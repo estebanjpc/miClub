@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout/layout :: head}" />
+
+<body class="d-flex flex-column min-vh-100 bg-light">
+	<header th:replace="~{layout/layout :: header}"></header>
+
+	<main class="flex-grow-1">
+		<div class="container py-4">
+
+			<!-- Título -->
+			<div class="row mb-4">
+				<div class="col text-center">
+					<h3 th:text="${titulo}" class="fw-bold text-primary border-bottom pb-2"></h3>
+				</div>
+			</div>
+
+			<!-- Contenedor Tabla + Botón -->
+			<div class="row justify-content-center">
+				<div class="col-lg-10">
+
+					<!-- Botón Crear alineado a la derecha -->
+					<div class="d-flex justify-content-end mb-3">
+						<div class="col-3 d-grid">
+							<a th:href="@{/categorias/crear}" class="btn btn-success btn-sm rounded-pill">
+								<i class="fas fa-plus-circle"></i> Nueva Categoría
+							</a>
+						</div>
+					</div>
+
+					<!-- Tabla -->
+					<div class="card shadow-sm border-0">
+						<div class="card-body table-responsive">
+							<table class="table table-hover align-middle table-striped">
+								<thead class="bg-primary text-white">
+									<tr>
+										<th>#</th>
+										<th>Nombre Categoría</th>
+										<th>Valor Cuota</th>
+										<th class="text-center">Editar</th>
+										<th class="text-center">Eliminar</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr th:each="cat, cont : ${listadoCategorias}">
+										<td th:text="${cont.index + 1}"></td>
+										<td th:text="${cat.nombre}"></td>
+										<td th:text="${#numbers.formatDecimal(cat.valorCuota, 0, 'POINT', 0, 'COMMA')}">
+										</td>
+
+										<td class="text-center">
+											<a th:href="@{'/categorias/editar/' + ${cat.id}}"
+												class="btn btn-outline-primary btn-sm rounded-pill"
+												data-bs-toggle="tooltip" title="Editar">
+												<i class="fas fa-edit"></i>
+											</a>
+										</td>
+
+										<td class="text-center">
+											<button th:onclick="eliminarCategoria([[${cat.id}]])"
+												class="btn btn-outline-danger btn-sm rounded-pill"
+												data-bs-toggle="tooltip" title="Eliminar">
+												<i class="fas fa-trash-alt"></i>
+											</button>
+										</td>
+									</tr>
+									<tr th:if="${#lists.isEmpty(listadoCategorias)}">
+										<td colspan="5" class="text-center text-muted py-3">
+											No hay categorías registradas
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+				</div>
+			</div>
+
+		</div>
+	</main>
+	<script th:src="@{/js/categoria.js}"></script>
+	<footer th:replace="~{layout/layout :: footer}"></footer>
+</body>
+
+</html>

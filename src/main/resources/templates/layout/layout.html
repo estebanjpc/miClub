@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<!-- HEAD -->
+
+<head th:fragment="head">
+	<meta charset="UTF-8" />
+	<title th:text="${titulo}">Título</title>
+	<link rel="icon" type="image/x-icon" href="images/favicon.ico">
+
+	<!-- Bootstrap y librerías -->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
+		crossorigin="anonymous">
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" crossorigin="anonymous">
+	<link rel="stylesheet" type="text/css" th:href="@{/css/style.css}" />
+
+	<style>
+		body {
+			background-color: #f8f9fa;
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+		}
+
+		/* Navbar moderno */
+		.navbar {
+			box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+		}
+
+		.nav-link {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			transition: all 0.2s ease-in-out;
+		}
+
+		.nav-link:hover {
+			background: rgba(255, 255, 255, 0.1);
+			border-radius: 0.375rem;
+			padding-left: 0.75rem;
+		}
+
+		.nav-link.active {
+			font-weight: 600;
+			border-bottom: 2px solid #fff;
+		}
+
+		/* Dropdown moderno */
+		.dropdown-menu {
+			border-radius: 0.5rem;
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		}
+
+		.dropdown-item i {
+			width: 18px;
+		}
+
+		.dropdown-item.text-danger:hover {
+			background-color: #ffe6e6;
+		}
+
+		/* Loader overlay */
+		#loaderOverlay {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(255, 255, 255, 0.8);
+			backdrop-filter: blur(3px);
+			display: none;
+			align-items: center;
+			justify-content: center;
+			z-index: 1050;
+		}
+
+		/* Footer */
+		footer {
+			background-color: #ffffff;
+			padding: 1rem 0;
+			box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.05);
+			text-align: center;
+		}
+
+		footer img {
+			width: 80px;
+			margin-bottom: 0.5rem;
+		}
+
+		footer p {
+			margin: 0;
+			color: #6c757d;
+			font-size: 0.9rem;
+		}
+	</style>
+</head>
+
+<!-- BODY -->
+
+<body class="d-flex flex-column min-vh-100">
+
+	<!-- HEADER -->
+	<header th:fragment="header">
+		<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm px-3">
+			<a class="navbar-brand d-flex align-items-center" href="#">
+				<img th:src="@{/images/logo.png}" style="height: 40px;" alt="Logo" class="me-2">
+			</a>
+
+			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+				aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+
+			<div class="collapse navbar-collapse" id="navbarNav">
+				<!-- Menú principal -->
+				<ul class="navbar-nav me-auto">
+					<li class="nav-item">
+						<a class="nav-link" sec:authorize="hasAnyRole('ROLE_ADMIN')" th:href="@{/listadoClub}">
+							<i class="fas fa-search"></i> Listado Club
+						</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" sec:authorize="hasAnyRole('ROLE_CLUB')" th:href="@{/listadoUsuarios}">
+							<i class="fas fa-search"></i> Listado Usuarios
+						</a>
+					</li>
+				</ul>
+
+				<!-- Dropdown usuario -->
+				<ul class="navbar-nav ms-auto">
+					<li class="nav-item dropdown">
+						<a href="#" class="nav-link dropdown-toggle d-flex align-items-center"
+							data-bs-toggle="dropdown">
+							<i class="fas fa-user-circle fa-lg me-1"></i>
+							<span th:text="${#strings.substringBefore(#authentication.name,'@')}"></span>
+						</a>
+
+						<ul class="dropdown-menu dropdown-menu-end shadow">
+							<!-- Header con email -->
+							<li class="dropdown-header text-muted small">
+								<i class="fas fa-envelope"></i>
+								<span sec:authentication="name"></span>
+							</li>
+
+							<!-- Divider común -->
+							<li>
+								<hr class="dropdown-divider">
+							</li>
+
+							<!-- ========== PERFIL CLUB ========== -->
+							<li sec:authorize="hasRole('ROLE_CLUB')">
+								<h6 class="dropdown-header text-primary fw-bold">
+									<i class="fas fa-user-cog"></i> Mi Perfil
+								</h6>
+								<a th:href="@{/perfilClub}" class="dropdown-item">
+									<i class="fas fa-building"></i> Datos del Club
+								</a>
+								<a th:href="@{/cuentas/cuentaBancaria}" class="dropdown-item">
+									<i class="fas fa-university"></i> Datos de Cuenta
+								</a>
+								<a th:href="@{/categorias/listar}" class="dropdown-item">
+									<i class="fas fa-tags"></i> Categorías
+								</a>
+							</li>
+
+							<!-- ========== PERFIL USUARIO ========== -->
+							<li sec:authorize="hasRole('ROLE_USER')">
+								<a th:href="@{/perfilUsuario}" class="dropdown-item">
+									<i class="fas fa-user"></i> Mi Perfil
+								</a>
+							</li>
+
+							<!-- ========== ADMINISTRADOR ========== -->
+							<li sec:authorize="hasRole('ROLE_ADMIN')">
+								<a th:href="@{/listadoUsuarios}" class="dropdown-item">
+									<i class="fas fa-users-cog"></i> Adm Usuarios
+								</a>
+							</li>
+
+							<!-- Divider antes del logout solo si hay algo arriba -->
+							<li>
+								<hr class="dropdown-divider">
+							</li>
+
+							<!-- ========== LOGOUT ========== -->
+							<li>
+								<form id="logoutForm" th:action="@{/logout}" method="POST">
+									<button class="dropdown-item text-danger" type="submit">
+										<i class="fas fa-sign-out-alt"></i> Cerrar sesión
+									</button>
+								</form>
+							</li>
+						</ul>
+					</li>
+				</ul>
+
+			</div>
+		</nav>
+
+		<!-- Loader overlay -->
+		<div id="loader">
+			<div class="spinner-border text-primary" role="status" style="display:none"></div>
+		</div>
+	</header>
+
+	<!-- Contenido dinámico -->
+	<main class="container my-4" th:replace="${contenido}"></main>
+
+	<!-- Footer -->
+	<footer th:fragment="footer">
+		<img th:src="@{/images/logo.png}" alt="Logo">
+		<p><small>Desarrollado por <strong>&copy; E3 Soluciones Informáticas</strong></small></p>
+
+
+		<!-- Scripts -->
+		<script th:src="@{/js/jquery-3.3.1.min.js}"></script>
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.8/dist/sweetalert2.all.min.js"></script>
+		<script th:src="@{/js/general.js}"></script>
+		<script th:src="@{/js/function/sorttable.js}"></script>
+
+		<!-- SweetAlert mensajes -->
+		<input type="hidden" id="msjLayout" th:value="${msjLayout}">
+		<script type="text/javascript">
+			$(document).ready(function () {
+				const input = document.getElementById("msjLayout");
+				if (input && input.value) {
+					mostrarAlerta(input.value);
+				}
+			});
+		</script>
+
+	</footer>
+</body>
+
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout/layout :: head}" />
+
+<body class="d-flex flex-column min-vh-100">
+	<header th:replace="~{layout/layout :: header}"></header>
+
+	<main class="flex-grow-1">
+		<div class="container py-4">
+
+			<!-- Título -->
+			<div class="row mb-4">
+				<div class="col text-center">
+					<h3 th:text="${titulo}" class="fw-bold text-primary border-bottom pb-2"></h3>
+				</div>
+			</div>
+
+			<!-- Contenedor Tabla + Botón -->
+			<div class="row justify-content-center">
+				<div class="col-lg-10">
+					<!-- Botón Crear alineado a la derecha -->
+					<div class="d-flex justify-content-end mb-3">
+						<div class="col-2 d-grid"> <a th:href="@{/crearUsuario}" class="btn btn-success btn-sm rounded-pill">
+							<i class="fas fa-user-plus"></i> Crear </a> 
+						</div>
+					</div>
+
+					<!-- Tabla -->
+					<div class="card shadow-sm border-0">
+						<div class="card-body table-responsive">
+							<table class="table table-hover align-middle table-striped">
+								<thead class="bg-primary text-white">
+									<tr>
+										<th>#</th>
+										<th>Nombre</th>
+										<th>Apellido</th>
+										<th>Email</th>
+										<th>Estado</th>
+										<th class="text-center">Editar</th>
+										<th class="text-center">Eliminar</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr th:each="u,cont: ${listadoUsuarios}">
+										<td th:text="${cont.index + 1}"></td>
+										<td th:text="${u.nombre}"></td>
+										<td th:text="${u.apellido}"></td>
+										<td th:text="${u.email}"></td>
+										<td>
+											<span th:if="${u.estado} == 0"
+												class="badge bg-warning text-dark">Pendiente</span>
+											<span th:if="${u.estado} == 1" class="badge bg-success">Activo</span>
+											<span th:if="${u.estado} == 2"
+												class="badge bg-secondary">Deshabilitado</span>
+										</td>
+										<td class="text-center">
+											<a th:href="@{/editarUsuario/} + ${u.id}"
+												class="btn btn-outline-primary btn-sm rounded-pill"
+												data-bs-toggle="tooltip" title="Editar">
+												<i class="fas fa-edit"></i>
+											</a>
+										</td>
+										<td class="text-center">
+											<button th:onclick="eliminarUsuario([[${u.id}]])"
+												class="btn btn-outline-danger btn-sm rounded-pill"
+												data-bs-toggle="tooltip" title="Eliminar">
+												<i class="fas fa-trash-alt"></i>
+											</button>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</main>
+
+	<script th:src="@{/js/usuario.js}"></script>
+	<footer th:replace="~{layout/layout :: footer}"></footer>
+</body>
+
+</html>

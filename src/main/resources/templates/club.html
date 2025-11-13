@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout/layout :: head}">
+
+<body class="d-flex flex-column min-vh-100">
+
+	<head th:replace="~{layout/layout :: header}">
+		<main class="flex-grow-1">
+			<div class="container py-4">
+				<!-- Título -->
+				<div class="row mb-4">
+					<div class="col text-center">
+						<h3 th:text="${titulo}" class="fw-bold text-primary border-bottom pb-2"></h3>
+					</div>
+				</div>
+				<!-- Formulario -->
+				<div class="row justify-content-center">
+					<div class="col-lg-8 col-md-10">
+						<div class="card shadow-sm border-0">
+							<div class="card-body">
+								<form id="idForm" th:action="@{/guardarClub}" th:object="${usuario}" method="post"
+									class="row g-3" enctype="multipart/form-data">
+									<!-- Nombre -->
+									<div class="col-md-6">
+										<label class="form-label fw-semibold">
+											<i class="fas fa-user text-primary"></i> Nombre Club
+										</label>
+										<input th:field="*{nombre}" type="text" class="form-control"
+											th:errorclass="'is-invalid'" />
+										<div class="invalid-feedback" th:if="${#fields.hasErrors('nombre')}"
+											th:errors="*{nombre}"></div>
+									</div>
+
+									<!-- Codigo -->
+									<!--<div class="col-md-6">
+                                    <label class="form-label fw-semibold">
+                                        <i class="fas fa-user text-primary"></i> Codigo
+                                    </label>
+                                    <input th:field="*{club.codigo}" type="text" class="form-control" th:errorclass="'is-invalid'"/>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('club.codigo')}" th:errors="*{club.codigo}"></div>
+                                </div>-->
+
+									<!-- Email -->
+									<div class="col-md-6">
+										<label class="form-label fw-semibold">
+											<i class="fas fa-envelope text-primary"></i> Email
+										</label>
+										<input th:field="*{email}" type="email" class="form-control"
+											th:errorclass="'is-invalid'" />
+										<div class="invalid-feedback" th:if="${#fields.hasErrors('email')}"
+											th:errors="*{email}"></div>
+									</div>
+									<!-- Estado -->
+									<div class="col-md-6">
+										<label class="form-label fw-semibold">
+											<i class="fas fa-toggle-on text-primary"></i> Estado
+										</label>
+										<select class="form-select" th:field="*{estado}" th:errorclass="'is-invalid'">
+											<option th:each="estado: ${estados.entrySet()}" th:text="${estado.value}"
+												th:value="${estado.key}"></option>
+										</select>
+										<div class="invalid-feedback" th:if="${#fields.hasErrors('estado')}"
+											th:errors="*{estado}"></div>
+									</div>
+
+									<div class="col-md-6">
+										<label class="form-label fw-semibold">
+											<i class="fas fa-toggle-on text-primary"></i> Tipo Club
+										</label>
+										<select class="form-select" th:field="*{club.tipo}"
+											th:errorclass="'is-invalid'">
+											<option th:each="tipo: ${listaTipoClub.entrySet()}" th:text="${tipo.value}"
+												th:value="${tipo.key}"></option>
+										</select>
+										<div class="invalid-feedback" th:if="${#fields.hasErrors('club.tipo')}"
+											th:errors="*{club.tipo}"></div>
+									</div>
+									<div class="col-md-6 text-center">
+										<label class="form-label fw-semibold d-block">
+											<i class="fas fa-image text-primary"></i> Logo del Club (opcional)
+										</label>
+
+										<!-- Input de archivo -->
+										<input type="file" name="fileLogo" accept="image/*" class="form-control form-control-sm mb-4" onchange="previewImage(event)">
+										
+										<div class="mb-2 position-relative d-inline-block">
+											<!-- Logo actual -->
+											<img th:if="${usuario.club.logo != null}" id="currentLogo"
+												th:src="@{'/club/logo/' + ${usuario.club.id}}" alt="Logo actual"
+												class="border rounded-3 mb-2"
+												style="width: 150px; height: 150px; object-fit: cover;">
+
+											<!-- Vista previa para nuevas imágenes -->
+											<img id="previewLogo" src="#" alt="Vista previa"
+												class="border rounded-3 mb-2"
+												style="width: 150px; height: 150px; object-fit: cover; display: none;">
+
+											<!-- Botón para quitar el logo actual -->
+											<button type="button" id="removeLogoBtn"
+												th:if="${usuario.club.logo != null}"
+												class="btn btn-sm btn-danger position-absolute top-0 end-0"
+												style="border-radius: 50%;" onclick="removeCurrentLogo()">
+												<i class="fas fa-times"></i>
+											</button>
+										</div>
+
+										<!-- Campo oculto para marcar si se elimina el logo -->
+										<input type="hidden" name="eliminarLogo" id="eliminarLogo" value="false">
+									</div>
+
+
+									<!-- Botones -->
+									<div class="col-12 text-center mt-4">
+										<a th:href="@{${btnVolver}}"
+											class="btn btn-outline-secondary rounded-pill px-4 me-2">
+											<i class="fas fa-arrow-left"></i> Volver
+										</a>
+										<button type="submit" class="btn btn-primary rounded-pill px-4">
+											<i class="fas fa-save"></i> <span th:text="${btn}"></span>
+										</button>
+									</div>
+								</form>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+		<script th:src="@{/js/club.js}"></script>
+		<footer th:replace="~{layout/layout :: footer}"></footer>
+</body>
+
+</html>

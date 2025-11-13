@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:replace="~{layout/layout :: head}" />
+</head>
+
+<body class="d-flex flex-column min-vh-100 bg-light">
+	<header th:replace="~{layout/layout :: header}"></header>
+
+	<main class="flex-grow-1">
+		<div class="container py-4">
+
+			<!-- Título -->
+			<div class="row mb-4">
+				<div class="col text-center">
+					<h3 th:text="${titulo}" class="fw-bold text-primary border-bottom pb-2"></h3>
+				</div>
+			</div>
+
+			<div class="row justify-content-center">
+				<div class="col-lg-8">
+
+					<!-- Si ya existe cuenta -->
+					<div th:if="${tieneCuenta}" class="card shadow-sm border-0">
+						<div class="card-body">
+							<h5 class="fw-bold text-primary mb-3"><i class="fas fa-university me-2"></i>Cuenta
+								Registrada</h5>
+
+							<ul class="list-group mb-3">
+								<li class="list-group-item d-flex justify-content-between align-items-center">
+									<span><i class="fas fa-building me-2 text-primary"></i>Banco</span>
+									<strong th:text="${cuenta.banco}"></strong>
+								</li>
+								<li class="list-group-item d-flex justify-content-between align-items-center">
+									<span><i class="fas fa-wallet me-2 text-primary"></i>Tipo de Cuenta</span>
+									<strong th:text="${cuenta.tipoCuenta}"></strong>
+								</li>
+								<li class="list-group-item d-flex justify-content-between align-items-center">
+									<span><i class="fas fa-hashtag me-2 text-primary"></i>N° Cuenta</span>
+									<strong th:text="${cuenta.numeroCuenta}"></strong>
+								</li>
+								<li class="list-group-item d-flex justify-content-between align-items-center">
+									<span><i class="fas fa-user me-2 text-primary"></i>Titular</span>
+									<strong th:text="${cuenta.nombreTitular}"></strong>
+								</li>
+								<li class="list-group-item d-flex justify-content-between align-items-center">
+									<span><i class="fas fa-id-card me-2 text-primary"></i>RUT</span>
+									<strong th:text="${cuenta.rut}"></strong>
+								</li>
+								<li class="list-group-item d-flex justify-content-between align-items-center">
+									<span><i class="fas fa-envelope me-2 text-primary"></i>Email</span>
+									<strong th:text="${cuenta.email}"></strong>
+								</li>
+							</ul>
+
+							<div class="text-center">
+								<button class="btn btn-outline-primary rounded-pill px-4 me-2" type="button"
+									data-bs-toggle="collapse" data-bs-target="#editarCuentaForm" aria-expanded="false"
+									aria-controls="editarCuentaForm">
+									<i class="fas fa-edit me-1"></i> Editar
+								</button>
+								<button th:onclick="eliminarCuenta([[${cuenta.id}]])"
+									class="btn btn-outline-danger rounded-pill px-4">
+									<i class="fas fa-trash-alt me-1"></i> Eliminar
+								</button>
+							</div>
+
+							<!-- Formulario de edición -->
+							<div class="collapse mt-4" id="editarCuentaForm">
+								<div class="card card-body border-primary-subtle">
+									<form th:action="@{/cuentas/guardar}" th:object="${cuenta}" method="post"
+										class="row g-3">
+
+										<!-- Banco -->
+										<div class="col-md-6">
+											<label class="form-label fw-semibold">
+												<i class="fas fa-university text-primary"></i> Banco
+											</label>
+											<select th:field="*{banco}" class="form-select"
+												th:errorclass="'is-invalid'">
+												<option value="">Seleccione un banco</option>
+												<option th:each="bancoItem : ${listadoBancos}"
+													th:value="${bancoItem.id}" th:text="${bancoItem.nombre}"></option>
+											</select>
+											<div class="invalid-feedback" th:if="${#fields.hasErrors('banco')}"
+												th:errors="*{banco}"></div>
+										</div>
+
+										<!-- Tipo de cuenta -->
+										<div class="col-md-6">
+											<label class="form-label fw-semibold">
+												<i class="fas fa-list text-primary"></i> Tipo de Cuenta
+											</label>
+											<select th:field="*{tipoCuenta}" class="form-select"
+												th:errorclass="'is-invalid'">
+												<option value="">-- Seleccione --</option>
+												<option value="Cuenta Corriente">Cuenta Corriente</option>
+												<option value="Cuenta Vista">Cuenta Vista</option>
+												<option value="Cuenta de Ahorro">Cuenta de Ahorro</option>
+											</select>
+											<div class="invalid-feedback" th:if="${#fields.hasErrors('tipoCuenta')}"
+												th:errors="*{tipoCuenta}"></div>
+										</div>
+
+										<!-- Número de cuenta -->
+										<div class="col-md-6">
+											<label class="form-label fw-semibold">
+												<i class="fas fa-hashtag text-primary"></i> Número de Cuenta
+											</label>
+											<input th:field="*{numeroCuenta}" type="text" class="form-control"
+												th:errorclass="'is-invalid'" required>
+											<div class="invalid-feedback" th:if="${#fields.hasErrors('numeroCuenta')}"
+												th:errors="*{numeroCuenta}"></div>
+										</div>
+
+										<!-- Titular -->
+										<div class="col-md-6">
+											<label class="form-label fw-semibold">
+												<i class="fas fa-user text-primary"></i> Titular
+											</label>
+											<input th:field="*{nombreTitular}" type="text" class="form-control"
+												th:errorclass="'is-invalid'" required>
+											<div class="invalid-feedback" th:if="${#fields.hasErrors('nombreTitular')}"
+												th:errors="*{nombreTitular}"></div>
+										</div>
+
+										<!-- RUT -->
+										<div class="col-md-6">
+											<label class="form-label fw-semibold">
+												<i class="fas fa-id-card text-primary"></i> RUT
+											</label>
+											<input th:field="*{rut}" type="text" class="form-control"
+												th:errorclass="'is-invalid'" required>
+											<div class="invalid-feedback" th:if="${#fields.hasErrors('rut')}"
+												th:errors="*{rut}"></div>
+										</div>
+
+										<!-- Email -->
+										<div class="col-md-6">
+											<label class="form-label fw-semibold">
+												<i class="fas fa-envelope text-primary"></i> Email
+											</label>
+											<input th:field="*{email}" type="email" class="form-control"
+												th:errorclass="'is-invalid'" required>
+											<div class="invalid-feedback" th:if="${#fields.hasErrors('email')}"
+												th:errors="*{email}"></div>
+										</div>
+
+										<!-- Botón -->
+										<div class="col-12 text-center mt-3">
+											<button type="submit" class="btn btn-success rounded-pill px-4">
+												<i class="fas fa-save me-1"></i> Guardar Cuenta
+											</button>
+										</div>
+
+									</form>
+
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Si no hay cuenta -->
+					<div th:if="${!tieneCuenta}" class="card shadow-sm border-0">
+						<div class="card-body">
+							<h5 class="fw-bold text-primary mb-3">
+								<i class="fas fa-plus-circle me-2"></i>Agregar Cuenta
+							</h5>
+
+							<form th:action="@{/cuentas/guardar}" th:object="${cuenta}" method="post" class="row g-3">
+
+								<!-- Banco -->
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">
+										<i class="fas fa-university text-primary"></i> Banco
+									</label>
+									<select th:field="*{banco}" class="form-select" th:errorclass="'is-invalid'">
+										<option value="">Seleccione un banco</option>
+										<option th:each="bancoItem : ${listadoBancos}" th:value="${bancoItem.id}"
+											th:text="${bancoItem.nombre}">
+										</option>
+									</select>
+									<div class="invalid-feedback" th:if="${#fields.hasErrors('banco')}"
+										th:errors="*{banco}"></div>
+								</div>
+
+								<!-- Tipo de cuenta -->
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">
+										<i class="fas fa-list text-primary"></i> Tipo de Cuenta
+									</label>
+									<select th:field="*{tipoCuenta}" class="form-select" th:errorclass="'is-invalid'">
+										<option value="">-- Seleccione --</option>
+										<option value="Cuenta Corriente">Cuenta Corriente</option>
+										<option value="Cuenta Vista">Cuenta Vista</option>
+										<option value="Cuenta de Ahorro">Cuenta de Ahorro</option>
+									</select>
+									<div class="invalid-feedback" th:if="${#fields.hasErrors('tipoCuenta')}"
+										th:errors="*{tipoCuenta}"></div>
+								</div>
+
+								<!-- Número -->
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">
+										<i class="fas fa-hashtag text-primary"></i> Número de Cuenta
+									</label>
+									<input th:field="*{numeroCuenta}" type="text" class="form-control"
+										th:errorclass="'is-invalid'" required>
+									<div class="invalid-feedback" th:if="${#fields.hasErrors('numeroCuenta')}"
+										th:errors="*{numeroCuenta}"></div>
+								</div>
+
+								<!-- Titular -->
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">
+										<i class="fas fa-user text-primary"></i> Titular
+									</label>
+									<input th:field="*{nombreTitular}" type="text" class="form-control"
+										th:errorclass="'is-invalid'" required>
+									<div class="invalid-feedback" th:if="${#fields.hasErrors('nombreTitular')}"
+										th:errors="*{nombreTitular}"></div>
+								</div>
+
+								<!-- RUT -->
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">
+										<i class="fas fa-id-card text-primary"></i> RUT
+									</label>
+									<input th:field="*{rut}" type="text" class="form-control"
+										th:errorclass="'is-invalid'" required>
+									<div class="invalid-feedback" th:if="${#fields.hasErrors('rut')}"
+										th:errors="*{rut}"></div>
+								</div>
+
+								<!-- Email -->
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">
+										<i class="fas fa-envelope text-primary"></i> Email
+									</label>
+									<input th:field="*{email}" type="email" class="form-control"
+										th:errorclass="'is-invalid'" required>
+									<div class="invalid-feedback" th:if="${#fields.hasErrors('email')}"
+										th:errors="*{email}"></div>
+								</div>
+
+								<!-- Botón guardar -->
+								<div class="col-12 text-center mt-3">
+									<button type="submit" class="btn btn-success rounded-pill px-4">
+										<i class="fas fa-save me-1"></i> Guardar Cuenta
+									</button>
+								</div>
+
+							</form>
+						</div>
+					</div>
+
+
+				</div>
+			</div>
+		</div>
+	</main>
+
+	<footer th:replace="~{layout/layout :: footer}"></footer>
+
+	<script th:src="@{/js/cuenta.js}"></script>
+</body>
+
+</html>

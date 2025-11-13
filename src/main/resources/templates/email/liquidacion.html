@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Liquidación Mensual</title>
+</head>
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color:#f4f6f8; margin:0; padding:0;">
+  <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#f4f6f8">
+    <tr>
+      <td align="center" style="padding: 40px 0;">
+        <table width="600" bgcolor="#ffffff" style="border-radius: 10px; box-shadow:0 6px 18px rgba(0,0,0,0.1); overflow:hidden;">
+
+          <!-- Header con logo -->
+          <tr>
+            <td align="center" bgcolor="#0d6efd" style="padding: 25px;">
+              <img src="cid:logoImage" alt="Logo" style="max-height:60px; display:block; margin-bottom:10px;">
+              <h1 style="color:#ffffff; font-size:24px; margin:0;">Liquidación Mensual</h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:30px; color:#333333; font-size:16px; line-height:1.6;">
+              <p>Estimado/a <strong th:text="${nombre} + ' ' + ${apellido}">Nombre Apellido</strong>,</p>
+              <p>Adjuntamos en este correo la liquidación correspondiente al mes de <strong th:text="${mes}">Mes</strong>, emitida por la empresa <strong th:text="${empresa}">Empresa</strong>.</p>
+
+              <p>Detalles del documento:</p>
+              <table cellpadding="10" cellspacing="0" border="0" width="100%" 
+                     style="background-color:#f1f3f5; border-radius:8px; margin:20px 0;">
+                <tr>
+                  <td style="width:35%; font-weight:bold;">Empresa:</td>
+                  <td th:text="${empresa}">Empresa Ejemplo</td>
+                </tr>
+                <tr>
+                  <td style="width:35%; font-weight:bold;">Mes de liquidación:</td>
+                  <td th:text="${mes}">Mes</td>
+                </tr>
+                <tr>
+                  <td style="width:35%; font-weight:bold;">Fecha de carga:</td>
+                  <td th:text="${fechaCarga}">dd/MM/yyyy</td>
+                </tr>
+                <tr>
+                  <td style="width:35%; font-weight:bold;">Archivo:</td>
+                  <td th:text="${nombreArchivo}">liquidacion.pdf</td>
+                </tr>
+              </table>
+
+              <p>El archivo PDF adjunto contiene toda la información detallada de su liquidación.</p>
+
+              <p style="margin-top:25px;">Saludos cordiales,<br>
+              <em>Departamento de Administración</em></p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" bgcolor="#e9ecef" style="padding:15px; font-size:12px; color:#6c757d;">
+              Este es un mensaje automático, por favor no responder a este correo.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

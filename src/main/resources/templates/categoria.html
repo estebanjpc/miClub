@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout/layout :: head}">
+	<style>
+		.is-invalid {
+			border-color: #dc3545 !important;
+			box-shadow: 0 0 0 0.15rem rgba(220, 53, 69, 0.25);
+		}
+
+		.invalid-feedback {
+			display: block;
+			color: #dc3545;
+			font-size: 0.875em;
+		}
+	</style>
+</head>
+
+<body class="d-flex flex-column min-vh-100 bg-light">
+	<header th:replace="~{layout/layout :: header}"></header>
+
+	<main class="flex-grow-1">
+		<div class="container py-4">
+
+			<!-- Título -->
+			<div class="row mb-4">
+				<div class="col text-center">
+					<h3 th:text="${titulo}" class="fw-bold text-primary border-bottom pb-2"></h3>
+				</div>
+			</div>
+
+			<!-- Formulario -->
+			<div class="row justify-content-center">
+				<div class="col-lg-8 col-md-10">
+					<div class="card shadow-sm border-0">
+						<div class="card-body">
+							<form th:action="@{/categorias/guardar}" th:object="${categoria}" method="post"
+								class="row g-3">
+
+								<!-- Nombre Categoría -->
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">
+										<i class="fas fa-tag text-primary"></i> Nombre de la Categoría
+									</label>
+									<input th:field="*{nombre}" type="text" placeholder="Ej: Sub 12"
+										class="form-control"
+										th:classappend="${#fields.hasErrors('nombre') or (nombreDuplicado ?: false)} ? 'is-invalid' : ''" />
+
+									<!-- Error por validación @NotBlank -->
+									<div class="invalid-feedback" th:if="${#fields.hasErrors('nombre')}"
+										th:errors="*{nombre}"></div>
+
+									<!-- Error por nombre duplicado -->
+									<div class="invalid-feedback" th:if="${nombreDuplicado ?: false}">
+										Ya existe una categoría con ese nombre en este club.
+									</div>
+								</div>
+
+
+								<!-- Valor Cuota -->
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">
+										<i class="fas fa-dollar-sign text-success"></i> Valor Cuota
+									</label>
+									<input th:field="*{valorCuota}" type="text" placeholder="Ej: 25000"
+										class="form-control"
+										th:classappend="${#fields.hasErrors('valorCuota')} ? 'is-invalid' : ''" />
+									<div class="invalid-feedback" th:if="${#fields.hasErrors('valorCuota')}"
+										th:errors="*{valorCuota}"></div>
+								</div>
+
+								<!-- Club (solo lectura) -->
+								<div class="col-md-12">
+									<label class="form-label fw-semibold">
+										<i class="fas fa-university text-primary"></i> Club Asociado
+									</label>
+									<input type="text" th:value="${club.nombre}" class="form-control" readonly />
+									<input type="hidden" th:field="*{club.id}" />
+								</div>
+
+								<!-- Botones -->
+								<div class="col-12 text-center mt-4">
+									<a th:href="@{/categorias/listar}"
+										class="btn btn-outline-secondary rounded-pill px-4 me-2">
+										<i class="fas fa-arrow-left"></i> Volver
+									</a>
+									<button type="submit" class="btn btn-primary rounded-pill px-4">
+										<i class="fas fa-save"></i> Guardar
+									</button>
+								</div>
+
+							</form>
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</main>
+
+	<footer th:replace="~{layout/layout :: footer}"></footer>
+</body>
+
+</html>

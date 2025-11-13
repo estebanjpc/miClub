@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout/layout :: head}" />
+
+<body class="d-flex flex-column min-vh-100">
+	<header th:replace="~{layout/layout :: header}"></header>
+
+	<main class="flex-grow-1">
+		<div class="container py-4">
+
+			<!-- Título -->
+			<div class="row mb-4">
+				<div class="col text-center">
+					<h3 th:text="${titulo}" class="fw-bold text-primary border-bottom pb-2"></h3>
+				</div>
+			</div>
+
+			<!-- Formulario -->
+			<div class="row justify-content-center">
+				<div class="col-lg-10 col-md-11">
+					<div class="card shadow-sm border-0">
+						<div class="card-body">
+							<form id="idForm" th:action="@{/guardarUsuario}" th:object="${usuario}" method="post"
+								class="row g-3">
+
+								<!-- ===================== APODERADO ===================== -->
+								<div class="col-12">
+									<h5 class="fw-bold text-secondary border-bottom pb-2 mb-3">
+										<i class="fas fa-user-shield text-primary"></i> Datos del Apoderado
+									</h5>
+								</div>
+
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">Nombre</label>
+									<input th:field="*{nombre}" type="text" class="form-control" />
+								</div>
+
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">Apellido</label>
+									<input th:field="*{apellido}" type="text" class="form-control" />
+								</div>
+
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">Email</label>
+									<input th:field="*{email}" type="email" class="form-control" />
+								</div>
+
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">Rut</label>
+									<input th:field="*{rut}" type="text" class="form-control"
+										placeholder="Ej: 997249492" />
+								</div>
+
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">Teléfono</label>
+									<input th:field="*{telefono}" type="text" class="form-control" />
+								</div>
+
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">Dirección</label>
+									<input th:field="*{direccion}" type="text" class="form-control" />
+								</div>
+
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">Estado</label>
+									<select class="form-select" th:field="*{estado}">
+										<option th:each="estado: ${estados.entrySet()}" th:text="${estado.value}"
+											th:value="${estado.key}"></option>
+									</select>
+								</div>
+
+								<!-- ===================== DEPORTISTAS ===================== -->
+								<div class="col-12 mt-4">
+									<h5 class="fw-bold text-secondary border-bottom pb-2 mb-3">
+										<i class="fas fa-running text-primary"></i> Datos de los Deportistas
+									</h5>
+								</div>
+
+								<!-- Checkbox -->
+								<div class="col-12">
+									<div class="form-check mb-3">
+										<input class="form-check-input" type="checkbox" id="mismoDeportista" />
+										<label class="form-check-label" for="mismoDeportista">
+											El apoderado también es deportista (se copiarán sus datos)
+										</label>
+									</div>
+								</div>
+
+								<!-- Contenedor dinámico -->
+								<div id="deportistasContainer" class="row g-3"></div>
+
+								<div class="col-12 text-end">
+									<button type="button" id="addDeportistaBtn"
+										class="btn btn-outline-primary btn-sm rounded-pill">
+										<i class="fas fa-plus-circle"></i> Agregar Deportista
+									</button>
+								</div>
+
+								<!-- ===================== BOTONES ===================== -->
+								<div class="col-12 text-center mt-4">
+									<a th:href="@{/listadoUsuarios}"
+										class="btn btn-outline-secondary rounded-pill px-4 me-2">
+										<i class="fas fa-arrow-left"></i> Volver
+									</a>
+									<button type="submit" class="btn btn-primary rounded-pill px-4">
+										<i class="fas fa-save"></i> <span th:text="${btn}"></span>
+									</button>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</main>
+
+	<script th:src="@{/js/usuario.js}"></script>
+	<footer th:replace="~{layout/layout :: footer}"></footer>
+</body>
+
+</html>

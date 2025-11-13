@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout/layout :: head"></head>
+<body class="d-flex flex-column min-vh-100">
+    <header th:replace="layout/layout :: header"></header>
+    <main class="flex-grow-1">
+        <div class="container py-5">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-8 col-lg-6">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-danger text-white text-center py-3">
+                            <h4 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Error 403: Acceso Denegado</h4>
+                        </div>
+                        <div class="card-body text-center p-4">
+                            <h5 class="card-title mb-3">Lo sentimos, no tienes permisos para acceder a esta página</h5>
+                            <p class="card-text text-muted mb-4">Parece que intentaste acceder a un recurso restringido. Por favor, verifica tus permisos o contacta al administrador del sistema.</p>
+                            <a class="btn btn-outline-primary btn-lg rounded-pill" role="button" th:href="@{/}">Volver al Inicio</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer th:replace="layout/layout :: footer"></footer>
+    <script>
+        // Inicializar tooltips de Bootstrap (opcional, si se añaden tooltips en el futuro)
+        document.addEventListener("DOMContentLoaded", () => {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+        });
+    </script>
+</body>
+</html>
