@@ -64,8 +64,6 @@ public class Usuario implements Serializable {
 	@Transient
 	private String passAux;
 
-	private String categoria;
-
 	@OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Valid
 	private List<Deportista> deportistas = new ArrayList<Deportista>();
@@ -175,14 +173,6 @@ public class Usuario implements Serializable {
 
 	public void setPassAux(String passAux) {
 		this.passAux = passAux;
-	}
-
-	public String getCategoria() {
-		return categoria;
-	}
-
-	public void setCategoria(String categoria) {
-		this.categoria = categoria;
 	}
 
 	public List<Deportista> getDeportistas() {

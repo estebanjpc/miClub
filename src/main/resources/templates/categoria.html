@@ -69,15 +69,6 @@
 										th:errors="*{valorCuota}"></div>
 								</div>
 
-								<!-- Club (solo lectura) -->
-								<div class="col-md-12">
-									<label class="form-label fw-semibold">
-										<i class="fas fa-university text-primary"></i> Club Asociado
-									</label>
-									<input type="text" th:value="${club.nombre}" class="form-control" readonly />
-									<input type="hidden" th:field="*{club.id}" />
-								</div>
-
 								<!-- Botones -->
 								<div class="col-12 text-center mt-4">
 									<a th:href="@{/categorias/listar}"

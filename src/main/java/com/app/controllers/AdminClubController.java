@@ -50,7 +50,7 @@ public class AdminClubController {
 	private BCryptPasswordEncoder passEncoder;
 
 	@RequestMapping(value = { "/listadoClub" })
-	public String mantenedorUsuario(Model model) {
+	public String listadoClub(Model model) {
 		List<Usuario> listadoClub = usuarioService.findUsuarioByAuthority("ROLE_CLUB");
 		model.addAttribute("titulo", "Mantenedor Club");
 		model.addAttribute("listadoClub", listadoClub);

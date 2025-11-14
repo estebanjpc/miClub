@@ -43,9 +43,11 @@ public class Deportista implements Serializable {
 	@NotBlank(message = "Debe seleccionar el sexo")
 	private String sexo;
 
-	@NotBlank(message = "Debe seleccionar una categoría")
-	private String categoria;
-	
+	@NotNull(message = "Debe seleccionar una categoría")
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "id_categoria")
+	private Categoria categoria;
+
 	@NotBlank(message = "Debe seleccionar el estado")
 	private String estado;
 
@@ -101,14 +103,6 @@ public class Deportista implements Serializable {
 		this.sexo = sexo;
 	}
 
-	public String getCategoria() {
-		return categoria;
-	}
-
-	public void setCategoria(String categoria) {
-		this.categoria = categoria;
-	}
-
 	public Usuario getUsuario() {
 		return usuario;
 	}
@@ -124,4 +118,13 @@ public class Deportista implements Serializable {
 	public void setEstado(String estado) {
 		this.estado = estado;
 	}
+
+	public Categoria getCategoria() {
+		return categoria;
+	}
+
+	public void setCategoria(Categoria categoria) {
+		this.categoria = categoria;
+	}
+
 }
