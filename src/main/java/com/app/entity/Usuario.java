@@ -37,7 +37,7 @@ public class Usuario implements Serializable {
 	private Long id;
 
 	@Valid
-	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "id_club")
 	private Club club;
 
@@ -75,10 +75,8 @@ public class Usuario implements Serializable {
 //    @Pattern(regexp = "\\d{7,8}-?[\\dkK]", message = "RUT inválido. Ejemplo: 12345678-9")
     private String rut;
 
-	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-	@JoinColumn(name = "id_usuario")
-	@NotEmpty
-	private List<Role> roles;
+    @OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Role> roles = new ArrayList<>();
 	
 	@PrePersist
     protected void onCreate() {

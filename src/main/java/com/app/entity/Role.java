@@ -6,15 +6,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
 
-
-
-
 @Entity
-@Table(name = "usuarios_rol", uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id","authority"})})
+@Table(name = "usuarios_rol", uniqueConstraints = { @UniqueConstraint(columnNames = { "id_usuario", "authority" }) })
 public class Role implements Serializable {
 
 	/**
@@ -25,12 +24,16 @@ public class Role implements Serializable {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	
-	
+
 	private String authority;
-	
+
 	@Transient
 	private String nombre;
+	
+	@ManyToOne
+	@JoinColumn(name = "id_usuario")
+	private Usuario usuario;
+
 
 	public Long getId() {
 		return id;
@@ -47,21 +50,23 @@ public class Role implements Serializable {
 	public void setAuthority(String authority) {
 		this.authority = authority;
 	}
-	
-	public Role(String nombre,String role) {
+
+	public Role(String nombre, String role) {
 		this.authority = role;
 		this.nombre = nombre;
 	}
 
 	public Role() {
-		
+
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if(this == obj) return true;
-		if(!(obj instanceof Role)) return false;
-		
+		if (this == obj)
+			return true;
+		if (!(obj instanceof Role))
+			return false;
+
 		Role role = (Role) obj;
 		return this.authority != null && this.authority.equals(role.getAuthority());
 	}
@@ -72,6 +77,14 @@ public class Role implements Serializable {
 
 	public void setNombre(String nombre) {
 		this.nombre = nombre;
+	}
+
+	public Usuario getUsuario() {
+		return usuario;
+	}
+
+	public void setUsuario(Usuario usuario) {
+		this.usuario = usuario;
 	}
 
 }

@@ -35,7 +35,17 @@ public class JpaUserDetailsService implements UserDetailsService{
 	@Transactional(readOnly=true)
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
-		Usuario usuario = usuarioDao.findByEmail(email);
+		List<Usuario> usuarios = usuarioDao.findByEmail(email);
+
+		if (usuarios == null || usuarios.isEmpty()) {
+		    throw new BadCredentialsException("email: "+email+" no existe en bd");
+		}
+
+		// Escoger el usuario habilitado
+		Usuario usuario = usuarios.stream()
+		        .filter(u -> Boolean.TRUE.equals(u.getEnabled()))
+		        .findFirst()
+		        .orElse(usuarios.get(0));
 		
 		if(usuario == null) {
 //			logger.error("ERROR LOGIN :::::  email: "+email+" no existe en bd");

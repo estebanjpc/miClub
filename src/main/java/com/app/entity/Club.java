@@ -59,6 +59,9 @@ public class Club implements Serializable {
 
     @OneToMany(mappedBy = "club", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Categoria> categorias = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "club")
+    private List<Usuario> usuarios;
 
 	@PrePersist
 	protected void onCreate() {
@@ -145,6 +148,14 @@ public class Club implements Serializable {
 
 	public void setCategorias(List<Categoria> categorias) {
 		this.categorias = categorias;
+	}
+
+	public List<Usuario> getUsuarios() {
+		return usuarios;
+	}
+
+	public void setUsuarios(List<Usuario> usuarios) {
+		this.usuarios = usuarios;
 	}
 
 }

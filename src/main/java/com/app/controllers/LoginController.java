@@ -1,6 +1,7 @@
 package com.app.controllers;
 
 import java.security.Principal;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.app.entity.Club;
 import com.app.entity.Usuario;
 import com.app.service.IEmailService;
 import com.app.service.IUsuarioService;
@@ -28,60 +30,81 @@ public class LoginController {
 
 	@Autowired
 	private IUsuarioService usuarioService;
-
+	
 	@Autowired
 	private BCryptPasswordEncoder passEncoder;
 
 	@Autowired
 	private IEmailService emailService;
 
+//	@GetMapping({ "/login", "/" })
+//	public String login(@RequestParam(value = "error", required = false) String error,
+//			@RequestParam(value = "logout", required = false) String logout, Model model, Principal principal,
+//			RedirectAttributes flash, HttpServletRequest request) {
+//
+//		model.addAttribute("titulo", "Login");
+//
+//		if (principal != null) {
+//			Usuario usuario = usuarioService.findByEmail(principal.getName());
+//			request.getSession().setAttribute("usuarioLogin", usuario);
+//
+//			if (usuario.getEstado().equalsIgnoreCase("0"))
+//				return "redirect:/actualizarPass";
+//
+//			boolean esUser = usuario.getRoles().stream().anyMatch(r -> "ROLE_USER".equals(r.getAuthority()));
+//			boolean esAdmin = usuario.getRoles().stream().anyMatch(r -> "ROLE_ADMIN".equals(r.getAuthority()));
+//			boolean esClub = usuario.getRoles().stream().anyMatch(r -> "ROLE_CLUB".equals(r.getAuthority()));
+//
+//			if (esUser) {
+//				return "redirect:/consulta";
+//			} else if (esAdmin) {
+//				return "redirect:/listadoClub";
+//			} else if (esClub) {
+//				request.getSession().setAttribute("idClubSession", usuario.getClub().getId());
+//				return "redirect:/listadoUsuarios";
+//			}
+//		}
+//
+//		String loginError = (String) request.getSession().getAttribute("loginError");
+//		if (loginError != null) {
+//			model.addAttribute("msjLogin",
+//					"error;Error en el login; nombre de usuario o contraseña incorrecta, por favor vuelva a intentarlo!");
+//			request.getSession().removeAttribute("loginError"); // limpiar
+//		}
+//
+//		if (error != null) {
+//			model.addAttribute("msjLogin",
+//					"error;Error en el login; nombre de usuario o contraseña incorrecta, por favor vuelva a intentarlo!");
+//		}
+//
+//		if (logout != null) {
+//			model.addAttribute("success", "Ha cerrado session con exito");
+//		}
+//
+//		return "login";
+//	}
+
 	@GetMapping({ "/login", "/" })
-	public String login(@RequestParam(value = "error", required = false) String error,
-			@RequestParam(value = "logout", required = false) String logout, Model model, Principal principal,
-			RedirectAttributes flash, HttpServletRequest request) {
+	public String login(
+	        @RequestParam(value = "error", required = false) String error,
+	        @RequestParam(value = "logout", required = false) String logout,
+	        Model model,
+	        HttpServletRequest request) {
 
-		model.addAttribute("titulo", "Login");
+	    model.addAttribute("titulo", "Login");
 
-		if (principal != null) {
-			Usuario usuario = usuarioService.findByEmail(principal.getName());
-			request.getSession().setAttribute("usuarioLogin", usuario);
+	    if (error != null) {
+	        model.addAttribute("msjLogin",
+	                "error;Error en el login; nombre de usuario o contraseña incorrecta, por favor vuelva a intentarlo!");
+	    }
 
-			if (usuario.getEstado().equalsIgnoreCase("0"))
-				return "redirect:/actualizarPass";
+	    if (logout != null) {
+	        model.addAttribute("success", "Ha cerrado sesión con éxito");
+	    }
 
-			boolean esUser = usuario.getRoles().stream().anyMatch(r -> "ROLE_USER".equals(r.getAuthority()));
-			boolean esAdmin = usuario.getRoles().stream().anyMatch(r -> "ROLE_ADMIN".equals(r.getAuthority()));
-			boolean esClub = usuario.getRoles().stream().anyMatch(r -> "ROLE_CLUB".equals(r.getAuthority()));
-
-			if (esUser) {
-				return "redirect:/consulta";
-			} else if (esAdmin) {
-				return "redirect:/listadoClub";
-			} else if (esClub) {
-				request.getSession().setAttribute("idClubSession", usuario.getClub().getId());
-				return "redirect:/listadoUsuarios";
-			}
-		}
-
-		String loginError = (String) request.getSession().getAttribute("loginError");
-		if (loginError != null) {
-			model.addAttribute("msjLogin",
-					"error;Error en el login; nombre de usuario o contraseña incorrecta, por favor vuelva a intentarlo!");
-			request.getSession().removeAttribute("loginError"); // limpiar
-		}
-
-		if (error != null) {
-			model.addAttribute("msjLogin",
-					"error;Error en el login; nombre de usuario o contraseña incorrecta, por favor vuelva a intentarlo!");
-		}
-
-		if (logout != null) {
-			model.addAttribute("success", "Ha cerrado session con exito");
-		}
-
-		return "login";
+	    return "login";
 	}
-
+	
 	@RequestMapping(value = { "/recuperacion" })
 	public String recuperacion(Model model, RedirectAttributes flash, Authentication authentication,
 			HttpServletRequest request) {
@@ -145,6 +168,21 @@ public class LoginController {
 		flash.addFlashAttribute("msjLayout", "success;Exito;Se realizo corrextamente el cambio de password");
 
 		return "redirect:/login";
+	}
+	
+	@GetMapping("/seleccionarClub")
+	public String seleccionarClub(Model model, Principal principal) {
+	    Usuario usuario = usuarioService.findByEmail(principal.getName());
+	    List<Club> clubes = usuarioService.findClubesByUsuario(principal.getName());
+	    model.addAttribute("clubes", clubes);
+	    model.addAttribute("usuario", usuario);
+	    return "seleccionarClub";
+	}
+
+	@PostMapping("/setClubActivo")
+	public String setClubActivo(@RequestParam("clubId") Long clubId, HttpServletRequest request) {
+	    request.getSession().setAttribute("idClubSession", clubId);
+	    return "redirect:/consulta";
 	}
 
 }

@@ -7,5 +7,5 @@ import com.app.entity.Club;
 public interface IClubDao extends CrudRepository<Club, Long> {
 
 	public boolean existsByCodigo(String codigo);
-	
+
 }

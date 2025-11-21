@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.app.dao.IUsuarioDao;
+import com.app.entity.Club;
 import com.app.entity.Usuario;
 
 @Service
@@ -42,7 +43,15 @@ public class UsuarioServiceImpl implements IUsuarioService {
 	@Override
 	@Transactional(readOnly = true)
 	public Usuario findByEmail(String email) {
-		return usuarioDao.findByEmail(email);
+		List<Usuario> usuarios = usuarioDao.findByEmail(email);
+	    if (usuarios == null || usuarios.isEmpty()) {
+	        return null;
+	    }
+
+	    return usuarios.stream()
+	            .filter(u -> Boolean.TRUE.equals(u.getEnabled()))
+	            .findFirst()
+	            .orElse(usuarios.get(0));
 	}
 
 	@Override
@@ -55,4 +64,13 @@ public class UsuarioServiceImpl implements IUsuarioService {
 		return usuarioDao.findUsuarioByIdClub(idClubSession,role);
 	}
 
+	@Override
+	public List<Long> findClubIdsByUsuario(String email) {
+		return usuarioDao.findClubIdsByUsuario(email);
+	}
+
+	@Override
+	public List<Club> findClubesByUsuario(String email) {
+		return usuarioDao.findClubesByUsuario(email);
+	}
 }
