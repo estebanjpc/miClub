@@ -138,7 +138,7 @@ public class LoginController {
 		return "redirect:/login";
 	}
 
-	@RequestMapping(value = { "/actualizarPass" })
+	@GetMapping({ "/actualizarPass" })
 	public String actualizar(Model model, RedirectAttributes flash, Authentication authentication,
 			HttpServletRequest request) {
 

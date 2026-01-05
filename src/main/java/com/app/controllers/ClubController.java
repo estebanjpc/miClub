@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.bind.support.SessionStatus;
@@ -62,7 +61,7 @@ public class ClubController {
 	@Autowired
 	private ICategoriaService categoriaService;
 
-	@RequestMapping(value = { "/listadoUsuarios" })
+	@GetMapping({ "/listadoUsuarios" })
 	public String listadoUsuariosEmpresa(Model model, RedirectAttributes flash, Authentication authentication,
 			HttpServletRequest request) {
 
@@ -73,7 +72,7 @@ public class ClubController {
 		return "listadoUsuarios";
 	}
 
-	@RequestMapping(value = { "/crearUsuario" })
+	@GetMapping({ "/crearUsuario" })
 	public String crearUsuario(Map<String, Object> model, RedirectAttributes flash, Authentication authentication,
 			HttpServletRequest request) {
 
@@ -172,8 +171,8 @@ public class ClubController {
 	    return "redirect:/listadoUsuarios";
 	}
 	
-	@RequestMapping(value = { "/editarUsuario/{id}" })
-	public String editarUsuario(@PathVariable(value = "id") Long id,
+	@GetMapping({ "/editarUsuario/{id}" })
+	public String editarUsuario(@PathVariable Long id,
 			Map<String, Object> model,
 			RedirectAttributes flash, 
 			Authentication authentication, 
@@ -212,7 +211,7 @@ public class ClubController {
 	    return new ResponseEntity<>(club.getLogo(), headers, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value = { "/perfilClub" })
+	@GetMapping({ "/perfilClub" })
 	public String miPerfil(Map<String, Object> model, RedirectAttributes flash, Authentication authentication, HttpServletRequest request) {
 		Usuario usuario = (Usuario) request.getSession().getAttribute("usuarioLogin");
 		model.put("titulo", "Mantenedor Club");

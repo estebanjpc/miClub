@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout/layout :: head}" />
+
+<body class="d-flex flex-column min-vh-100">
+	<header th:replace="~{layout/layout :: header}"></header>
+
+	<main class="flex-grow-1">
+		<div class="container py-4">
+
+			<!-- Título -->
+			<div class="row mb-4">
+				<div class="col text-center">
+					<h3 class="fw-bold text-primary border-bottom pb-2" th:text="${titulo}">Gestión de Pagos</h3>
+				</div>
+			</div>
+
+
+			<div class="row mb-4 text-center">
+
+				<div class="col-md-3">
+					<div class="card shadow-sm border-0">
+						<div class="card-body">
+							<h6>Total Deportistas</h6>
+							<h3 th:text="${dashboard.totalDeportistas}"></h3>
+						</div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="card shadow-sm border-0 bg-success text-white">
+						<div class="card-body">
+							<h6>Al día</h6>
+							<h3 th:text="${dashboard.alDia}"></h3>
+						</div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="card shadow-sm border-0 bg-danger text-white">
+						<div class="card-body">
+							<h6>Morosos</h6>
+							<h3 th:text="${dashboard.morosos}"></h3>
+						</div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="card shadow-sm border-0 bg-primary text-white">
+						<div class="card-body">
+							<h6>Recaudado mes</h6>
+							<h4>$ <span th:text="${dashboard.totalRecaudadoMes}"></span></h4>
+						</div>
+					</div>
+				</div>
+
+			</div>
+
+
+
+			<form id="filtrosForm" method="get" class="row g-2 mb-3">
+
+				<div class="col-md-3">
+					<select name="mes" class="form-select">
+						<option th:value="${null}">Mes</option>
+						<option th:each="m : ${meses}" th:value="${m.key}" th:text="${m.value}"
+							th:selected="${m.key == mesSeleccionado}">
+						</option>
+					</select>
+
+				</div>
+
+				<div class="col-md-3">
+					<select name="estado" class="form-select">
+						<option th:value="${null}">Estado</option>
+						<option th:each="e : ${T(com.app.enums.EstadoPago).values()}"
+						        th:value="${e.name()}"
+						        th:text="${e}"
+						        th:selected="${estadoSeleccionado != null and e.name() == estadoSeleccionado}">
+						</option>
+					</select>
+				</div>
+
+				<div class="col-md-4">
+					<select name="idDeportista" class="form-select">
+						<option th:value="${null}">Deportista</option>
+						<option th:each="d : ${deportistas}" th:value="${d.id}" th:text="${d.nombre + ' ' + d.apellido}"
+							th:selected="${deportistaSeleccionado != null and d.id == deportistaSeleccionado}">
+						</option>
+					</select>
+
+				</div>
+
+				<div class="col-md-2 d-grid gap-2">
+					<button class="btn btn-primary" type="submit">
+						Filtrar
+					</button>
+
+					<a th:href="@{/listadoPagos}" class="btn btn-outline-secondary">
+						Limpiar
+					</a>
+				</div>
+
+			</form>
+
+
+			<!-- Tabla -->
+			<div class="row justify-content-center">
+				<div class="col-lg-11">
+					<div class="card shadow-sm border-0">
+						<div class="card-body table-responsive">
+
+							<table class="table table-hover align-middle table-striped">
+								<thead class="bg-primary text-white">
+									<tr>
+										<th>#</th>
+										<th>Deportista</th>
+										<th>Mes</th>
+										<th>Año</th>
+										<th>Medio Pago</th>
+										<th>Estado</th>
+										<th>Fecha</th>
+										<th class="text-center">Acción</th>
+										<th class="text-center">Ver Orden</th>
+									</tr>
+								</thead>
+
+								<tbody>
+									<tr th:each="e, cont : ${estadoPagos}">
+										<td th:text="${cont.index + 1}"></td>
+
+										<td th:text="${e.nombreCompleto}"></td>
+
+										<td th:text="${meses[e.mes]}"></td>
+										<td th:text="${e.anio}"></td>
+
+										<td>
+											<span th:if="${e.medioPago != null}" class="badge bg-info"
+												th:text="${e.medioPago}">
+											</span>
+											<span th:if="${e.medioPago == null}">—</span>
+										</td>
+
+										<td>
+											<span class="badge" th:classappend="${e.colorEstado}" th:text="${e.estado}">
+											</span>
+										</td>
+
+										<td>
+											<span th:if="${e.fechaPago != null}"
+											      th:text="${#temporals.format(e.fechaPago, 'dd-MM-yyyy HH:mm')}">
+											</span>
+											<span th:if="${e.fechaPago == null}">—</span>
+										</td>
+
+										<!-- Acciones -->
+										<td class="text-center">
+
+											<form th:if="${e.estado.name() == 'PENDIENTE' 
+								                      and e.medioPago?.name() == 'EFECTIVO'}" th:action="@{/aprobar/{id}(id=${e.idPago})}"
+												method="post" class="d-inline">
+
+												<button class="btn btn-success btn-sm rounded-pill">
+													<i class="fas fa-check"></i>
+												</button>
+											</form>
+
+											<span th:if="${e.estado.name() == 'PAGADO'}">✔</span>
+										</td>
+
+										<!-- Orden Khipu -->
+										<td class="text-center">
+											<a th:if="${e.idOrdenPago != null}"
+												th:href="@{/orden/{id}(id=${e.idOrdenPago})}"
+												class="btn btn-outline-secondary btn-sm rounded-pill">
+												<i class="fas fa-receipt"></i>
+											</a>
+										</td>
+									</tr>
+								</tbody>
+
+
+							</table>
+
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</main>
+
+	<footer th:replace="~{layout/layout :: footer}"></footer>
+	<script th:src="@{/js/gestionPagos.js}"></script>
+</body>
+
+</html>

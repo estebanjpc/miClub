@@ -1,0 +1,24 @@
+.metodo-pago-card {
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: 0.18s;
+    border-radius: 12px;
+    user-select: none;
+}
+
+.metodo-pago-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 10px rgba(0,0,0,0.15);
+}
+
+/* Clase visual que aplicamos por JS */
+.metodo-pago-card.selected {
+    border-color: red !important;    /* !important para vencer overrides de Bootstrap */
+    background: #ffecec !important;
+}
+
+/* Añadimos foco visual para accesibilidad */
+.metodo-pago-card:focus {
+    outline: 3px solid rgba(13,110,253,0.15);
+    outline-offset: 4px;
+}

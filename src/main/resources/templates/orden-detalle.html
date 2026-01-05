@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout/layout :: head}" />
+
+<body class="d-flex flex-column min-vh-100">
+	<header th:replace="~{layout/layout :: header}"></header>
+
+	<main class="flex-grow-1">
+		<div class="container py-4">
+
+			<div class="row mb-3">
+				<div class="col">
+					<a th:href="@{/club/pagos}" class="btn btn-outline-secondary btn-sm rounded-pill">
+						<i class="fas fa-arrow-left"></i> Volver
+					</a>
+				</div>
+			</div>
+
+			<div class="card shadow-sm border-0">
+				<div class="card-body">
+
+					<h5 class="fw-bold mb-3">
+						Orden de Pago #<span th:text="${orden.id}"></span>
+					</h5>
+
+					<div class="row mb-3">
+						<div class="col-md-4">
+							<strong>Estado:</strong><br>
+							<span class="badge"
+								th:classappend="${orden.estado.name() == 'PAGADO' ? 'bg-success' : 'bg-warning'}"
+								th:text="${orden.estado}">
+							</span>
+						</div>
+
+						<div class="col-md-4">
+							<strong>Medio:</strong><br>
+							<span th:text="${orden.medioPago}"></span>
+						</div>
+
+						<div class="col-md-4">
+							<strong>Monto Total:</strong><br>
+							$ <span th:text="${orden.montoTotal}"></span>
+						</div>
+					</div>
+
+					<hr>
+
+					<h6>Pagos asociados</h6>
+
+					<table class="table table-sm align-middle">
+						<thead>
+							<tr>
+								<th>Deportista</th>
+								<th>Mes</th>
+								<th>Año</th>
+								<th>Estado</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="p : ${orden.pagos}">
+								<td th:text="${p.deportista.nombre + ' ' + p.deportista.apellido}"></td>
+								<td th:text="${p.nombreMes}"></td>
+								<td th:text="${p.anio}"></td>
+								<td>
+									<span class="badge" th:classappend="${p.colorEstado}" th:text="${p.estado}">
+									</span>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+
+					<div class="mt-3">
+						<a th:if="${orden.khipuUrl != null}" th:href="${orden.khipuUrl}" target="_blank"
+							class="btn btn-primary btn-sm rounded-pill">
+							<i class="fas fa-external-link-alt"></i> Ver en Khipu
+						</a>
+					</div>
+
+				</div>
+			</div>
+
+		</div>
+	</main>
+
+	<footer th:replace="~{layout/layout :: footer}"></footer>
+</body>
+
+</html>

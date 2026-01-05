@@ -1,28 +1,175 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
-<head th:replace="~{layout/layout :: head}" />
+<head>
+	<th:block th:replace="~{layout/layout :: head}"></th:block>
+	<link rel="stylesheet" type="text/css" th:href="@{/css/pago.css}" />
 </head>
 
 <body class="d-flex flex-column min-vh-100 bg-light">
+
+	<!-- Header -->
 	<header th:replace="~{layout/layout :: header}"></header>
 
+	<!-- Contenido -->
 	<main class="flex-grow-1">
 		<div class="container py-4">
 
-			<!-- Título -->
+			<!-- Título Pagos Pendientes -->
 			<div class="row mb-4">
 				<div class="col text-center">
-					<h3 th:text="${titulo}" class="fw-bold text-primary border-bottom pb-2"></h3>
+					<h3 class="fw-bold text-primary border-bottom pb-2">Pagos Pendientes</h3>
 				</div>
 			</div>
 
-			
+			<!-- Formulario Pago -->
+			<form th:action="@{/pagar}" method="post" id="formPago">
+
+				<div class="row justify-content-center">
+					<div class="col-lg-10">
+
+						<!-- TABLA PAGOS PENDIENTES -->
+						<div class="card shadow-sm border-0 mb-4">
+							<div class="card-body table-responsive">
+
+								<table class="table table-hover align-middle table-striped">
+									<thead class="bg-primary text-white">
+										<tr>
+											<th>#</th>
+											<th>Deportista</th>
+											<th>Mes</th>
+											<th>Año</th>
+											<th>Valor</th>
+										</tr>
+									</thead>
+
+									<tbody>
+										<tr th:each="m : ${meses}">
+											<td>
+												<input type="checkbox" name="seleccionados" th:value="${m.deportistaId + '-' + m.mes + '-' + m.anio}" class="chkMes form-check-input" th:data-valor="${m.valorCuota}">
+											</td>
+											<td th:text="${m.deportistaNombre}"></td>
+											<td th:text="${m.nombreMes}"></td>
+											<td th:text="${m.anio}"></td>
+											<td th:text="${#numbers.formatInteger(m.valorCuota, 0)}"></td>
+										</tr>
+									</tbody>
+								</table>
+
+							</div>
+						</div>
+
+						<!-- MÉTODO DE PAGO -->
+						<div class="card shadow-sm border-0 mb-4 p-3">
+
+							<h5 class="fw-bold mb-3">Selecciona el método de pago</h5>
+
+							<!-- input escondido -->
+							<input type="hidden" name="medioPago" id="medioPagoHidden" required>
+
+							<div class="row">
+
+								<!-- Khipu -->
+								<div class="col-md-6 mb-3">
+									<div class="card metodo-pago-card text-center p-3 hover-shadow" data-value="KHIPU">
+										<img src="https://s3.amazonaws.com/static.khipu.com/buttons/2024/200x75-white.png" alt="Khipu" class="img-fluid" style="max-height: 75px; width: auto;">
+										<h6 class="mt-2 fw-bold">Transferencia vía Khipu</h6>
+									</div>
+								</div>
+
+								<!-- Efectivo -->
+								<div class="col-md-6 mb-3">
+									<div class="card metodo-pago-card text-center p-3 hover-shadow"
+										data-value="EFECTIVO">
+										<img th:src="@{/images/efectivo.png}" alt="Efectivo" class="img-fluid" style="max-height: 75px; width: auto;">
+										<h6 class="mt-2 fw-bold">Pago en efectivo</h6>
+									</div>
+								</div>
+
+							</div>
+
+							<h5 class="mt-3 fw-bold">
+								Total a pagar:
+								<span class="text-success">$ <span id="totalPagar">0</span></span>
+							</h5>
+						</div>
+
+						<!-- Botón Pagar -->
+						<div class="text-end">
+							<button type="submit" class="btn btn-primary rounded-pill px-4 py-2 shadow-sm">
+								Pagar
+							</button>
+						</div>
+
+					</div>
+				</div>
+
+			</form>
+
+			<!-- Separador -->
+			<hr class="my-5">
+
+			<!-- Título Pagos Realizados -->
+			<div class="row mb-4">
+				<div class="col text-center">
+					<h3 class="fw-bold text-primary border-bottom pb-2">Pagos Realizados</h3>
+				</div>
+			</div>
+
+			<!-- TABLA PAGOS REALIZADOS -->
+			<div class="row justify-content-center">
+				<div class="col-lg-10">
+
+					<div class="card shadow-sm border-0 mb-5">
+						<div class="card-body table-responsive">
+
+							<table class="table table-hover align-middle table-striped">
+								<thead class="bg-success text-white">
+									<tr>
+										<th>#</th>
+										<th>Deportista</th>
+										<th>Mes</th>
+										<th>Año</th>
+										<th>Fecha</th>
+										<th>Medio Pago</th>
+										<th>Estado</th>
+										<th>Observación</th>
+									</tr>
+								</thead>
+
+								<tbody>
+									<tr th:each="p,cont : ${pagosRealizados}">
+										<td th:text="${cont.index + 1}"></td>
+										<td th:text="${p.deportista.nombre + ' ' + p.deportista.apellido}"></td>
+										<td th:text="${p.nombreMes}"></td>
+										<td th:text="${p.anio}"></td>
+										<td th:text="${#temporals.format(p.fecha, 'dd/MM/yyyy HH:mm')}"></td>
+										<td th:text="${p.medioPago}"></td>
+
+										<!-- Estado -->
+										<td>
+											<span class="badge" th:classappend="${p.colorEstado}" th:text="${p.estado}"></span>
+										</td>
+
+										<td th:text="${p.observacion != null ? p.observacion : '-'}"></td>
+									</tr>
+								</tbody>
+
+							</table>
+
+						</div>
+					</div>
+
+				</div>
+			</div>
+
 		</div>
 	</main>
 
+	<!-- Footer -->
 	<footer th:replace="~{layout/layout :: footer}"></footer>
 
+	<script th:src="@{/js/pago.js}"></script>
 </body>
 
 </html>

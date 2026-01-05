@@ -122,6 +122,11 @@
 							<i class="fas fa-search"></i> Listado Usuarios
 						</a>
 					</li>
+					<li class="nav-item">
+						<a class="nav-link" sec:authorize="hasAnyRole('ROLE_CLUB')" th:href="@{/listadoPagos}">
+							<i class="fas fa-search"></i> Listado Pagos
+						</a>
+					</li>
 				</ul>
 
 				<!-- Dropdown usuario -->
@@ -215,7 +220,6 @@
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.8/dist/sweetalert2.all.min.js"></script>
 		<script th:src="@{/js/general.js}"></script>
-		<script th:src="@{/js/function/sorttable.js}"></script>
 
 		<!-- SweetAlert mensajes -->
 		<input type="hidden" id="msjLayout" th:value="${msjLayout}">

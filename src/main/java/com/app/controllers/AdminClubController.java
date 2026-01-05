@@ -13,12 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -49,7 +44,7 @@ public class AdminClubController {
 	@Autowired
 	private BCryptPasswordEncoder passEncoder;
 
-	@RequestMapping(value = { "/listadoClub" })
+	@GetMapping({ "/listadoClub" })
 	public String listadoClub(Model model) {
 		List<Usuario> listadoClub = usuarioService.findUsuarioByAuthority("ROLE_CLUB");
 		model.addAttribute("titulo", "Mantenedor Club");
@@ -57,7 +52,7 @@ public class AdminClubController {
 		return "listadoClub";
 	}
 
-	@RequestMapping(value = { "/crearClub" })
+	@GetMapping({ "/crearClub" })
 	public String crearClub(Map<String, Object> model) {
 		Usuario usuario = new Usuario();
 		usuario.setRoles(Arrays.asList(new Role("Club", "ROLE_CLUB")));
@@ -69,8 +64,8 @@ public class AdminClubController {
 
 	@PostMapping("/guardarClub")
 	public String guardarUsuario(@Valid Usuario usuario, BindingResult result,
-			@RequestParam(value = "fileLogo", required = false) MultipartFile fileLogo,
-			@RequestParam(value = "eliminarLogo", required = false) String eliminarLogo,
+			@RequestParam(required = false) MultipartFile fileLogo,
+			@RequestParam(required = false) String eliminarLogo,
 			Map<String, Object> model, RedirectAttributes flash, SessionStatus status) {
 
 		model.put("titulo", "Mantenedor Club");
@@ -148,8 +143,8 @@ public class AdminClubController {
 		return "redirect:/listadoClub";
 	}
 
-	@RequestMapping(value = { "/editarClub/{id}" })
-	public String editarClub(@PathVariable(value = "id") Long id, Map<String, Object> model, RedirectAttributes flash) {
+	@GetMapping({ "/editarClub/{id}" })
+	public String editarClub(@PathVariable Long id, Map<String, Object> model, RedirectAttributes flash) {
 		Usuario usuario = usuarioService.findById(id);
 		if (usuario == null) {
 			model.put("msjLayout", "error;Club no existe;Clubno existe en BD");

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout/layout :: head}"></head>
+
+<body>
+	<header th:replace="~{layout/layout :: header}"></header>
+	<main class="container py-5">
+		<div class="card p-4">
+			<h3>Retorno de pago Khipu</h3>
+			<p th:if="${estado == 'OK'}">
+				El pago fue realizado correctamente.
+			</p>
+
+			<p th:if="${estado == 'CANCELADO'}">
+				El pago fue cancelado por el usuario.
+			</p>
+
+			<p th:if="${estado == 'PROCESANDO'}">
+				Su orden <strong th:text="${ordenId}"></strong> está siendo procesada.
+			</p>
+
+			<p>
+				Si el pago fue exitoso, en unos segundos verá el pago marcado como
+				<strong>Pagado</strong> en "Pagos Realizados".
+			</p>
+			<a th:href="@{/consulta}" class="btn btn-primary">Volver a Mis Pagos</a>
+		</div>
+	</main>
+	<footer th:replace="~{layout/layout :: footer}"></footer>
+</body>
+
+</html>
