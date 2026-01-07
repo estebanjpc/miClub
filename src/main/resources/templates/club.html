@@ -53,15 +53,17 @@
 									</div>
 									<!-- Estado -->
 									<div class="col-md-6">
-										<label class="form-label fw-semibold">
-											<i class="fas fa-toggle-on text-primary"></i> Estado
-										</label>
-										<select class="form-select" th:field="*{estado}" th:errorclass="'is-invalid'">
-											<option th:each="estado: ${estados.entrySet()}" th:text="${estado.value}"
-												th:value="${estado.key}"></option>
+										<label class="form-label fw-semibold"><i class="fas fa-toggle-on text-primary"></i> Estado del Club</label>
+										<select class="form-select" th:field="*{club.estado}"
+											th:errorclass="'is-invalid'">
+											<option value="">Seleccione</option>
+											<option th:each="estado : ${estados.entrySet()}" th:value="${estado.key}"
+												th:text="${estado.value}">
+											</option>
 										</select>
-										<div class="invalid-feedback" th:if="${#fields.hasErrors('estado')}"
-											th:errors="*{estado}"></div>
+										<div class="invalid-feedback" th:if="${#fields.hasErrors('club.estado')}"
+											th:errors="*{club.estado}">
+										</div>
 									</div>
 
 									<div class="col-md-6">
@@ -82,8 +84,9 @@
 										</label>
 
 										<!-- Input de archivo -->
-										<input type="file" name="fileLogo" accept="image/*" class="form-control form-control-sm mb-4" onchange="previewImage(event)">
-										
+										<input type="file" name="fileLogo" accept="image/*"
+											class="form-control form-control-sm mb-4" onchange="previewImage(event)">
+
 										<div class="mb-2 position-relative d-inline-block">
 											<!-- Logo actual -->
 											<img th:if="${usuario.club.logo != null}" id="currentLogo"

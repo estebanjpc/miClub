@@ -9,7 +9,7 @@ import com.app.dao.IClubDao;
 import com.app.entity.Club;
 
 @Service
-public class ClubServiceImplm implements IClubService {
+public class ClubServiceImpl implements IClubService {
 	
 	@Autowired
 	private IClubDao clubDao;

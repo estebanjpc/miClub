@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+import com.app.auth.LoginFailureHandler;
 import com.app.auth.LoginSuccessHandler;
 import com.app.service.JpaUserDetailsService;
 
@@ -25,6 +26,10 @@ public class SpringSecurityConfig {
 
     @Autowired
     private JpaUserDetailsService userDetailsService;
+    
+    @Autowired
+    private LoginFailureHandler loginFailureHandler;
+
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
@@ -41,17 +46,14 @@ public class SpringSecurityConfig {
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
-                .loginPage("/login")
-                .loginProcessingUrl("/login")
-                .usernameParameter("email")
-                .passwordParameter("password")
-                .successHandler(successHandler)
-                .failureHandler((request, response, exception) -> {
-                    request.getSession().setAttribute("loginError", exception.getMessage());
-                    response.sendRedirect("/login?error");
-                })
-                .permitAll()
-            )
+            	    .loginPage("/login")
+            	    .loginProcessingUrl("/login")
+            	    .usernameParameter("email")
+            	    .passwordParameter("password")
+            	    .successHandler(successHandler)
+            	    .failureHandler(loginFailureHandler)
+            	    .permitAll()
+            	)
             .logout(logout -> logout.permitAll())
             .exceptionHandling(ex -> ex.accessDeniedPage("/error_403"));
 

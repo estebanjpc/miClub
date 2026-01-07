@@ -17,6 +17,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 
 @Entity
 @Table(name = "club")
@@ -41,8 +42,9 @@ public class Club implements Serializable {
 	@Column(nullable = false)
 	private String tipo;
 
+	@NotEmpty
 	@Column(nullable = false)
-	private String estado;
+	private String estado; // 1 Activo | 2 Desactivado
 
 	@Column(name = "fecha_alta")
 	private LocalDateTime fechaAlta;

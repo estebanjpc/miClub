@@ -120,17 +120,17 @@ public class AdminClubController {
 			// EXISTENTE: conservar estado original
 			Usuario existente = usuarioService.findById(usuario.getId());
 			if (existente != null) {
-				usuario.setEstado(existente.getEstado());
+//				usuario.setEstado(existente.getEstado());
 				usuario.setPassword(existente.getPassword());
 				usuario.getClub().setCodigo(existente.getClub().getCodigo());
 			}
 		}
 
-		usuario.setEnabled("1".equals(usuario.getEstado()));
-		usuario.getClub().setEstado(usuario.getEstado());
+		usuario.setEnabled("1".equals(usuario.getClub().getEstado()));
+		usuario.setEstado(usuario.getClub().getEstado());
 		usuario.getClub().setNombre(usuario.getNombre());
 
-//		clubService.save(usuario.getClub());
+		clubService.save(usuario.getClub());
 		usuarioService.save(usuario);
 		status.setComplete();
 		flash.addFlashAttribute("msjLayout", "success;" + msje + "!;Club " + msje);
@@ -161,7 +161,6 @@ public class AdminClubController {
 	@ModelAttribute("estados")
 	public Map<String, String> estados() {
 		Map<String, String> estados = new HashMap<String, String>();
-		estados.put("", "Seleccione");
 		estados.put("1", "Activo");
 		estados.put("2", "Desactivo");
 		return estados;

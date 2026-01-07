@@ -1,4 +1,3 @@
-
 document.querySelectorAll(".nav-link").forEach((link) => {
 	link.classList.remove('active');
     if (link.href === window.location.href) {

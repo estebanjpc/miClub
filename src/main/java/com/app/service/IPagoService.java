@@ -9,9 +9,9 @@ import com.app.enums.EstadoPago;
 
 public interface IPagoService {
 	
-	public List<MesPagoDTO> obtenerMesesParaPagar(Long usuarioId);
+	public List<MesPagoDTO> obtenerMesesParaPagar(Long usuarioId, Long idClub);
 //	public void guardarPago(Long deportistaId, int mes, int anio, MedioPago medioPago);
-	public List<Pago> obtenerPagosRealizados(Long usuarioId);
+	public List<Pago> obtenerPagosRealizados(Long usuarioId, Long idClub);
 	public void registrarPagoEfectivo(List<String> seleccionados);
 	public OrdenPago generarOrdenPagoKhipu(List<String> seleccionados, Long usuarioId);
     void confirmarPagoKhipu(String paymentId, String status);

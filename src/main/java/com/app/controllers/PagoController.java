@@ -21,12 +21,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.app.dto.DashboardPagoDTO;
 import com.app.dto.EstadoPagoDeportistaDTO;
 import com.app.dto.MesPagoDTO;
+import com.app.entity.Club;
 import com.app.entity.Deportista;
 import com.app.entity.OrdenPago;
 import com.app.entity.Pago;
 import com.app.entity.Usuario;
 import com.app.enums.EstadoPago;
 import com.app.enums.MedioPago;
+import com.app.service.IClubService;
 import com.app.service.IDashboardPagoService;
 import com.app.service.IDeportistaService;
 import com.app.service.IEstadoPagoClubService;
@@ -50,25 +52,34 @@ public class PagoController {
 
 	@Autowired
 	private IOrdenPagoService ordenPagoService;
-	
+
 	@Autowired
 	private IDeportistaService deportistaService;
-	
+
 	@Autowired
 	private IEstadoPagoClubService estadoPagoClubService;
 	
+	@Autowired
+	private IClubService clubService;
 
 	@GetMapping({ "/consulta" })
 	public String consulta(Model model, RedirectAttributes flash, Authentication authentication,
 			HttpServletRequest request) {
 
 		model.addAttribute("titulo", "Consulta");
+		
+		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
+		
+		if (idClubSession == null) {
+	        flash.addFlashAttribute("msjLayout", "error;Seleccione Club;No hay club seleccionado");
+	        return "redirect:/login";
+	    }
 
 		String email = authentication.getName();
 		Usuario usuario = usuarioService.findByEmail(email);
 
-		List<MesPagoDTO> meses = pagoService.obtenerMesesParaPagar(usuario.getId());
-		List<Pago> pagosRealizados = pagoService.obtenerPagosRealizados(usuario.getId());
+		List<MesPagoDTO> meses = pagoService.obtenerMesesParaPagar(usuario.getId(),idClubSession);
+		List<Pago> pagosRealizados = pagoService.obtenerPagosRealizados(usuario.getId(),idClubSession);
 
 		model.addAttribute("meses", meses);
 		model.addAttribute("pagosRealizados", pagosRealizados);
@@ -102,13 +113,18 @@ public class PagoController {
 //		return "listadoPagos";
 //	}
 
-	@SuppressWarnings("deprecation")
 	@GetMapping("/listadoPagos")
 	public String listarPagosClub(@RequestParam(required = false) Integer mes,
 			@RequestParam(required = false) EstadoPago estado, @RequestParam(required = false) Long idDeportista,
 			Model model, HttpServletRequest request) {
 
 		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
+
+		Club club = clubService.findById(idClubSession);
+
+		if (!"1".equals(club.getEstado())) {
+			return "redirect:/login?clubDeshabilitado";
+		}
 
 		// Mes por defecto: mes actual
 		if (mes == null) {

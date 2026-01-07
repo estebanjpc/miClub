@@ -3,8 +3,6 @@ package com.app.service;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.GrantedAuthority;
@@ -20,53 +18,47 @@ import com.app.dao.IUsuarioDao;
 import com.app.entity.Role;
 import com.app.entity.Usuario;
 
-
 @Service("jpaUserDetailsService")
-public class JpaUserDetailsService implements UserDetailsService{
+public class JpaUserDetailsService implements UserDetailsService {
 
-	
 	@Autowired
 	private IUsuarioDao usuarioDao;
-	
-	private Logger logger = LoggerFactory.getLogger(JpaUserDetailsService.class);
-	
-	
+
+
 	@Override
-	@Transactional(readOnly=true)
+	@Transactional(readOnly = true)
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
-		List<Usuario> usuarios = usuarioDao.findByEmail(email);
+	    List<Usuario> usuarios = usuarioDao.findByEmail(email);
 
-		if (usuarios == null || usuarios.isEmpty()) {
-		    throw new BadCredentialsException("email: "+email+" no existe en bd");
-		}
+	    if (usuarios == null || usuarios.isEmpty()) {
+	        throw new BadCredentialsException("EMAIL_NO_EXISTE");
+	    }
 
-		// Escoger el usuario habilitado
-		Usuario usuario = usuarios.stream()
-		        .filter(u -> Boolean.TRUE.equals(u.getEnabled()))
-		        .findFirst()
-		        .orElse(usuarios.get(0));
-		
-		if(usuario == null) {
-//			logger.error("ERROR LOGIN :::::  email: "+email+" no existe en bd");
-//			throw new UsernameNotFoundException("email: "+email+" no existe en bd");
-			throw new BadCredentialsException("email: "+email+" no existe en bd");
-		}
-		
-		List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-		
-		for (Role role: usuario.getRoles()) {
-			logger.info("Role: "+role.getAuthority());
-			authorities.add(new SimpleGrantedAuthority(role.getAuthority()));
-		}
-		
-		if(authorities.isEmpty()) {
-			logger.error("ERROR LOGIN :::::  email: "+email+" no tiene roles asignados!");
-			throw new UsernameNotFoundException("email: "+email+" no tiene roles asignados!");
-		}
-		
-		User user = new User(usuario.getEmail(), usuario.getPassword(), usuario.getEnabled(), true, true, true, authorities);
-		return user;
+	    Usuario usuario = usuarios.stream()
+	            .filter(u -> Boolean.TRUE.equals(u.getEnabled()))
+	            .findFirst()
+	            .orElseThrow(() -> new BadCredentialsException("USUARIO_DESHABILITADO"));
+
+	    List<GrantedAuthority> authorities = new ArrayList<>();
+
+	    for (Role role : usuario.getRoles()) {
+	        authorities.add(new SimpleGrantedAuthority(role.getAuthority()));
+	    }
+
+	    if (authorities.isEmpty()) {
+	        throw new UsernameNotFoundException("SIN_ROLES");
+	    }
+
+	    return new User(
+	            usuario.getEmail(),
+	            usuario.getPassword(),
+	            usuario.getEnabled(),
+	            true,
+	            true,
+	            true,
+	            authorities
+	    );
 	}
-	
+
 }

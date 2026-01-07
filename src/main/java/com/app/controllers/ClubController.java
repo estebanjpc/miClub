@@ -66,6 +66,13 @@ public class ClubController {
 			HttpServletRequest request) {
 
 		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
+		
+		Club club = clubService.findById(idClubSession);
+
+		if (!"1".equals(club.getEstado())) {
+		    return "redirect:/login?clubDeshabilitado";
+		}
+		
 		List<Usuario> listadoUsuarios = usuarioService.findUsuarioByIdClub(idClubSession,"ROLE_USER");
 		model.addAttribute("titulo", "Listado Usuarios");
 		model.addAttribute("listadoUsuarios", listadoUsuarios);

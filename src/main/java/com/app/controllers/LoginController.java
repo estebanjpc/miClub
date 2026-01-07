@@ -12,13 +12,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.app.entity.Club;
 import com.app.entity.Usuario;
+import com.app.service.IClubService;
 import com.app.service.IEmailService;
 import com.app.service.IUsuarioService;
 import com.app.util.Util;
@@ -30,82 +30,37 @@ public class LoginController {
 
 	@Autowired
 	private IUsuarioService usuarioService;
-	
+
 	@Autowired
 	private BCryptPasswordEncoder passEncoder;
 
 	@Autowired
 	private IEmailService emailService;
+	
+	@Autowired
+	private IClubService clubService;
 
-//	@GetMapping({ "/login", "/" })
-//	public String login(@RequestParam(value = "error", required = false) String error,
-//			@RequestParam(value = "logout", required = false) String logout, Model model, Principal principal,
-//			RedirectAttributes flash, HttpServletRequest request) {
-//
-//		model.addAttribute("titulo", "Login");
-//
-//		if (principal != null) {
-//			Usuario usuario = usuarioService.findByEmail(principal.getName());
-//			request.getSession().setAttribute("usuarioLogin", usuario);
-//
-//			if (usuario.getEstado().equalsIgnoreCase("0"))
-//				return "redirect:/actualizarPass";
-//
-//			boolean esUser = usuario.getRoles().stream().anyMatch(r -> "ROLE_USER".equals(r.getAuthority()));
-//			boolean esAdmin = usuario.getRoles().stream().anyMatch(r -> "ROLE_ADMIN".equals(r.getAuthority()));
-//			boolean esClub = usuario.getRoles().stream().anyMatch(r -> "ROLE_CLUB".equals(r.getAuthority()));
-//
-//			if (esUser) {
-//				return "redirect:/consulta";
-//			} else if (esAdmin) {
-//				return "redirect:/listadoClub";
-//			} else if (esClub) {
-//				request.getSession().setAttribute("idClubSession", usuario.getClub().getId());
-//				return "redirect:/listadoUsuarios";
-//			}
-//		}
-//
-//		String loginError = (String) request.getSession().getAttribute("loginError");
-//		if (loginError != null) {
-//			model.addAttribute("msjLogin",
-//					"error;Error en el login; nombre de usuario o contraseña incorrecta, por favor vuelva a intentarlo!");
-//			request.getSession().removeAttribute("loginError"); // limpiar
-//		}
-//
-//		if (error != null) {
-//			model.addAttribute("msjLogin",
-//					"error;Error en el login; nombre de usuario o contraseña incorrecta, por favor vuelva a intentarlo!");
-//		}
-//
-//		if (logout != null) {
-//			model.addAttribute("success", "Ha cerrado session con exito");
-//		}
-//
-//		return "login";
-//	}
 
 	@GetMapping({ "/login", "/" })
-	public String login(
-	        @RequestParam(value = "error", required = false) String error,
-	        @RequestParam(value = "logout", required = false) String logout,
-	        Model model,
-	        HttpServletRequest request) {
+	public String login(@RequestParam(required = false) String error, @RequestParam(required = false) String logout,
+			Model model, HttpServletRequest request) {
 
-	    model.addAttribute("titulo", "Login");
+		model.addAttribute("titulo", "Login");
 
-	    if (error != null) {
-	        model.addAttribute("msjLogin",
-	                "error;Error en el login; nombre de usuario o contraseña incorrecta, por favor vuelva a intentarlo!");
-	    }
+		String msj = (String) request.getSession().getAttribute("msjLogin");
+		if (msj != null) {
+			model.addAttribute("msjLogin", msj);
+			request.getSession().removeAttribute("msjLogin");
+		}
 
-	    if (logout != null) {
-	        model.addAttribute("success", "Ha cerrado sesión con éxito");
-	    }
+		if (logout != null) {
+			model.addAttribute("success", "Ha cerrado sesión con éxito");
+		}
 
-	    return "login";
+		return "login";
 	}
-	
-	@RequestMapping(value = { "/recuperacion" })
+
+	@GetMapping({ "/recuperacion" })
 	public String recuperacion(Model model, RedirectAttributes flash, Authentication authentication,
 			HttpServletRequest request) {
 
@@ -115,8 +70,8 @@ public class LoginController {
 	}
 
 	@PostMapping("/recuperarClave")
-	public String recuperarClave(@RequestParam("email") String email, Map<String, Object> model,
-			RedirectAttributes flash, SessionStatus status) {
+	public String recuperarClave(@RequestParam String email, Map<String, Object> model, RedirectAttributes flash,
+			SessionStatus status) {
 
 		model.put("titulo", "Recuperar Clave");
 		Usuario usuario = usuarioService.findByEmail(email);
@@ -148,9 +103,8 @@ public class LoginController {
 	}
 
 	@PostMapping("/actualizarPass")
-	public String actualizarPass(@RequestParam("password1") String password1,
-			@RequestParam("password2") String password2, Map<String, Object> model, RedirectAttributes flash,
-			SessionStatus status, Principal principal) {
+	public String actualizarPass(@RequestParam String password1, @RequestParam String password2,
+			Map<String, Object> model, RedirectAttributes flash, SessionStatus status, Principal principal) {
 
 		model.put("titulo", "Actualizar Clave");
 
@@ -169,18 +123,27 @@ public class LoginController {
 
 		return "redirect:/login";
 	}
-	
+
 	@GetMapping("/seleccionarClub")
 	public String seleccionarClub(Model model, Principal principal) {
-	    Usuario usuario = usuarioService.findByEmail(principal.getName());
-	    List<Club> clubes = usuarioService.findClubesByUsuario(principal.getName());
-	    model.addAttribute("clubes", clubes);
-	    model.addAttribute("usuario", usuario);
-	    return "seleccionarClub";
+		Usuario usuario = usuarioService.findByEmail(principal.getName());
+		List<Club> clubes = usuarioService.findClubesByUsuario(principal.getName());
+		model.addAttribute("clubes", clubes);
+		model.addAttribute("usuario", usuario);
+		return "seleccionarClub";
 	}
 
 	@PostMapping("/setClubActivo")
-	public String setClubActivo(@RequestParam("clubId") Long clubId, HttpServletRequest request) {
+	public String setClubActivo(@RequestParam Long clubId, RedirectAttributes flash, HttpServletRequest request) {
+		
+		Club club = clubService.findById(clubId);
+		
+		
+		if (!"1".equals(club.getEstado())) {
+	        flash.addFlashAttribute("msjLogin","error;Club deshabilitado;El club seleccionado se encuentra deshabilitado.");
+	        return "redirect:/seleccionarClub";
+	    }
+
 	    request.getSession().setAttribute("idClubSession", clubId);
 	    return "redirect:/consulta";
 	}

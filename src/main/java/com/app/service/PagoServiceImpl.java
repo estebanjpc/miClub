@@ -36,9 +36,9 @@ public class PagoServiceImpl implements IPagoService {
 	private IKhipuService khipuService;
 
 	@Override
-	public List<MesPagoDTO> obtenerMesesParaPagar(Long usuarioId) {
+	public List<MesPagoDTO> obtenerMesesParaPagar(Long usuarioId,Long idClub) {
 
-		List<Deportista> deportistas = deportistaDao.findByUsuarioId(usuarioId);
+		List<Deportista> deportistas = deportistaDao.findByUsuarioAndClub(usuarioId,idClub);
 		List<MesPagoDTO> lista = new ArrayList<>();
 
 		LocalDate hoy = LocalDate.now();
@@ -66,9 +66,9 @@ public class PagoServiceImpl implements IPagoService {
 
 	@Override
 	@Transactional
-	public List<Pago> obtenerPagosRealizados(Long usuarioId) {
+	public List<Pago> obtenerPagosRealizados(Long usuarioId,Long idClub) {
 
-		List<Deportista> deportistas = deportistaDao.findByUsuarioId(usuarioId);
+		List<Deportista> deportistas = deportistaDao.findByUsuarioAndClub(usuarioId,idClub);
 		List<Pago> lista = new ArrayList<>();
 
 		for (Deportista d : deportistas) {
