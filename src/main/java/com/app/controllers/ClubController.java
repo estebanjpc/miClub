@@ -62,7 +62,7 @@ public class ClubController {
 	private ICategoriaService categoriaService;
 
 	@GetMapping({ "/listadoUsuarios" })
-	public String listadoUsuariosEmpresa(Model model, RedirectAttributes flash, Authentication authentication,
+	public String listadoUsuarios(Model model, RedirectAttributes flash, Authentication authentication,
 			HttpServletRequest request) {
 
 		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");

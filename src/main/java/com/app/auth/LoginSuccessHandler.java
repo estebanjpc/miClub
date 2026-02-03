@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import com.app.entity.Usuario;
 import com.app.service.IUsuarioService;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -23,61 +22,54 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-			Authentication authentication) throws IOException, ServletException {
+			Authentication authentication) throws IOException {
 
 		String email = authentication.getName();
-		Usuario usuario = usuarioService.findByEmail(email);
 
-		// Guardar usuario completo en sesión
+		List<Usuario> usuarios = usuarioService.findAllByEmail(email);
+
+		List<Usuario> activos = usuarios.stream().filter(u -> Boolean.TRUE.equals(u.getEnabled())).filter(u -> {
+			boolean esAdmin = u.getRoles().stream().anyMatch(r -> "ROLE_ADMIN".equals(r.getAuthority()));
+
+			if (esAdmin) {
+				return true;
+			}
+
+			return u.getClub() != null && "1".equals(u.getClub().getEstado());
+		}).toList();
+
+		if (activos.isEmpty()) {
+			response.sendRedirect("/sinClub");
+			return;
+		}
+
+		if (activos.size() == 1) {
+			setContexto(request, activos.get(0));
+			response.sendRedirect(determinarRedirect(activos.get(0)));
+			return;
+		}
+
+		// varios clubes → SOLO los suyos
+		request.getSession().setAttribute("usuariosClub", activos);
+		response.sendRedirect("/seleccionarClub");
+	}
+
+	private void setContexto(HttpServletRequest request, Usuario usuario) {
 		request.getSession().setAttribute("usuarioLogin", usuario);
+		request.getSession().setAttribute("rolesActivos", usuario.getRoles());
+		if (usuario.getClub() != null) request.getSession().setAttribute("idClubSession", usuario.getClub().getId());
+//		else request.getSession().removeAttribute("idClubSession");
+		
+	}
 
-		// Si está bloqueado o debe cambiar pass
-		if ("0".equalsIgnoreCase(usuario.getEstado())) {
-			response.sendRedirect("/actualizarPass");
-			return;
-		}
+	private String determinarRedirect(Usuario usuario) {
 
-		// Roles
-		boolean esUser = usuario.getRoles().stream().anyMatch(r -> "ROLE_USER".equals(r.getAuthority()));
-		boolean esAdmin = usuario.getRoles().stream().anyMatch(r -> "ROLE_ADMIN".equals(r.getAuthority()));
-		boolean esClub = usuario.getRoles().stream().anyMatch(r -> "ROLE_CLUB".equals(r.getAuthority()));
+		if (usuario.getRoles().stream().anyMatch(r -> "ROLE_ADMIN".equals(r.getAuthority())))
+			return "/listadoClub";
 
-		// Administrador
-		if (esAdmin) {
-			response.sendRedirect("/listadoClub");
-			return;
-		}
+		if (usuario.getRoles().stream().anyMatch(r -> "ROLE_CLUB".equals(r.getAuthority())))
+			return "/listadoUsuarios";
 
-		if (esClub) {
-			request.getSession().setAttribute("idClubSession", usuario.getClub().getId());
-			response.sendRedirect("/listadoUsuarios");
-			return;
-		}
-
-		if (esUser) {
-			// Si es CLUB → validar multi-club
-			List<Long> clubIds = usuarioService.findClubIdsByUsuario(email);
-
-			if (clubIds.size() == 1) {
-				request.getSession().setAttribute("idClubSession", clubIds.get(0));
-				response.sendRedirect("/consulta");
-				return;
-			}
-
-			if (clubIds.size() > 1) {
-				// usuario debe elegir
-				response.sendRedirect("/seleccionarClub");
-				return;
-			}
-
-			if (clubIds.size() == 0) {
-				// usuario debe elegir
-				response.sendRedirect("/sinClub");
-				return;
-			}
-
-		}
-
-		super.onAuthenticationSuccess(request, response, authentication);
+		return "/consulta";
 	}
 }

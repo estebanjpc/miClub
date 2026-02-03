@@ -68,15 +68,13 @@ public class PagoController {
 
 		model.addAttribute("titulo", "Consulta");
 		
+		Usuario usuario = (Usuario)request.getSession().getAttribute("usuarioLogin");
 		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
 		
 		if (idClubSession == null) {
 	        flash.addFlashAttribute("msjLayout", "error;Seleccione Club;No hay club seleccionado");
 	        return "redirect:/login";
 	    }
-
-		String email = authentication.getName();
-		Usuario usuario = usuarioService.findByEmail(email);
 
 		List<MesPagoDTO> meses = pagoService.obtenerMesesParaPagar(usuario.getId(),idClubSession);
 		List<Pago> pagosRealizados = pagoService.obtenerPagosRealizados(usuario.getId(),idClubSession);

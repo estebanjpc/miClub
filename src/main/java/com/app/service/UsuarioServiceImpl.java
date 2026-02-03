@@ -74,4 +74,9 @@ public class UsuarioServiceImpl implements IUsuarioService {
 //		return usuarioDao.findClubesByUsuario(email);
 		return usuarioDao.findClubesHabilitadosByUsuario(email);
 	}
+
+	@Override
+	public List<Usuario> findAllByEmail(String email) {
+		return usuarioDao.findByEmail(email);
+	}
 }

@@ -17,6 +17,7 @@ public interface IUsuarioService {
 	public List<Usuario> findUsuarioByIdClub(Long idClubSession, String role);
 	public List<Long> findClubIdsByUsuario(String email);
 	public List<Club> findClubesByUsuario(String email);
+	public List<Usuario> findAllByEmail(String email);
 
 	
 }

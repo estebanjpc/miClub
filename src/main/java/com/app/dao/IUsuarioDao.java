@@ -28,6 +28,6 @@ public interface IUsuarioDao extends CrudRepository<Usuario, Long>{
 	@Query("SELECT u.club.id FROM Usuario u WHERE u.email = ?1 AND u.club.estado = '1' ")
 	public List<Long> findClubIdsByUsuario(String email);
 
-	@Query("SELECT c FROM Club c JOIN c.usuarios u WHERE u.email = ?1AND c.estado = '1' ")
+	@Query("SELECT c FROM Club c JOIN c.usuarios u WHERE u.email = ?1  AND c.estado = '1' ")
 	public List<Club> findClubesHabilitadosByUsuario(String email);
 }

@@ -36,10 +36,9 @@ public class LoginController {
 
 	@Autowired
 	private IEmailService emailService;
-	
+
 	@Autowired
 	private IClubService clubService;
-
 
 	@GetMapping({ "/login", "/" })
 	public String login(@RequestParam(required = false) String error, @RequestParam(required = false) String logout,
@@ -103,23 +102,25 @@ public class LoginController {
 	}
 
 	@PostMapping("/actualizarPass")
-	public String actualizarPass(@RequestParam String password1, @RequestParam String password2,
-			Map<String, Object> model, RedirectAttributes flash, SessionStatus status, Principal principal) {
+	public String actualizarPass(@RequestParam String password1, @RequestParam String password2, Principal principal,
+			RedirectAttributes flash) {
 
-		model.put("titulo", "Actualizar Clave");
-
-		if (!password1.equalsIgnoreCase(password2)) {
-			flash.addFlashAttribute("msjLayout", "error;Error Password;Password deben ser iguales");
+		if (!password1.equals(password2)) {
+			flash.addFlashAttribute("msjLayout", "error;Error;Las contraseñas no coinciden");
 			return "redirect:/actualizarPass";
 		}
 
-		Usuario usuario = usuarioService.findByEmail(principal.getName());
+		List<Usuario> usuarios = usuarioService.findAllByEmail(principal.getName());
 
-		usuario.setPassword(passEncoder.encode(password1));
-		usuario.setEstado("1");
-		usuarioService.save(usuario);
-		status.setComplete();
-		flash.addFlashAttribute("msjLayout", "success;Exito;Se realizo corrextamente el cambio de password");
+		String encoded = passEncoder.encode(password1);
+
+		for (Usuario u : usuarios) {
+			u.setPassword(encoded);
+			u.setEstado("1");
+			usuarioService.save(u);
+		}
+
+		flash.addFlashAttribute("msjLayout", "success;Éxito;Contraseña actualizada correctamente");
 
 		return "redirect:/login";
 	}
@@ -135,17 +136,17 @@ public class LoginController {
 
 	@PostMapping("/setClubActivo")
 	public String setClubActivo(@RequestParam Long clubId, RedirectAttributes flash, HttpServletRequest request) {
-		
-		Club club = clubService.findById(clubId);
-		
-		
-		if (!"1".equals(club.getEstado())) {
-	        flash.addFlashAttribute("msjLogin","error;Club deshabilitado;El club seleccionado se encuentra deshabilitado.");
-	        return "redirect:/seleccionarClub";
-	    }
 
-	    request.getSession().setAttribute("idClubSession", clubId);
-	    return "redirect:/consulta";
+		Club club = clubService.findById(clubId);
+
+		if (!"1".equals(club.getEstado())) {
+			flash.addFlashAttribute("msjLogin",
+					"error;Club deshabilitado;El club seleccionado se encuentra deshabilitado.");
+			return "redirect:/seleccionarClub";
+		}
+
+		request.getSession().setAttribute("idClubSession", clubId);
+		return "redirect:/consulta";
 	}
 
 }
