@@ -16,76 +16,67 @@
 	</style>
 </head>
 
-<body class="d-flex flex-column min-vh-100 bg-light">
+<body class="d-flex flex-column min-vh-100">
 	<header th:replace="~{layout/layout :: header}"></header>
 
-	<main class="flex-grow-1">
-		<div class="container py-4">
+	<main class="flex-grow-1 bg-light">
+		<div class="container-fluid px-3 px-lg-4 py-3 py-lg-4" style="max-width: 720px;">
 
-			<!-- Título -->
-			<div class="row mb-4">
-				<div class="col text-center">
-					<h3 th:text="${titulo}" class="fw-bold text-primary border-bottom pb-2"></h3>
+			<div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
+				<div>
+					<h3 class="fw-bold text-primary mb-0" th:text="${titulo}">Categoría</h3>
+					<p class="text-muted small mb-0 mt-1">Define el nombre y el valor de la cuota mensual.</p>
 				</div>
+				<a th:href="@{/categorias/listar}" class="btn btn-outline-secondary btn-sm rounded-pill">
+					<i class="fas fa-arrow-left me-1"></i> Volver al listado
+				</a>
 			</div>
 
-			<!-- Formulario -->
-			<div class="row justify-content-center">
-				<div class="col-lg-8 col-md-10">
-					<div class="card shadow-sm border-0">
-						<div class="card-body">
-							<form th:action="@{/categorias/guardar}" th:object="${categoria}" method="post"
-								class="row g-3">
-
-								<!-- Nombre Categoría -->
-								<div class="col-md-6">
-									<label class="form-label fw-semibold">
-										<i class="fas fa-tag text-primary"></i> Nombre de la Categoría
-									</label>
-									<input th:field="*{nombre}" type="text" placeholder="Ej: Sub 12"
-										class="form-control"
-										th:classappend="${#fields.hasErrors('nombre') or (nombreDuplicado ?: false)} ? 'is-invalid' : ''" />
-
-									<!-- Error por validación @NotBlank -->
-									<div class="invalid-feedback" th:if="${#fields.hasErrors('nombre')}"
-										th:errors="*{nombre}"></div>
-
-									<!-- Error por nombre duplicado -->
-									<div class="invalid-feedback" th:if="${nombreDuplicado ?: false}">
-										Ya existe una categoría con ese nombre en este club.
-									</div>
-								</div>
-
-
-								<!-- Valor Cuota -->
-								<div class="col-md-6">
-									<label class="form-label fw-semibold">
-										<i class="fas fa-dollar-sign text-success"></i> Valor Cuota
-									</label>
-									<input th:field="*{valorCuota}" type="text" placeholder="Ej: 25000"
-										class="form-control"
-										th:classappend="${#fields.hasErrors('valorCuota')} ? 'is-invalid' : ''" />
-									<div class="invalid-feedback" th:if="${#fields.hasErrors('valorCuota')}"
-										th:errors="*{valorCuota}"></div>
-								</div>
-
-								<!-- Botones -->
-								<div class="col-12 text-center mt-4">
-									<a th:href="@{/categorias/listar}"
-										class="btn btn-outline-secondary rounded-pill px-4 me-2">
-										<i class="fas fa-arrow-left"></i> Volver
-									</a>
-									<button type="submit" class="btn btn-primary rounded-pill px-4">
-										<i class="fas fa-save"></i> Guardar
-									</button>
-								</div>
-
-							</form>
-						</div>
+			<div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+				<div class="card-header bg-white border-bottom py-3 px-3 px-lg-4 d-flex align-items-center gap-2">
+					<span class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center"
+						style="width:40px;height:40px;">
+						<i class="fas fa-tag"></i>
+					</span>
+					<div>
+						<h3 class="h6 mb-0 fw-semibold text-dark">Datos de la categoría</h3>
+						<p class="small text-muted mb-0">Nombre visible para apoderados y monto</p>
 					</div>
 				</div>
-			</div>
+				<div class="card-body p-3 p-lg-4">
+					<form th:action="@{/categorias/guardar}" th:object="${categoria}" method="post" class="row g-3">
 
+						<div class="col-md-6">
+							<label class="form-label fw-semibold">Nombre de la categoría</label>
+							<input th:field="*{nombre}" type="text" placeholder="Ej: Sub 12" class="form-control"
+								th:classappend="${#fields.hasErrors('nombre') or (nombreDuplicado ?: false)} ? 'is-invalid' : ''" />
+							<div class="invalid-feedback" th:if="${#fields.hasErrors('nombre')}"
+								th:errors="*{nombre}"></div>
+							<div class="invalid-feedback" th:if="${nombreDuplicado ?: false}">
+								Ya existe una categoría con ese nombre en este club.
+							</div>
+						</div>
+
+						<div class="col-md-6">
+							<label class="form-label fw-semibold">Valor cuota</label>
+							<input th:field="*{valorCuota}" type="text" placeholder="Ej: 25000" class="form-control"
+								th:classappend="${#fields.hasErrors('valorCuota')} ? 'is-invalid' : ''" />
+							<div class="invalid-feedback" th:if="${#fields.hasErrors('valorCuota')}"
+								th:errors="*{valorCuota}"></div>
+						</div>
+
+						<div class="col-12 border-top pt-4 mt-2 d-flex flex-wrap justify-content-center gap-2">
+							<a th:href="@{/categorias/listar}" class="btn btn-outline-secondary rounded-pill px-4">
+								<i class="fas fa-arrow-left me-1"></i> Volver
+							</a>
+							<button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+								<i class="fas fa-save me-1"></i> Guardar
+							</button>
+						</div>
+
+					</form>
+				</div>
+			</div>
 		</div>
 	</main>
 

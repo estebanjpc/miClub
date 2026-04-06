@@ -5,6 +5,7 @@ public class DashboardPagoDTO {
 	private Long totalDeportistas;
 	private Long alDia;
 	private Long morosos;
+	/** Total recaudado en el período (suma valor cuota de pagos PAGADO). */
 	private Integer totalRecaudadoMes;
 
 	public Long getTotalDeportistas() {

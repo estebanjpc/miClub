@@ -1,6 +1,9 @@
 package com.app.service;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -11,20 +14,20 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.app.dao.IUsuarioDao;
+import com.app.repository.IUsuarioRepository;
 import com.app.entity.Usuario;
 
 @Service("jpaUserDetailsService")
 public class JpaUserDetailsService implements UserDetailsService {
 
 	@Autowired
-	private IUsuarioDao usuarioDao;
+	private IUsuarioRepository usuarioRepository;
 
 	@Override
 	@Transactional(readOnly = true)
 	public UserDetails loadUserByUsername(String email) {
 
-		List<Usuario> usuarios = usuarioDao.findByEmail(email);
+		List<Usuario> usuarios = usuarioRepository.findByEmail(email);
 
 		if (usuarios == null || usuarios.isEmpty()) {
 			throw new BadCredentialsException("EMAIL_NO_EXISTE");
@@ -36,11 +39,20 @@ public class JpaUserDetailsService implements UserDetailsService {
 			throw new BadCredentialsException("USUARIO_DESHABILITADO");
 		}
 
-		// password único por email
-		Usuario ref = usuarios.get(0);
-		List<SimpleGrantedAuthority> authorities = ref.getRoles().stream().map(r -> new SimpleGrantedAuthority(r.getAuthority())).toList();
+		Set<String> authorityNames = new LinkedHashSet<>();
+		for (Usuario u : usuarios) {
+			if (Boolean.TRUE.equals(u.getEnabled())) {
+				u.getRoles().forEach(r -> authorityNames.add(r.getAuthority()));
+			}
+		}
+		List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+		for (String a : authorityNames) {
+			authorities.add(new SimpleGrantedAuthority(a));
+		}
 
-		return new User(email, ref.getPassword(), true, true, true, true,authorities);
+		Usuario ref = usuarios.stream().filter(u -> Boolean.TRUE.equals(u.getEnabled())).findFirst().orElse(usuarios.get(0));
+
+		return new User(email, ref.getPassword(), true, true, true, true, authorities);
 	}
 
 }

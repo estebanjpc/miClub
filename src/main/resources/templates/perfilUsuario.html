@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+	<th:block th:replace="~{layout/layout :: head}"></th:block>
+	<style>
+		.is-invalid {
+			border-color: #dc3545 !important;
+			box-shadow: 0 0 0 0.15rem rgba(220, 53, 69, 0.25);
+		}
+
+		.invalid-feedback {
+			display: block;
+			color: #dc3545;
+			font-size: 0.875em;
+		}
+
+		.nav-tabs .nav-link.active {
+			font-weight: 600;
+		}
+	</style>
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+
+	<header th:replace="~{layout/layout :: header}"></header>
+
+	<main class="flex-grow-1 bg-light">
+		<div class="container-fluid px-3 px-lg-4 py-3 py-lg-4" style="max-width: 880px;">
+
+			<div class="mb-3">
+				<h2 class="fw-bold text-primary mb-1" th:text="${titulo}">Mi perfil</h2>
+				<p class="text-muted small mb-0" th:if="${nombreClub != null}">
+					<i class="fas fa-shield-alt me-1"></i>
+					<span th:text="${nombreClub}">Club</span>
+				</p>
+			</div>
+
+			<ul class="nav nav-tabs mb-0" id="perfilTabs" role="tablist">
+				<li class="nav-item" role="presentation">
+					<button type="button" class="nav-link" th:classappend="${tab == 'datos'} ? ' active'"
+						id="tab-datos" data-bs-toggle="tab" data-bs-target="#pane-datos" role="tab"
+						aria-controls="pane-datos" th:attr="aria-selected=${tab == 'datos'}">
+						<i class="fas fa-user me-1"></i> Mis datos
+					</button>
+				</li>
+				<li class="nav-item" role="presentation">
+					<button type="button" class="nav-link" th:classappend="${tab == 'deportistas'} ? ' active'"
+						id="tab-deportistas" data-bs-toggle="tab" data-bs-target="#pane-deportistas" role="tab"
+						aria-controls="pane-deportistas" th:attr="aria-selected=${tab == 'deportistas'}">
+						<i class="fas fa-running me-1"></i> Deportistas
+					</button>
+				</li>
+			</ul>
+
+			<div class="card border-0 shadow-sm rounded-top-0">
+				<div class="card-body p-4">
+
+					<div class="tab-content" id="perfilTabContent">
+						<!-- Pestaña: apoderado -->
+						<div class="tab-pane fade" th:classappend="${tab == 'datos'} ? ' show active'" id="pane-datos"
+							role="tabpanel" aria-labelledby="tab-datos">
+
+							<form th:action="@{/guardarPerfilUsuario}" th:object="${usuario}" method="post"
+								class="row g-3">
+
+								<input type="hidden" th:field="*{id}" />
+
+								<h5 class="text-primary border-bottom pb-2">
+									<i class="fas fa-user me-1"></i> Datos personales
+								</h5>
+
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">Nombre</label>
+									<input th:field="*{nombre}" type="text" class="form-control"
+										autocomplete="given-name"
+										th:classappend="${#fields.hasErrors('nombre')} ? 'is-invalid' : ''" />
+									<div class="invalid-feedback" th:if="${#fields.hasErrors('nombre')}"
+										th:errors="*{nombre}"></div>
+								</div>
+
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">Apellido</label>
+									<input th:field="*{apellido}" type="text" class="form-control"
+										autocomplete="family-name"
+										th:classappend="${#fields.hasErrors('apellido')} ? 'is-invalid' : ''" />
+									<div class="invalid-feedback" th:if="${#fields.hasErrors('apellido')}"
+										th:errors="*{apellido}"></div>
+								</div>
+
+								<div class="col-12">
+									<label class="form-label fw-semibold">Correo electrónico</label>
+									<input th:field="*{email}" type="email" class="form-control" autocomplete="email"
+										th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''" />
+									<div class="invalid-feedback" th:if="${#fields.hasErrors('email')}"
+										th:errors="*{email}"></div>
+									<p class="small text-muted mb-0 mt-1">Es el mismo usuario con el que inicias sesión.</p>
+								</div>
+
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">Teléfono</label>
+									<input th:field="*{telefono}" type="text" class="form-control" autocomplete="tel"
+										placeholder="Ej: 997249492"
+										th:classappend="${#fields.hasErrors('telefono')} ? 'is-invalid' : ''" />
+									<div class="invalid-feedback" th:if="${#fields.hasErrors('telefono')}"
+										th:errors="*{telefono}"></div>
+								</div>
+
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">RUT</label>
+									<input th:field="*{rut}" type="text" class="form-control"
+										th:classappend="${#fields.hasErrors('rut')} ? 'is-invalid' : ''" />
+									<div class="invalid-feedback" th:if="${#fields.hasErrors('rut')}"
+										th:errors="*{rut}"></div>
+								</div>
+
+								<div class="col-12">
+									<label class="form-label fw-semibold">Dirección</label>
+									<input th:field="*{direccion}" type="text" class="form-control"
+										autocomplete="street-address"
+										th:classappend="${#fields.hasErrors('direccion')} ? 'is-invalid' : ''" />
+									<div class="invalid-feedback" th:if="${#fields.hasErrors('direccion')}"
+										th:errors="*{direccion}"></div>
+								</div>
+
+								<div class="col-12 pt-2">
+									<button type="submit" class="btn btn-primary">
+										<i class="fas fa-save me-1"></i> Guardar cambios
+									</button>
+									<a th:href="@{/consulta}" class="btn btn-outline-secondary ms-2">
+										Volver a cuotas
+									</a>
+								</div>
+
+								<div class="col-12 pt-3 border-top mt-2">
+									<p class="small text-muted mb-2">Seguridad de la cuenta</p>
+									<a th:href="@{/actualizarPass}" class="btn btn-outline-primary btn-sm">
+										<i class="fas fa-key me-1"></i> Cambiar contraseña
+									</a>
+								</div>
+							</form>
+						</div>
+
+						<!-- Pestaña: deportistas -->
+						<div class="tab-pane fade" th:classappend="${tab == 'deportistas'} ? ' show active'"
+							id="pane-deportistas" role="tabpanel" aria-labelledby="tab-deportistas">
+
+							<div th:if="${deportistaPerfilError != null}" class="alert alert-danger" role="alert"
+								th:text="${deportistaPerfilError}">
+							</div>
+
+							<p class="text-muted small mb-3">
+								Puedes actualizar nombre, apellidos, RUT, fecha de nacimiento y sexo.
+								<strong>Categoría</strong>, <strong>estado</strong> e <strong>fecha de ingreso</strong> al club
+								son gestionados solo por el club.
+							</p>
+
+							<div th:if="${deportistasLista == null or deportistasLista.isEmpty()}" class="text-center py-4 text-muted">
+								<i class="fas fa-user-slash fa-2x mb-2 d-block"></i>
+								No tienes deportistas registrados en este club.
+							</div>
+
+							<form th:if="${deportistasLista != null and !deportistasLista.isEmpty()}"
+								th:action="@{/guardarPerfilDeportistas}" th:object="${deportistasCmd}" method="post">
+
+								<div th:each="d, iter : ${deportistasLista}" class="card mb-4 border shadow-sm">
+									<div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+										<span class="fw-semibold text-primary">
+											<i class="fas fa-running me-1"></i>
+											<span th:text="${d.nombre + ' ' + d.apellido}">Deportista</span>
+										</span>
+										<span class="badge bg-secondary" th:text="'#' + ${iter.count}">#1</span>
+									</div>
+									<div class="card-body">
+										<div class="row small text-muted mb-3 pb-2 border-bottom">
+											<div class="col-md-4 mb-2">
+												<span class="fw-semibold text-dark">Categoría</span><br />
+												<span th:text="${d.categoria != null} ? ${d.categoria.nombre} : '—'">—</span>
+											</div>
+											<div class="col-md-4 mb-2">
+												<span class="fw-semibold text-dark">Estado</span><br />
+												<span th:text="${estadosDeportista.get(d.estado) != null ? estadosDeportista.get(d.estado) : d.estado}">—</span>
+											</div>
+											<div class="col-md-4 mb-2">
+												<span class="fw-semibold text-dark">Fecha ingreso al club</span><br />
+												<span th:text="${d.fechaIngreso != null} ? ${#temporals.format(d.fechaIngreso, 'dd/MM/yyyy')} : '—'">—</span>
+											</div>
+										</div>
+
+										<div class="row g-3">
+											<input type="hidden" th:field="*{filas[__${iter.index}__].id}" />
+
+											<div class="col-md-6">
+												<label class="form-label fw-semibold">Nombre</label>
+												<input type="text" class="form-control" th:field="*{filas[__${iter.index}__].nombre}" autocomplete="off" />
+											</div>
+											<div class="col-md-6">
+												<label class="form-label fw-semibold">Apellido</label>
+												<input type="text" class="form-control" th:field="*{filas[__${iter.index}__].apellido}" autocomplete="off" />
+											</div>
+											<div class="col-md-6">
+												<label class="form-label fw-semibold">RUT</label>
+												<input type="text" class="form-control" th:field="*{filas[__${iter.index}__].rut}" autocomplete="off" />
+											</div>
+											<div class="col-md-6">
+												<label class="form-label fw-semibold">Fecha de nacimiento</label>
+												<input type="date" class="form-control"
+													th:field="*{filas[__${iter.index}__].fechaNacimiento}" />
+											</div>
+											<div class="col-md-6">
+												<label class="form-label fw-semibold">Sexo</label>
+												<select class="form-select" th:field="*{filas[__${iter.index}__].sexo}">
+													<option value="">Seleccione</option>
+													<option value="M">Masculino</option>
+													<option value="F">Femenino</option>
+												</select>
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<div class="d-flex flex-wrap gap-2 pt-2">
+									<button type="submit" class="btn btn-primary">
+										<i class="fas fa-save me-1"></i> Guardar deportistas
+									</button>
+									<a th:href="@{/consulta}" class="btn btn-outline-secondary">Volver a cuotas</a>
+								</div>
+							</form>
+						</div>
+					</div>
+
+				</div>
+			</div>
+
+		</div>
+	</main>
+
+	<footer th:replace="~{layout/layout :: footer}"></footer>
+
+</body>
+
+</html>

@@ -34,8 +34,13 @@ public class CategoriaController {
     private IUsuarioService usuarioService;
 
     @GetMapping("/listar")
-    public String listar(Model model, Principal principal, HttpServletRequest request) {
-        Usuario usuario = usuarioService.findByEmail(principal.getName());
+    public String listar(Model model, Principal principal, HttpServletRequest request,
+            RedirectAttributes flash) {
+        Usuario usuario = usuarioClubActivo(principal, request);
+        if (usuario == null) {
+            flash.addFlashAttribute("msjLogin", "error;Club;Selecciona un club para continuar.");
+            return "redirect:/seleccionarClub";
+        }
         Club club = usuario.getClub();
 
         List<Categoria> listadoCategorias = categoriaService.findByClub(club);
@@ -46,8 +51,13 @@ public class CategoriaController {
     }
 
     @GetMapping("/crear")
-    public String crear(Model model, Principal principal) {
-        Usuario usuario = usuarioService.findByEmail(principal.getName());
+    public String crear(Model model, Principal principal, HttpServletRequest request,
+            RedirectAttributes flash) {
+        Usuario usuario = usuarioClubActivo(principal, request);
+        if (usuario == null) {
+            flash.addFlashAttribute("msjLogin", "error;Club;Selecciona un club para continuar.");
+            return "redirect:/seleccionarClub";
+        }
         Club club = usuario.getClub();
 
         Categoria categoria = new Categoria();
@@ -61,8 +71,13 @@ public class CategoriaController {
     }
 
     @GetMapping("/editar/{id}")
-    public String editar(@PathVariable Long id, Model model, Principal principal, RedirectAttributes flash) {
-        Usuario usuario = usuarioService.findByEmail(principal.getName());
+    public String editar(@PathVariable Long id, Model model, Principal principal, HttpServletRequest request,
+            RedirectAttributes flash) {
+        Usuario usuario = usuarioClubActivo(principal, request);
+        if (usuario == null) {
+            flash.addFlashAttribute("msjLogin", "error;Club;Selecciona un club para continuar.");
+            return "redirect:/seleccionarClub";
+        }
         Club club = usuario.getClub();
 
         Categoria categoria = categoriaService.findById(id);
@@ -83,9 +98,14 @@ public class CategoriaController {
                           BindingResult result,
                           Principal principal,
                           Model model,
+                          HttpServletRequest request,
                           RedirectAttributes flash) {
 
-        Usuario usuario = usuarioService.findByEmail(principal.getName());
+        Usuario usuario = usuarioClubActivo(principal, request);
+        if (usuario == null) {
+            flash.addFlashAttribute("msjLogin", "error;Club;Selecciona un club para continuar.");
+            return "redirect:/seleccionarClub";
+        }
         Club club = usuario.getClub();
 
         if (result.hasErrors()) {
@@ -110,8 +130,13 @@ public class CategoriaController {
     }
 
     @GetMapping("/eliminar/{id}")
-    public String eliminar(@PathVariable Long id, Principal principal, RedirectAttributes flash) {
-        Usuario usuario = usuarioService.findByEmail(principal.getName());
+    public String eliminar(@PathVariable Long id, Principal principal, HttpServletRequest request,
+            RedirectAttributes flash) {
+        Usuario usuario = usuarioClubActivo(principal, request);
+        if (usuario == null) {
+            flash.addFlashAttribute("msjLogin", "error;Club;Selecciona un club para continuar.");
+            return "redirect:/seleccionarClub";
+        }
         Club club = usuario.getClub();
 
         Categoria categoria = categoriaService.findById(id);
@@ -124,5 +149,10 @@ public class CategoriaController {
         }
 
         return "redirect:/categorias/listar";
+    }
+
+    private Usuario usuarioClubActivo(Principal principal, HttpServletRequest request) {
+        Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
+        return usuarioService.resolveUsuarioActivo(principal.getName(), idClubSession);
     }
 }

@@ -5,6 +5,7 @@ import java.time.LocalDate;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -12,6 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -54,6 +56,18 @@ public class Deportista implements Serializable {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "id_usuario")
 	private Usuario usuario;
+
+	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+	@NotNull(message = "Debe ingresar la fecha de ingreso")
+	@Column(name = "fecha_ingreso")
+	private LocalDate fechaIngreso;
+
+	@PrePersist
+	protected void onCreate() {
+		if (this.fechaIngreso == null) {
+			this.fechaIngreso = LocalDate.now();
+		}
+	}
 
 	public Long getId() {
 		return id;
@@ -125,6 +139,14 @@ public class Deportista implements Serializable {
 
 	public void setCategoria(Categoria categoria) {
 		this.categoria = categoria;
+	}
+
+	public LocalDate getFechaIngreso() {
+		return fechaIngreso;
+	}
+
+	public void setFechaIngreso(LocalDate fechaIngreso) {
+		this.fechaIngreso = fechaIngreso;
 	}
 
 }

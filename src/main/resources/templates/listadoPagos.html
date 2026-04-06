@@ -6,183 +6,458 @@
 <body class="d-flex flex-column min-vh-100">
 	<header th:replace="~{layout/layout :: header}"></header>
 
-	<main class="flex-grow-1">
-		<div class="container py-4">
+	<main class="flex-grow-1 bg-light">
+		<div class="container-fluid px-3 px-lg-4 py-3 py-lg-4" style="max-width: 1400px;">
 
-			<!-- Título -->
-			<div class="row mb-4">
-				<div class="col text-center">
-					<h3 class="fw-bold text-primary border-bottom pb-2" th:text="${titulo}">Gestión de Pagos</h3>
+			<div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3">
+				<div>
+					<h3 class="fw-bold text-primary mb-0" th:text="${titulo}">Gestión de Pagos</h3>
+					<p class="text-muted small mb-0 mt-1">Resumen del club, filtros y detalle por pestaña.</p>
 				</div>
 			</div>
 
-
-			<div class="row mb-4 text-center">
-
-				<div class="col-md-3">
-					<div class="card shadow-sm border-0">
-						<div class="card-body">
-							<h6>Total Deportistas</h6>
-							<h3 th:text="${dashboard.totalDeportistas}"></h3>
+			<!-- KPIs club -->
+			<div class="row g-2 g-lg-3 mb-3">
+				<div class="col-6 col-xl-3">
+					<div class="card border-0 shadow-sm h-100 rounded-3">
+						<div class="card-body py-3 px-3">
+							<h6 class="text-muted text-uppercase small mb-1">Activos en el período</h6>
+							<p class="small text-muted mb-2" th:text="${nombreMesConsulta + ' ' + anioConsulta}">Mes</p>
+							<h3 class="mb-0 fw-semibold" th:text="${dashboard.totalDeportistas}"></h3>
 						</div>
 					</div>
 				</div>
-
-				<div class="col-md-3">
-					<div class="card shadow-sm border-0 bg-success text-white">
-						<div class="card-body">
-							<h6>Al día</h6>
-							<h3 th:text="${dashboard.alDia}"></h3>
+				<div class="col-6 col-xl-3">
+					<div class="card border-0 shadow-sm h-100 rounded-3 bg-success text-white">
+						<div class="card-body py-3 px-3">
+							<h6 class="small mb-1 opacity-90">Al día (cuota pagada)</h6>
+							<p class="small mb-2 opacity-75" th:text="${nombreMesConsulta + ' ' + anioConsulta}">Mes</p>
+							<h3 class="mb-0 fw-semibold" th:text="${dashboard.alDia}"></h3>
+							<p class="small mb-0 mt-2 opacity-75">PAGADO en ese período</p>
 						</div>
 					</div>
 				</div>
-
-				<div class="col-md-3">
-					<div class="card shadow-sm border-0 bg-danger text-white">
-						<div class="card-body">
-							<h6>Morosos</h6>
-							<h3 th:text="${dashboard.morosos}"></h3>
+				<div class="col-6 col-xl-3">
+					<div class="card border-0 shadow-sm h-100 rounded-3 bg-danger text-white">
+						<div class="card-body py-3 px-3">
+							<h6 class="small mb-1 opacity-90">Sin cuota al día</h6>
+							<p class="small mb-2 opacity-75" th:text="${nombreMesConsulta + ' ' + anioConsulta}">Mes</p>
+							<h3 class="mb-0 fw-semibold" th:text="${dashboard.morosos}"></h3>
+							<p class="small mb-0 mt-2 opacity-75">Activos sin PAGADO ese mes</p>
 						</div>
 					</div>
 				</div>
-
-				<div class="col-md-3">
-					<div class="card shadow-sm border-0 bg-primary text-white">
-						<div class="card-body">
-							<h6>Recaudado mes</h6>
-							<h4>$ <span th:text="${dashboard.totalRecaudadoMes}"></span></h4>
+				<div class="col-6 col-xl-3">
+					<div class="card border-0 shadow-sm h-100 rounded-3 bg-primary text-white">
+						<div class="card-body py-3 px-3">
+							<h6 class="small mb-1 opacity-90">Recaudado</h6>
+							<p class="small mb-2 opacity-75" th:text="${nombreMesConsulta + ' ' + anioConsulta}">Mes</p>
+							<h4 class="mb-0 fw-semibold">$ <span th:text="${dashboard.totalRecaudadoMes}"></span></h4>
+							<p class="small mb-0 mt-2 opacity-75">Por fecha de orden de pago</p>
 						</div>
 					</div>
 				</div>
-
 			</div>
 
-
-
-			<form id="filtrosForm" method="get" class="row g-2 mb-3">
-
-				<div class="col-md-3">
-					<select name="mes" class="form-select">
-						<option th:value="${null}">Mes</option>
-						<option th:each="m : ${meses}" th:value="${m.key}" th:text="${m.value}"
-							th:selected="${m.key == mesSeleccionado}">
-						</option>
-					</select>
-
-				</div>
-
-				<div class="col-md-3">
-					<select name="estado" class="form-select">
-						<option th:value="${null}">Estado</option>
-						<option th:each="e : ${T(com.app.enums.EstadoPago).values()}"
-						        th:value="${e.name()}"
-						        th:text="${e}"
-						        th:selected="${estadoSeleccionado != null and e.name() == estadoSeleccionado}">
-						</option>
-					</select>
-				</div>
-
+			<!-- KPIs operativos -->
+			<div class="row g-2 g-lg-3 mb-3">
 				<div class="col-md-4">
-					<select name="idDeportista" class="form-select">
-						<option th:value="${null}">Deportista</option>
-						<option th:each="d : ${deportistas}" th:value="${d.id}" th:text="${d.nombre + ' ' + d.apellido}"
-							th:selected="${deportistaSeleccionado != null and d.id == deportistaSeleccionado}">
-						</option>
-					</select>
-
-				</div>
-
-				<div class="col-md-2 d-grid gap-2">
-					<button class="btn btn-primary" type="submit">
-						Filtrar
-					</button>
-
-					<a th:href="@{/listadoPagos}" class="btn btn-outline-secondary">
-						Limpiar
+					<a th:href="@{/listadoPagos(mes=${mesSeleccionado},estado=${estadoSeleccionado},idDeportista=${deportistaSeleccionado},idCategoria=${categoriaSeleccionada},minCuotasMorosos=${minCuotasMorosos},tab='pendientes')}"
+					   class="text-decoration-none">
+						<div class="card shadow-sm border-warning border-2 h-100 rounded-3">
+							<div class="card-body py-3 px-3">
+								<h6 class="text-warning text-uppercase small mb-1">Pendientes por aprobar</h6>
+								<h2 class="mb-0 text-dark fw-bold" th:text="${kpiPendientes}">0</h2>
+								<small class="text-muted">Efectivo esperando revisión</small>
+							</div>
+						</div>
 					</a>
 				</div>
+				<div class="col-md-4">
+					<a th:href="@{/listadoPagos(mes=${mesSeleccionado},estado=${estadoSeleccionado},idDeportista=${deportistaSeleccionado},idCategoria=${categoriaSeleccionada},minCuotasMorosos=${minCuotasMorosos},tab='morosos')}"
+					   class="text-decoration-none">
+						<div class="card shadow-sm border-danger border-2 h-100 rounded-3">
+							<div class="card-body py-3 px-3">
+								<h6 class="text-danger text-uppercase small mb-1" th:text="${'Morosos ' + minCuotasMorosos + '+ cuotas'}">Morosos</h6>
+								<h2 class="mb-0 text-dark fw-bold" th:text="${kpiMorosos3}">0</h2>
+								<small class="text-muted">Hasta el mes filtrado</small>
+							</div>
+						</div>
+					</a>
+				</div>
+				<div class="col-md-4">
+					<a th:href="@{/listadoPagos(mes=${mesSeleccionado},estado=${estadoSeleccionado},idDeportista=${deportistaSeleccionado},idCategoria=${categoriaSeleccionada},minCuotasMorosos=${minCuotasMorosos},tab='mensual')}"
+					   class="text-decoration-none">
+						<div class="card shadow-sm border-success border-2 h-100 rounded-3">
+							<div class="card-body py-3 px-3">
+								<h6 class="text-success text-uppercase small mb-1">Pagos confirmados</h6>
+								<h2 class="mb-0 text-dark fw-bold" th:text="${kpiPagadosMes}">0</h2>
+								<small class="text-muted">Registros PAGADO en el mes seleccionado</small>
+							</div>
+						</div>
+					</a>
+				</div>
+			</div>
 
-			</form>
+			<!-- Resumen por categoría (mes consultado) -->
+			<div class="card border-0 shadow-sm mb-3 rounded-3" th:if="${!#lists.isEmpty(resumenPorCategoria)}">
+				<div class="card-header bg-white border-0 py-2 px-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+					<span class="fw-semibold text-secondary small text-uppercase">Deuda por categoría — mes seleccionado</span>
+					<span class="text-muted small">Morosos / pendiente de pago / total que deben</span>
+				</div>
+				<div class="card-body pt-0 px-2 px-md-3 pb-3">
+					<div class="row g-2">
+						<div class="col-6 col-md-4 col-lg-3" th:each="rc : ${resumenPorCategoria}">
+							<div class="border rounded-3 p-2 h-100 bg-white"
+							     th:classappend="${categoriaSeleccionada != null and rc.idCategoria != null and rc.idCategoria == categoriaSeleccionada} ? ' border-primary border-2' : ' border-light'">
+								<div class="small text-truncate fw-semibold text-dark" th:text="${rc.nombreCategoria}">Cat</div>
+								<div class="d-flex flex-wrap gap-2 mt-1 small">
+									<span class="badge text-bg-danger" th:text="'M: ' + ${rc.morosos}">M:0</span>
+									<span class="badge text-bg-warning text-dark" th:text="'P: ' + ${rc.pendientesPago}">P:0</span>
+									<span class="badge text-bg-secondary" th:text="'Σ: ' + ${rc.totalDeben}">Σ:0</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 
+			<!-- Filtros -->
+			<div class="card border-0 shadow-sm mb-3 rounded-3">
+				<div class="card-body p-3">
+					<form id="filtrosForm" method="get" class="row g-2 g-lg-3 align-items-end">
+						<input type="hidden" name="tab" th:value="${activeTab}" />
 
-			<!-- Tabla -->
-			<div class="row justify-content-center">
-				<div class="col-lg-11">
-					<div class="card shadow-sm border-0">
-						<div class="card-body table-responsive">
+						<div class="col-6 col-md-4 col-lg-2">
+							<label class="form-label small text-muted mb-0">Mes</label>
+							<select name="mes" class="form-select form-select-sm">
+								<option th:each="m : ${meses}" th:value="${m.key}" th:text="${m.value}"
+									th:selected="${m.key == mesSeleccionado}">
+								</option>
+							</select>
+						</div>
 
-							<table class="table table-hover align-middle table-striped">
-								<thead class="bg-primary text-white">
+						<div class="col-6 col-md-4 col-lg-2">
+							<label class="form-label small text-muted mb-0">Estado</label>
+							<select name="estado" class="form-select form-select-sm">
+								<option th:value="${null}">Todos</option>
+								<option th:each="e : ${T(com.app.enums.EstadoPago).values()}"
+								        th:value="${e.name()}"
+								        th:text="${e}"
+								        th:selected="${estadoSeleccionado != null and e.name() == estadoSeleccionado}">
+								</option>
+							</select>
+						</div>
+
+						<div class="col-12 col-md-4 col-lg-3">
+							<label class="form-label small text-muted mb-0">Categoría</label>
+							<select name="idCategoria" class="form-select form-select-sm">
+								<option th:value="${null}">Todas</option>
+								<option th:each="c : ${categorias}" th:value="${c.id}" th:text="${c.nombre}"
+									th:selected="${categoriaSeleccionada != null and c.id == categoriaSeleccionada}">
+								</option>
+							</select>
+						</div>
+
+						<div class="col-6 col-md-4 col-lg-2">
+							<label class="form-label small text-muted mb-0">Mín. cuotas morosos</label>
+							<select name="minCuotasMorosos" class="form-select form-select-sm"
+							        title="Listar deportistas con al menos esta cantidad de cuotas adeudadas (hasta el mes filtrado)">
+								<option th:each="n : ${#numbers.sequence(1, 12)}" th:value="${n}" th:text="${n}"
+									th:selected="${n == minCuotasMorosos}"></option>
+							</select>
+						</div>
+
+						<div class="col-12 col-lg-3">
+							<label class="form-label small text-muted mb-0">Deportista</label>
+							<select name="idDeportista" class="form-select form-select-sm">
+								<option th:value="${null}">Todos</option>
+								<option th:each="d : ${deportistas}" th:value="${d.id}" th:text="${d.nombre + ' ' + d.apellido}"
+									th:selected="${deportistaSeleccionado != null and d.id == deportistaSeleccionado}">
+								</option>
+							</select>
+						</div>
+
+						<div class="col-12 col-lg-2 d-flex flex-wrap gap-2">
+							<button class="btn btn-primary btn-sm px-3 flex-grow-1" type="submit">Filtrar</button>
+							<a th:href="@{/listadoPagos}" class="btn btn-outline-secondary btn-sm px-3 flex-grow-1">Limpiar</a>
+						</div>
+					</form>
+				</div>
+			</div>
+
+			<!-- Chips filtros activos -->
+			<div class="mb-3" th:if="${estadoSeleccionado != null or deportistaSeleccionado != null or categoriaSeleccionada != null}">
+				<span class="text-muted small me-2">Filtros activos:</span>
+				<span th:if="${estadoSeleccionado != null}" class="badge rounded-pill bg-secondary me-1">
+					Estado: <span th:text="${estadoSeleccionado}"></span>
+					<a class="text-white ms-1 text-decoration-none"
+					   th:href="@{/listadoPagos(mes=${mesSeleccionado},idDeportista=${deportistaSeleccionado},idCategoria=${categoriaSeleccionada},minCuotasMorosos=${minCuotasMorosos},tab=${activeTab})}"
+					   title="Quitar estado">×</a>
+				</span>
+				<span th:if="${categoriaSeleccionada != null}" class="badge rounded-pill bg-secondary me-1">
+					Categoría:
+					<span th:each="c : ${categorias}" th:if="${c.id == categoriaSeleccionada}" th:text="${c.nombre}"></span>
+					<a class="text-white ms-1 text-decoration-none"
+					   th:href="@{/listadoPagos(mes=${mesSeleccionado},estado=${estadoSeleccionado},idDeportista=${deportistaSeleccionado},minCuotasMorosos=${minCuotasMorosos},tab=${activeTab})}"
+					   title="Quitar categoría">×</a>
+				</span>
+				<span th:if="${deportistaSeleccionado != null}" class="badge rounded-pill bg-secondary me-1">
+					Deportista:
+					<span th:each="d : ${deportistas}" th:if="${d.id == deportistaSeleccionado}"
+					      th:text="${d.nombre + ' ' + d.apellido}"></span>
+					<a class="text-white ms-1 text-decoration-none"
+					   th:href="@{/listadoPagos(mes=${mesSeleccionado},estado=${estadoSeleccionado},idCategoria=${categoriaSeleccionada},minCuotasMorosos=${minCuotasMorosos},tab=${activeTab})}"
+					   title="Quitar deportista">×</a>
+				</span>
+			</div>
+
+			<!-- Tabs + tablas -->
+			<div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+				<div class="card-body p-0">
+					<div class="px-3 pt-3 pb-0 border-bottom bg-white">
+						<ul class="nav nav-pills flex-wrap gap-1 mb-0">
+							<li class="nav-item">
+								<a class="nav-link py-2 px-3 rounded-pill"
+								   th:classappend="${activeTab == 'pendientes'} ? ' active'"
+								   th:href="@{/listadoPagos(mes=${mesSeleccionado},estado=${estadoSeleccionado},idDeportista=${deportistaSeleccionado},idCategoria=${categoriaSeleccionada},minCuotasMorosos=${minCuotasMorosos},tab='pendientes')}">
+								   Pendientes
+								   <span class="badge text-bg-light ms-1" th:text="${#lists.size(pendientesAprobacion)}">0</span>
+								</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link py-2 px-3 rounded-pill"
+								   th:classappend="${activeTab == 'mensual'} ? ' active'"
+								   th:href="@{/listadoPagos(mes=${mesSeleccionado},estado=${estadoSeleccionado},idDeportista=${deportistaSeleccionado},idCategoria=${categoriaSeleccionada},minCuotasMorosos=${minCuotasMorosos},tab='mensual')}">
+								   Estado mensual
+								</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link py-2 px-3 rounded-pill"
+								   th:classappend="${activeTab == 'morosos'} ? ' active'"
+								   th:href="@{/listadoPagos(mes=${mesSeleccionado},estado=${estadoSeleccionado},idDeportista=${deportistaSeleccionado},idCategoria=${categoriaSeleccionada},minCuotasMorosos=${minCuotasMorosos},tab='morosos')}">
+								   <span th:text="|Morosos ${minCuotasMorosos}+|">Morosos</span>
+								   <span class="badge text-bg-danger ms-1" th:text="${#lists.size(morososCriticos)}">0</span>
+								</a>
+							</li>
+						</ul>
+					</div>
+
+					<div class="p-3 p-lg-4">
+
+						<div th:if="${activeTab == 'pendientes'}" class="table-responsive">
+							<table class="table table-hover align-middle table-striped table-sm mb-0">
+								<thead class="bg-warning-subtle">
 									<tr>
-										<th>#</th>
+										<th class="text-nowrap">#</th>
 										<th>Deportista</th>
-										<th>Mes</th>
-										<th>Año</th>
-										<th>Medio Pago</th>
-										<th>Estado</th>
-										<th>Fecha</th>
-										<th class="text-center">Acción</th>
-										<th class="text-center">Ver Orden</th>
+										<th class="text-nowrap">Categoría</th>
+										<th class="text-nowrap">Mes</th>
+										<th class="text-nowrap">Año</th>
+										<th class="text-nowrap">Fecha registro</th>
+										<th>Observación</th>
+										<th class="text-center text-nowrap">Acción</th>
 									</tr>
 								</thead>
-
 								<tbody>
-									<tr th:each="e, cont : ${estadoPagos}">
+									<tr th:each="p, cont : ${pendientesAprobacion}">
 										<td th:text="${cont.index + 1}"></td>
-
-										<td th:text="${e.nombreCompleto}"></td>
-
-										<td th:text="${meses[e.mes]}"></td>
-										<td th:text="${e.anio}"></td>
-
+										<td th:text="${p.deportista.nombre + ' ' + p.deportista.apellido}"></td>
 										<td>
-											<span th:if="${e.medioPago != null}" class="badge bg-info"
-												th:text="${e.medioPago}">
-											</span>
-											<span th:if="${e.medioPago == null}">—</span>
+											<span class="badge text-bg-light text-dark border"
+											      th:text="${p.deportista.categoria != null ? p.deportista.categoria.nombre : '—'}"></span>
 										</td>
-
-										<td>
-											<span class="badge" th:classappend="${e.colorEstado}" th:text="${e.estado}">
-											</span>
-										</td>
-
-										<td>
-											<span th:if="${e.fechaPago != null}"
-											      th:text="${#temporals.format(e.fechaPago, 'dd-MM-yyyy HH:mm')}">
-											</span>
-											<span th:if="${e.fechaPago == null}">—</span>
-										</td>
-
-										<!-- Acciones -->
-										<td class="text-center">
-
-											<form th:if="${e.estado.name() == 'PENDIENTE' 
-								                      and e.medioPago?.name() == 'EFECTIVO'}" th:action="@{/aprobar/{id}(id=${e.idPago})}"
-												method="post" class="d-inline">
-
-												<button class="btn btn-success btn-sm rounded-pill">
+										<td th:text="${p.nombreMes}"></td>
+										<td th:text="${p.anio}"></td>
+										<td th:text="${#temporals.format(p.fecha, 'dd-MM-yyyy HH:mm')}"></td>
+										<td class="small" th:text="${p.observacion != null ? p.observacion : '-'}"></td>
+										<td class="text-center text-nowrap">
+											<form th:action="@{/aprobar/{id}(id=${p.id})}" method="post" class="d-inline">
+												<button class="btn btn-success btn-sm rounded-pill me-1" title="Aprobar">
 													<i class="fas fa-check"></i>
 												</button>
 											</form>
+											<button type="button" class="btn btn-danger btn-sm rounded-pill"
+													data-bs-toggle="modal"
+													th:data-bs-target="'#modalRechazoPendiente' + ${p.id}" title="Rechazar">
+												<i class="fas fa-times"></i>
+											</button>
 
-											<span th:if="${e.estado.name() == 'PAGADO'}">✔</span>
+											<div class="modal fade" th:id="'modalRechazoPendiente' + ${p.id}" tabindex="-1" aria-hidden="true">
+												<div class="modal-dialog">
+													<form th:action="@{/rechazar/{id}(id=${p.id})}" method="post">
+														<div class="modal-content">
+															<div class="modal-header bg-danger text-white">
+																<h5 class="modal-title">Rechazar Pago</h5>
+																<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+															</div>
+															<div class="modal-body text-start">
+																<p>¿Rechazar pago de <strong>[[${p.deportista.nombre + ' ' + p.deportista.apellido}]]</strong>?</p>
+																<div class="mb-3">
+																	<label class="form-label">Motivo del rechazo:</label>
+																	<textarea name="observacion" class="form-control" rows="3" required></textarea>
+																</div>
+															</div>
+															<div class="modal-footer">
+																<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+																<button type="submit" class="btn btn-danger">Confirmar Rechazo</button>
+															</div>
+														</div>
+													</form>
+												</div>
+											</div>
 										</td>
+									</tr>
+									<tr th:if="${#lists.isEmpty(pendientesAprobacion)}">
+										<td colspan="8" class="text-center text-muted py-4">No hay pagos pendientes por aprobar.</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
 
-										<!-- Orden Khipu -->
+						<div th:if="${activeTab == 'mensual'}" class="table-responsive">
+							<table class="table table-hover align-middle table-striped table-sm mb-0">
+								<thead class="bg-primary text-white">
+									<tr>
+										<th class="text-nowrap">#</th>
+										<th>Deportista</th>
+										<th class="text-nowrap">Categoría</th>
+										<th class="text-nowrap">Mes</th>
+										<th class="text-nowrap">Año</th>
+										<th class="text-nowrap">Medio</th>
+										<th class="text-nowrap">Estado</th>
+										<th class="text-nowrap">Fecha</th>
+										<th class="text-center text-nowrap">Orden</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr th:each="e, cont : ${estadoPagos}">
+										<td th:text="${cont.index + 1}"></td>
+										<td th:text="${e.nombreCompleto}"></td>
+										<td>
+											<span class="badge text-bg-light text-dark border"
+											      th:text="${e.nombreCategoria != null ? e.nombreCategoria : '—'}"></span>
+										</td>
+										<td th:text="${meses[e.mes]}"></td>
+										<td th:text="${e.anio}"></td>
+										<td>
+											<span th:if="${e.medioPago != null}" class="badge bg-info" th:text="${e.medioPago}"></span>
+											<span th:if="${e.medioPago == null}">—</span>
+										</td>
+										<td>
+											<span class="badge" th:classappend="${e.colorEstado}" th:text="${e.estado}"></span>
+											<i th:if="${e.observacion != null and !#strings.isEmpty(e.observacion)}"
+											   class="fas fa-info-circle text-muted"
+											   th:title="${e.observacion}"></i>
+										</td>
+										<td>
+											<span th:if="${e.fechaPago != null}" th:text="${#temporals.format(e.fechaPago, 'dd-MM-yyyy HH:mm')}"></span>
+											<span th:if="${e.fechaPago == null}">—</span>
+										</td>
 										<td class="text-center">
-											<a th:if="${e.idOrdenPago != null}"
-												th:href="@{/orden/{id}(id=${e.idOrdenPago})}"
-												class="btn btn-outline-secondary btn-sm rounded-pill">
+											<a th:if="${e.idOrdenPago != null}" th:href="@{/orden/{id}(id=${e.idOrdenPago})}"
+											   class="btn btn-outline-secondary btn-sm rounded-pill">
 												<i class="fas fa-receipt"></i>
 											</a>
 										</td>
 									</tr>
+									<tr th:if="${#lists.isEmpty(estadoPagos)}">
+										<td colspan="9" class="text-center text-muted py-4">No hay registros con los filtros aplicados.</td>
+									</tr>
 								</tbody>
+							</table>
+						</div>
 
-
+						<div th:if="${activeTab == 'morosos'}" class="table-responsive">
+							<table class="table table-hover align-middle table-striped table-sm mb-0">
+								<thead class="table-danger">
+									<tr>
+										<th class="text-nowrap">#</th>
+										<th>Deportista</th>
+										<th class="text-nowrap">Categoría</th>
+										<th class="text-nowrap">Cuotas</th>
+										<th class="text-nowrap">Monto</th>
+										<th class="text-nowrap">Último pago</th>
+										<th class="text-center text-nowrap">Historial</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr th:each="m, cont : ${morososCriticos}">
+										<td th:text="${cont.index + 1}"></td>
+										<td th:text="${m.nombreCompleto}"></td>
+										<td>
+											<span class="badge text-bg-light text-dark border"
+											      th:text="${m.nombreCategoria != null ? m.nombreCategoria : '—'}"></span>
+										</td>
+										<td><span class="badge text-bg-danger" th:text="${m.cuotasAdeudadas}"></span></td>
+										<td th:text="${'$ ' + #numbers.formatInteger(m.montoAdeudado, 0)}"></td>
+										<td>
+											<span th:if="${m.ultimaFechaPago != null}" th:text="${#temporals.format(m.ultimaFechaPago, 'dd-MM-yyyy HH:mm')}"></span>
+											<span th:if="${m.ultimaFechaPago == null}">Sin pagos</span>
+										</td>
+										<td class="text-center">
+											<button type="button" class="btn btn-outline-primary btn-sm rounded-pill"
+													data-bs-toggle="modal"
+													th:data-bs-target="'#modalHist' + ${m.idDeportista}">
+												<i class="fas fa-history me-1"></i> Ver
+											</button>
+										</td>
+									</tr>
+									<tr th:if="${#lists.isEmpty(morososCriticos)}">
+										<td colspan="7" class="text-center text-muted py-4" th:text="|No hay deportistas con ${minCuotasMorosos} o más cuotas adeudadas.|">—</td>
+									</tr>
+								</tbody>
 							</table>
 
+							<th:block th:each="m : ${morososCriticos}">
+								<div class="modal fade" tabindex="-1" aria-hidden="true"
+									 th:id="'modalHist' + ${m.idDeportista}"
+									 th:with="hist=${historialesMorosos.get(m.idDeportista)}">
+									<div class="modal-dialog modal-lg modal-dialog-scrollable">
+										<div class="modal-content">
+											<div class="modal-header bg-light">
+												<h5 class="modal-title">
+													Historial de pagos — <span th:text="${m.nombreCompleto}"></span>
+												</h5>
+												<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+											</div>
+											<div class="modal-body">
+												<p class="text-muted small mb-2">Movimientos más recientes primero.</p>
+												<div class="table-responsive">
+													<table class="table table-sm table-bordered align-middle mb-0">
+														<thead class="table-light">
+															<tr>
+																<th>Fecha</th>
+																<th>Período</th>
+																<th>Estado</th>
+																<th>Medio</th>
+																<th>Observación</th>
+																<th>Orden</th>
+															</tr>
+														</thead>
+														<tbody>
+															<tr th:each="p : ${hist}">
+																<td th:text="${p.fecha != null ? #temporals.format(p.fecha, 'dd-MM-yyyy HH:mm') : '—'}"></td>
+																<td th:text="${p.nombreMes + ' ' + p.anio}"></td>
+																<td><span class="badge" th:classappend="${p.colorEstado}" th:text="${p.estado}"></span></td>
+																<td th:text="${p.medioPago != null ? p.medioPago : '—'}"></td>
+																<td class="small" th:text="${p.observacion != null ? p.observacion : '—'}"></td>
+																<td>
+																	<a th:if="${p.ordenPago != null}" th:href="@{/orden/{id}(id=${p.ordenPago.id})}" class="btn btn-sm btn-outline-secondary">#<span th:text="${p.ordenPago.id}"></span></a>
+																	<span th:if="${p.ordenPago == null}">—</span>
+																</td>
+															</tr>
+															<tr th:if="${#lists.isEmpty(hist)}">
+																<td colspan="6" class="text-center text-muted">Sin registros.</td>
+															</tr>
+														</tbody>
+													</table>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</th:block>
 						</div>
 					</div>
 				</div>

@@ -1,6 +1,5 @@
-INSERT INTO club (id, fecha_alta, codigo, nombre, tipo, logo, estado) VALUES (1, '2025-11-10 16:58:42', 'club-1', 'Club-1', 'Baquetball', NULL,2);
-INSERT INTO club (id, fecha_alta, codigo, nombre, tipo, logo,estado) VALUES (2, '2025-11-10 16:58:42','club-2', 'Club-2', 'Futbol', NULL,1);
-
+INSERT INTO club (id, fecha_alta, codigo, nombre, tipo, logo, estado, dia_vencimiento_cuota) VALUES (1, '2025-11-10 16:58:42', 'club-1', 'Club-1', 'Baquetball', NULL, 2, 10);
+INSERT INTO club (id, fecha_alta, codigo, nombre, tipo, logo, estado, dia_vencimiento_cuota) VALUES (2, '2025-11-10 16:58:42', 'club-2', 'Club-2', 'Futbol', NULL, 1, 5);
 
 INSERT INTO usuarios (enabled, fecha_creacion, id, id_club, apellido, direccion, email,estado,nombre,password,rut,telefono) VALUES (1, NULL, 1, NULL, 'Global', NULL,'estebanjpc@gmail.com', '1', 'Admin', '$2a$10$h5zWx.w.hq.a2ekp0S.BNe.cgoG4321.XcZYtJnPxANwJvw0xU2uq', NULL, NULL);
 INSERT INTO usuarios (enabled, fecha_creacion, id, id_club, apellido, direccion, email,estado,nombre,password,rut,telefono) VALUES (0, NULL, 2, 1, 'AP', NULL, 'club1@gmail.com', '2', 'Club-1', '$2a$10$h5zWx.w.hq.a2ekp0S.BNe.cgoG4321.XcZYtJnPxANwJvw0xU2uq', NULL, NULL);
@@ -24,9 +23,9 @@ INSERT INTO categorias (id,id_club, nombre,valor_cuota) VALUES (1, 1, 'Juvenil',
 INSERT INTO categorias (id,id_club, nombre,valor_cuota) VALUES (2, 2, 'Juvenil',15000);
 INSERT INTO categorias (id,id_club, nombre,valor_cuota) VALUES (3, 1, 'Infantil',13000);
 
-INSERT INTO deportistas (fecha_nacimiento, id, id_categoria, id_usuario,apellido, nombre, rut, sexo,estado) VALUES ('1986-01-31', 1, 1,4, 'Perez','Jose Esteban', '16074474K', 'M',1);
-INSERT INTO deportistas (fecha_nacimiento, id, id_categoria, id_usuario,apellido, nombre, rut, sexo,estado) VALUES ('1986-01-31', 2, 2,5, 'Perez','Esteban', '16074474K', 'M',1);
-INSERT INTO deportistas (fecha_nacimiento, id, id_categoria, id_usuario,apellido, nombre, rut, sexo,estado) VALUES ('1995-12-24', 3, 3,4, 'Marin','Judith', '192891523', 'F',1);
+INSERT INTO deportistas (fecha_nacimiento, id, id_categoria, id_usuario,apellido, nombre, rut, sexo,estado,fecha_ingreso) VALUES ('1986-01-31', 1, 1,4, 'Perez','Jose Esteban', '16074474K', 'M',1,'2026-01-01');
+INSERT INTO deportistas (fecha_nacimiento, id, id_categoria, id_usuario,apellido, nombre, rut, sexo,estado,fecha_ingreso) VALUES ('1986-01-31', 2, 2,5, 'Perez','Esteban', '16074474K', 'M',1,'2026-01-01');
+INSERT INTO deportistas (fecha_nacimiento, id, id_categoria, id_usuario,apellido, nombre, rut, sexo,estado,fecha_ingreso) VALUES ('1995-12-24', 3, 3,4, 'Marin','Judith', '192891523', 'F',1,'2026-02-01');
 
 INSERT INTO cuentas_bancarias (id,id_banco,id_club,email,nombre_titular,numero_cuenta,rut,tipo_cuenta) VALUES (1,1,1,'email@email.com','Titular-1',1231,'16074474-K','Cta Cte');
 INSERT INTO cuentas_bancarias (id,id_banco,id_club,email,nombre_titular,numero_cuenta,rut,tipo_cuenta) VALUES (2,2,2,'email@email.com','Titular-1',1231,'16074474-K','Cta Cte');

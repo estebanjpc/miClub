@@ -3,6 +3,7 @@ package com.app.service;
 import java.util.List;
 
 import com.app.dto.MesPagoDTO;
+import com.app.dto.MorosidadClubDTO;
 import com.app.entity.OrdenPago;
 import com.app.entity.Pago;
 import com.app.enums.EstadoPago;
@@ -19,5 +20,12 @@ public interface IPagoService {
 	public List<Pago> buscarPagosPorClub(Long idClubSession);
 	public void aprobarPagoEfectivo(Long id);
 	public List<Pago> buscarPagosFiltrados(Long idClubSession, Integer mes, EstadoPago estado, Long idDeportista);
+	public void rechazarYReactivarPago(Long id, String observacion);
+	public List<Pago> obtenerPendientesAprobacion(Long idClubSession);
+	public List<MorosidadClubDTO> obtenerMorososCriticos(Long idClubSession, Integer mes, Integer anio, int minimoCuotas);
+
+	long contarPagadosEnMes(Long idClub, Integer mes, Integer anio);
+
+	List<Pago> obtenerHistorialDeportistaClub(Long idClub, Long deportistaId);
 
 }

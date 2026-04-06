@@ -5,8 +5,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -18,13 +16,15 @@ import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.app.entity.Club;
 import com.app.entity.Role;
 import com.app.entity.Usuario;
 import com.app.service.IClubService;
-import com.app.service.IEmailService;
+import com.app.service.AsyncEmailService;
 import com.app.service.IUsuarioService;
 import com.app.util.Util;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @Controller
@@ -36,7 +36,7 @@ public class AdminClubController {
 	private IUsuarioService usuarioService;
 
 	@Autowired
-	private IEmailService emailService;
+	private AsyncEmailService asyncEmailService;
 
 	@Autowired
 	private IClubService clubService;
@@ -56,9 +56,12 @@ public class AdminClubController {
 	public String crearClub(Map<String, Object> model) {
 		Usuario usuario = new Usuario();
 		usuario.setRoles(Arrays.asList(new Role("Club", "ROLE_CLUB")));
+		usuario.setClub(new Club());
 		model.put("titulo", "Mantenedor Club");
 		model.put("usuario", usuario);
 		model.put("btn", "Crear");
+		model.put("btnVolver", "/listadoClub");
+		model.put("adminClubForm", Boolean.TRUE);
 		return "club";
 	}
 
@@ -66,22 +69,40 @@ public class AdminClubController {
 	public String guardarUsuario(@Valid Usuario usuario, BindingResult result,
 			@RequestParam(required = false) MultipartFile fileLogo,
 			@RequestParam(required = false) String eliminarLogo,
-			Map<String, Object> model, RedirectAttributes flash, SessionStatus status) {
+			Map<String, Object> model, RedirectAttributes flash,HttpServletRequest request, SessionStatus status) {
 
+		
+		Usuario usuarioLogin = (Usuario) request.getSession().getAttribute("usuarioLogin");
+		
 		model.put("titulo", "Mantenedor Club");
 		model.put("btn", "Actualizar");
+		model.put("adminClubForm", Boolean.TRUE);
+		model.put("btnVolver", "/listadoClub");
 
 		String msje = "Editado con Éxito";
 		String pass = "";
 		boolean flagNuevo = false;
 
-		if (result.hasErrors())
+		if (result.hasErrors()) {
+			model.put("adminClubForm", Boolean.TRUE);
+			model.put("btnVolver", "/listadoClub");
 			return "club";
+		}
 
-		Usuario aux = usuarioService.findByEmail(usuario.getEmail());
-		if (aux != null && !aux.getId().equals(usuario.getId())) {
+		boolean emailDuplicado;
+		if (usuario.getId() != null && usuario.getClub() != null && usuario.getClub().getId() != null) {
+			emailDuplicado = usuarioService.existsOtroUsuarioConEmailEnClub(usuario.getEmail(),
+					usuario.getClub().getId(), usuario.getId());
+		} else {
+			List<Usuario> mismoCorreo = usuarioService.findAllByEmail(usuario.getEmail());
+			emailDuplicado = !mismoCorreo.isEmpty()
+					&& (usuario.getId() == null || mismoCorreo.stream().anyMatch(u -> !u.getId().equals(usuario.getId())));
+		}
+		if (emailDuplicado) {
 			result.rejectValue("email", "error.usuario", "Ya existe un usuario registrado con este correo electrónico");
 			model.put("msjLayout", "error;Correo duplicado;Ya existe un usuario registrado con ese email.");
+			model.put("adminClubForm", Boolean.TRUE);
+			model.put("btnVolver", "/listadoClub");
 			return "club";
 		}
 
@@ -130,14 +151,14 @@ public class AdminClubController {
 		usuario.setEstado(usuario.getClub().getEstado());
 		usuario.getClub().setNombre(usuario.getNombre());
 
-		clubService.save(usuario.getClub());
+		clubService.save(usuario.getClub(),usuarioLogin);
 		usuarioService.save(usuario);
 		status.setComplete();
 		flash.addFlashAttribute("msjLayout", "success;" + msje + "!;Club " + msje);
 
 		if (flagNuevo) {
 			usuario.setPassAux(pass);
-			Executors.newSingleThreadExecutor().execute(() -> emailService.creacionClub(usuario));
+			asyncEmailService.creacionClub(usuario);
 		}
 
 		return "redirect:/listadoClub";
@@ -155,6 +176,7 @@ public class AdminClubController {
 		model.put("usuario", usuario);
 		model.put("btn", "Actualizar");
 		model.put("btnVolver", "/listadoClub");
+		model.put("adminClubForm", Boolean.TRUE);
 		return "club";
 	}
 

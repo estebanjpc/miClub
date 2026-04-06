@@ -109,9 +109,10 @@
 
 <body>
     <!-- Card login -->
-    <div class="card card-login">
+    <div class="card card-login border-0 shadow-lg">
         <div class="card-body">
-            <h2 class="text-center mb-4">Login</h2>
+            <h2 class="text-center mb-2 fw-bold text-primary">Login</h2>
+            <p class="text-center text-muted small mb-4">Ingresa con tu correo y contraseña</p>
             <form th:action="@{/login}" method="post">
                 <div class="form-floating mb-3">
                     <input type="email" name="email" class="form-control" id="email" placeholder="Email" autofocus required>

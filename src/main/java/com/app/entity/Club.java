@@ -1,6 +1,7 @@
 package com.app.entity;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,19 +52,22 @@ public class Club implements Serializable {
 
 	@Column(name = "fecha_baja")
 	private LocalDateTime fechaBaja;
-	
+
 	@Lob
 	@Column(name = "logo", columnDefinition = "LONGBLOB")
 	private byte[] logo;
-	
-    @OneToOne(mappedBy = "club", cascade = CascadeType.ALL, orphanRemoval = true)
-    private CuentaBancaria cuentaBancaria;
 
-    @OneToMany(mappedBy = "club", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Categoria> categorias = new ArrayList<>();
-    
-    @OneToMany(mappedBy = "club")
-    private List<Usuario> usuarios;
+	@OneToOne(mappedBy = "club", cascade = CascadeType.ALL, orphanRemoval = true)
+	private CuentaBancaria cuentaBancaria;
+
+	@OneToMany(mappedBy = "club", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Categoria> categorias = new ArrayList<>();
+
+	@OneToMany(mappedBy = "club")
+	private List<Usuario> usuarios;
+
+	@Column(nullable = false)
+	private Integer diaVencimientoCuota;
 
 	@PrePersist
 	protected void onCreate() {
@@ -158,6 +162,14 @@ public class Club implements Serializable {
 
 	public void setUsuarios(List<Usuario> usuarios) {
 		this.usuarios = usuarios;
+	}
+
+	public Integer getDiaVencimientoCuota() {
+		return diaVencimientoCuota;
+	}
+
+	public void setDiaVencimientoCuota(Integer diaVencimientoCuota) {
+		this.diaVencimientoCuota = diaVencimientoCuota;
 	}
 
 }

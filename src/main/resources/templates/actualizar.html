@@ -122,9 +122,10 @@
 </head>
 
 <body>
-	<div class="card card-login">
-		<h2 class="text-center" th:text="${titulo}">Actualizar Contraseña</h2>
-		<p class="lh-1 mb-4 text-center">Ingrese nueva contraseña</p>
+	<div class="card card-login border-0 shadow-lg">
+		<div class="card-body px-1">
+		<h2 class="text-center fw-bold text-primary mb-2" th:text="${titulo}">Actualizar Contraseña</h2>
+		<p class="text-muted small text-center mb-4">Ingresa y confirma tu nueva contraseña</p>
 
 		<form th:action="@{/actualizarPass}" method="post">
 			<div class="input-group mb-3">
@@ -143,6 +144,7 @@
 				<button class="btn btn-primary btn-lg" type="submit">Actualizar Clave</button>
 			</div>
 		</form>
+		</div>
 	</div>
 
 	<div class="footer-login">

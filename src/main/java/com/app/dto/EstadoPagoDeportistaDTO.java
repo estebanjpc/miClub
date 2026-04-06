@@ -18,6 +18,10 @@ public class EstadoPagoDeportistaDTO {
 	private Long idPago; // null si no existe
 	private Long idOrdenPago;
 	private LocalDateTime fechaPago;
+	private String observacion;
+
+	private Long idCategoria;
+	private String nombreCategoria;
 
 
 
@@ -92,7 +96,31 @@ public class EstadoPagoDeportistaDTO {
     public void setFechaPago(LocalDateTime fechaPago) {
         this.fechaPago = fechaPago;
     }
-	
+    
+    public String getObservacion() {
+		return observacion;
+	}
+
+	public void setObservacion(String observacion) {
+		this.observacion = observacion;
+	}
+
+	public Long getIdCategoria() {
+		return idCategoria;
+	}
+
+	public void setIdCategoria(Long idCategoria) {
+		this.idCategoria = idCategoria;
+	}
+
+	public String getNombreCategoria() {
+		return nombreCategoria;
+	}
+
+	public void setNombreCategoria(String nombreCategoria) {
+		this.nombreCategoria = nombreCategoria;
+	}
+
 	public String getColorEstado() {
 	    return switch (estado) {
 	        case PAGADO -> "bg-success";

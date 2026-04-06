@@ -3,30 +3,48 @@
 
 <head th:replace="~{layout/layout :: head}"></head>
 
-<body>
+<body class="d-flex flex-column min-vh-100">
 	<header th:replace="~{layout/layout :: header}"></header>
-	<main class="container py-5">
-		<div class="card p-4">
-			<h3>Retorno de pago Khipu</h3>
-			<p th:if="${estado == 'OK'}">
-				El pago fue realizado correctamente.
-			</p>
 
-			<p th:if="${estado == 'CANCELADO'}">
-				El pago fue cancelado por el usuario.
-			</p>
+	<main class="flex-grow-1 bg-light">
+		<div class="container-fluid px-3 px-lg-4 py-4 py-lg-5" style="max-width: 640px;">
 
-			<p th:if="${estado == 'PROCESANDO'}">
-				Su orden <strong th:text="${ordenId}"></strong> está siendo procesada.
-			</p>
+			<div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+				<div class="card-header bg-white border-bottom py-3 px-3 px-lg-4 d-flex align-items-center gap-2">
+					<span class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center"
+						style="width:44px;height:44px;">
+						<i class="fas fa-credit-card"></i>
+					</span>
+					<div>
+						<h1 class="h5 mb-0 fw-semibold text-dark">Retorno de pago Khipu</h1>
+						<p class="small text-muted mb-0">Estado de tu transacción</p>
+					</div>
+				</div>
+				<div class="card-body p-4">
+					<div th:if="${estado == 'OK'}" class="alert alert-success border-0 rounded-3 mb-3" role="alert">
+						<i class="fas fa-check-circle me-2"></i>El pago fue realizado correctamente.
+					</div>
 
-			<p>
-				Si el pago fue exitoso, en unos segundos verá el pago marcado como
-				<strong>Pagado</strong> en "Pagos Realizados".
-			</p>
-			<a th:href="@{/consulta}" class="btn btn-primary">Volver a Mis Pagos</a>
+					<div th:if="${estado == 'CANCELADO'}" class="alert alert-warning border-0 rounded-3 mb-3" role="alert">
+						<i class="fas fa-times-circle me-2"></i>El pago fue cancelado.
+					</div>
+
+					<div th:if="${estado == 'PROCESANDO'}" class="alert alert-info border-0 rounded-3 mb-3" role="alert">
+						<i class="fas fa-hourglass-half me-2"></i>Tu orden <strong th:text="${ordenId}">—</strong> está siendo procesada.
+					</div>
+
+					<p class="text-muted small mb-4">
+						Si el pago fue exitoso, en unos segundos verás el estado actualizado en tus pagos.
+					</p>
+
+					<a th:href="@{/consulta}" class="btn btn-primary rounded-pill">
+						<i class="fas fa-arrow-left me-1"></i> Volver a mis pagos
+					</a>
+				</div>
+			</div>
 		</div>
 	</main>
+
 	<footer th:replace="~{layout/layout :: footer}"></footer>
 </body>
 

@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.app.dao.ICategoriaDao;
+import com.app.repository.ICategoriaRepository;
 import com.app.entity.Categoria;
 import com.app.entity.Club;
 
@@ -13,30 +13,30 @@ import com.app.entity.Club;
 public class CategoriaServiceImpl implements ICategoriaService {
 	
 	@Autowired
-	private ICategoriaDao categoriaDao;
+	private ICategoriaRepository categoriaRepository;
 
 	@Override
 	public List<Categoria> findByClub(Club club) {
-		return categoriaDao.findByClub(club);
+		return categoriaRepository.findByClub(club);
 	}
 
 	@Override
 	public Categoria findById(Long id) {
-		return categoriaDao.findById(id).orElse(null);
+		return categoriaRepository.findById(id).orElse(null);
 	}
 
 	@Override
 	public void save(Categoria categoria) {
-		categoriaDao.save(categoria);
+		categoriaRepository.save(categoria);
 	}
 
 	@Override
 	public void delete(Long id) {
-		categoriaDao.deleteById(id);
+		categoriaRepository.deleteById(id);
 	}
 
 	@Override
 	public Categoria findByNombreAndClub(String nombre, Club club) {
-	    return categoriaDao.findByNombreAndClub(nombre, club);
+	    return categoriaRepository.findByNombreAndClub(nombre, club);
 	}
 }

@@ -68,7 +68,11 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 			return "/listadoClub";
 
 		if (usuario.getRoles().stream().anyMatch(r -> "ROLE_CLUB".equals(r.getAuthority())))
-			return "/listadoUsuarios";
+			return "/listadoDeportistas";
+		
+		if(usuario.getEstado().equalsIgnoreCase("0")) {
+			return "/actualizarPass";
+		}
 
 		return "/consulta";
 	}

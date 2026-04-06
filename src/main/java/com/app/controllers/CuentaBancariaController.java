@@ -1,5 +1,6 @@
 package com.app.controllers;
 
+import java.security.Principal;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,13 +13,15 @@ import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.app.editors.BancoEditor;
 import com.app.entity.Banco;
 import com.app.entity.CuentaBancaria;
 import com.app.entity.Usuario;
-import com.app.service.ICuentaBancariaService;
 import com.app.service.IBancoService;
+import com.app.service.ICuentaBancariaService;
+import com.app.service.IUsuarioService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -35,6 +38,9 @@ public class CuentaBancariaController {
 	
 	@Autowired
 	private BancoEditor bancoEditor;
+
+	@Autowired
+	private IUsuarioService usuarioService;
 	
 	
 
@@ -44,10 +50,12 @@ public class CuentaBancariaController {
 	}
 	
 	@GetMapping("/cuentas/cuentaBancaria")
-	public String verCuenta(Model model, HttpServletRequest request) {
-	    Usuario usuario = (Usuario) request.getSession().getAttribute("usuarioLogin");
+	public String verCuenta(Model model, HttpServletRequest request, Principal principal,
+			RedirectAttributes flash) {
+	    Usuario usuario = usuarioService.refrescarUsuarioSesion(request, principal.getName());
 	    if (usuario == null || usuario.getClub() == null) {
-	        return "redirect:/login";
+	        flash.addFlashAttribute("msjLogin", "error;Club;Selecciona un club para continuar.");
+	        return "redirect:/seleccionarClub";
 	    }
 
 	    CuentaBancaria cuenta = cuentaService.findByClub(usuario.getClub());
@@ -69,11 +77,14 @@ public class CuentaBancariaController {
 	public String guardar(@Valid @ModelAttribute("cuenta") CuentaBancaria cuenta,
 	                      BindingResult result,
 	                      Model model,
-	                      HttpServletRequest request) {
+	                      HttpServletRequest request,
+	                      Principal principal,
+	                      RedirectAttributes flash) {
 
-	    Usuario usuario = (Usuario) request.getSession().getAttribute("usuarioLogin");
+	    Usuario usuario = usuarioService.refrescarUsuarioSesion(request, principal.getName());
 	    if (usuario == null || usuario.getClub() == null) {
-	        return "redirect:/login";
+	        flash.addFlashAttribute("msjLogin", "error;Club;Selecciona un club para continuar.");
+	        return "redirect:/seleccionarClub";
 	    }
 
 	    List<Banco> listadoBancos = bancoService.findAll();
@@ -100,10 +111,12 @@ public class CuentaBancariaController {
 	 * Eliminar la cuenta bancaria existente
 	 */
 	@GetMapping("/cuentas/eliminar/{id}")
-	public String eliminar(@PathVariable Long id, HttpServletRequest request) {
-		Usuario usuario = (Usuario) request.getSession().getAttribute("usuarioLogin");
+	public String eliminar(@PathVariable Long id, HttpServletRequest request, Principal principal,
+			RedirectAttributes flash) {
+		Usuario usuario = usuarioService.refrescarUsuarioSesion(request, principal.getName());
 		if (usuario == null || usuario.getClub() == null) {
-			return "redirect:/login";
+			flash.addFlashAttribute("msjLogin", "error;Club;Selecciona un club para continuar.");
+			return "redirect:/seleccionarClub";
 		}
 
 		CuentaBancaria cuenta = cuentaService.findById(id);

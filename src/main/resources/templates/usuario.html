@@ -13,252 +13,281 @@
 			color: #dc3545;
 			font-size: 0.875em;
 		}
+
+		.deportista-item {
+			background: #fff;
+		}
 	</style>
 </head>
 
 <body class="d-flex flex-column min-vh-100">
 	<header th:replace="~{layout/layout :: header}"></header>
 
-	<main class="flex-grow-1">
-		<div class="container py-4">
+	<main class="flex-grow-1 bg-light">
+		<div class="container-fluid px-3 px-lg-4 py-3 py-lg-4" style="max-width: 960px;">
 
-			<!-- Título -->
-			<div class="row mb-4">
-				<div class="col text-center">
-					<h3 th:text="${titulo}" class="fw-bold text-primary border-bottom pb-2"></h3>
+			<div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
+				<div>
+					<h3 class="fw-bold text-primary mb-0" th:text="${titulo}">Usuario</h3>
+					<p class="text-muted small mb-0 mt-1"
+						th:text="${isEditing} ? 'Modifica los datos del apoderado y deportistas.' : 'Completa el alta de un apoderado y al menos un deportista asociado.'">
+					</p>
 				</div>
+				<a th:href="@{/listadoDeportistas}" class="btn btn-outline-secondary btn-sm rounded-pill">
+					<i class="fas fa-arrow-left me-1"></i> Volver al listado
+				</a>
 			</div>
 
-			<!-- Formulario -->
-			<div class="row justify-content-center">
-				<div class="col-lg-10 col-md-10">
-					<div class="card shadow-sm border-0">
-						<div class="card-body">
-							<form id="idForm" th:action="@{/guardarUsuario}" th:object="${usuario}" method="post"
-								class="row g-3">
+			<div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+				<div class="card-header bg-white border-bottom py-3 px-3 px-lg-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
+					<div class="d-flex align-items-center gap-2">
+						<span class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center flex-shrink-0"
+							style="width:40px;height:40px;">
+							<i th:class="${isEditing} ? 'fas fa-user-edit' : 'fas fa-user-plus'"></i>
+						</span>
+						<div>
+							<h3 class="h6 mb-0 fw-semibold text-dark"
+								th:text="${isEditing} ? 'Editar ficha' : 'Nuevo usuario'">Formulario</h3>
+							<p class="small text-muted mb-0">Apoderado y deportistas del club</p>
+						</div>
+					</div>
+				</div>
 
-								<!-- SECCIÓN APODERADO -->
-								<h5 class="text-primary mt-3 border-bottom pb-2">
-									<i class="fas fa-user-tie"></i> Datos del Apoderado
-								</h5>
+				<div class="card-body p-3 p-lg-4">
+					<form id="idForm" th:action="@{/guardarUsuarioClub}" th:object="${usuario}" method="post" class="row g-3">
+
+						<!-- SECCIÓN APODERADO -->
+						<div class="col-12">
+							<h5 class="text-primary border-bottom pb-2 mb-3 d-flex align-items-center gap-2">
+								<span class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center"
+									style="width:32px;height:32px;font-size:0.85rem;">
+									<i class="fas fa-user-tie"></i>
+								</span>
+								Datos del apoderado
+							</h5>
+						</div>
+
+						<div class="col-md-6">
+							<label class="form-label fw-semibold">Nombre</label>
+							<input th:field="*{nombre}" type="text" class="form-control"
+								th:classappend="${#fields.hasErrors('nombre')} ? 'is-invalid' : ''" />
+							<div class="invalid-feedback" th:if="${#fields.hasErrors('nombre')}"
+								th:errors="*{nombre}"></div>
+						</div>
+
+						<div class="col-md-6">
+							<label class="form-label fw-semibold">Apellido</label>
+							<input th:field="*{apellido}" type="text" class="form-control"
+								th:classappend="${#fields.hasErrors('apellido')} ? 'is-invalid' : ''" />
+							<div class="invalid-feedback" th:if="${#fields.hasErrors('apellido')}"
+								th:errors="*{apellido}"></div>
+						</div>
+
+						<div class="col-md-6">
+							<label class="form-label fw-semibold">Email</label>
+							<input th:field="*{email}" type="email" class="form-control"
+								th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''" />
+							<div class="invalid-feedback" th:if="${#fields.hasErrors('email')}"
+								th:errors="*{email}"></div>
+						</div>
+
+						<div class="col-md-6">
+							<label class="form-label fw-semibold">Teléfono</label>
+							<input th:field="*{telefono}" type="text" placeholder="997249492" class="form-control"
+								th:classappend="${#fields.hasErrors('telefono')} ? 'is-invalid' : ''" />
+							<div class="invalid-feedback" th:if="${#fields.hasErrors('telefono')}"
+								th:errors="*{telefono}"></div>
+						</div>
+
+						<div class="col-md-6">
+							<label class="form-label fw-semibold">Dirección</label>
+							<input th:field="*{direccion}" type="text" class="form-control"
+								th:classappend="${#fields.hasErrors('direccion')} ? 'is-invalid' : ''" />
+							<div class="invalid-feedback" th:if="${#fields.hasErrors('direccion')}"
+								th:errors="*{direccion}"></div>
+						</div>
+
+						<div class="col-md-6">
+							<label class="form-label fw-semibold">RUT</label>
+							<input th:field="*{rut}" type="text" placeholder="11111111K" class="form-control"
+								th:classappend="${#fields.hasErrors('rut')} ? 'is-invalid' : ''" />
+							<div class="invalid-feedback" th:if="${#fields.hasErrors('rut')}"
+								th:errors="*{rut}"></div>
+						</div>
+
+						<div class="col-md-6">
+							<label class="form-label fw-semibold">Estado</label>
+							<select th:field="*{estado}" class="form-select"
+								th:classappend="${#fields.hasErrors('estado')} ? 'is-invalid' : ''">
+								<option th:each="estado: ${estados.entrySet()}" th:value="${estado.key}"
+									th:text="${estado.value}"></option>
+							</select>
+							<div class="invalid-feedback" th:if="${#fields.hasErrors('estado')}"
+								th:errors="*{estado}"></div>
+						</div>
+
+						<!-- SECCIÓN DEPORTISTA -->
+						<div class="col-12 mt-4">
+							<h5 class="text-primary border-bottom pb-2 mb-3 d-flex align-items-center gap-2">
+								<span class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center"
+									style="width:32px;height:32px;font-size:0.85rem;">
+									<i class="fas fa-running"></i>
+								</span>
+								Datos del deportista
+							</h5>
+						</div>
+
+						<div class="col-12">
+							<div class="form-check mb-2 p-3 rounded-3 bg-white border shadow-sm">
+								<input class="form-check-input" type="checkbox" id="chkMismo" />
+								<label class="form-check-label" for="chkMismo">
+									El apoderado también es el deportista
+								</label>
+							</div>
+						</div>
+
+						<div id="deportistasContainer" class="col-12">
+							<div th:each="deportista, iStat : *{deportistas}"
+								class="deportista-item row g-3 mb-3 p-3 p-md-4 rounded-3 border shadow-sm">
+
+								<div class="col-12 d-flex justify-content-between align-items-center mb-1 pb-2 border-bottom border-light">
+									<span class="small fw-semibold text-secondary text-uppercase">Deportista <span th:text="${iStat.count}">1</span></span>
+								</div>
 
 								<div class="col-md-6">
 									<label class="form-label fw-semibold">Nombre</label>
-									<input th:field="*{nombre}" type="text" class="form-control"
-										th:classappend="${#fields.hasErrors('nombre')} ? 'is-invalid' : ''" />
-									<div class="invalid-feedback" th:if="${#fields.hasErrors('nombre')}"
-										th:errors="*{nombre}"></div>
+									<input th:field="*{deportistas[__${iStat.index}__].nombre}" type="text"
+										class="form-control"
+										th:classappend="${#fields.hasErrors('deportistas[' + iStat.index + '].nombre')} ? 'is-invalid' : ''" />
+									<div class="invalid-feedback"
+										th:if="${#fields.hasErrors('deportistas[' + iStat.index + '].nombre')}"
+										th:errors="*{deportistas[__${iStat.index}__].nombre}"></div>
 								</div>
 
 								<div class="col-md-6">
 									<label class="form-label fw-semibold">Apellido</label>
-									<input th:field="*{apellido}" type="text" class="form-control"
-										th:classappend="${#fields.hasErrors('apellido')} ? 'is-invalid' : ''" />
-									<div class="invalid-feedback" th:if="${#fields.hasErrors('apellido')}"
-										th:errors="*{apellido}"></div>
-								</div>
-
-								<div class="col-md-6">
-									<label class="form-label fw-semibold">Email</label>
-									<input th:field="*{email}" type="email" class="form-control"
-										th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''" />
-									<div class="invalid-feedback" th:if="${#fields.hasErrors('email')}"
-										th:errors="*{email}"></div>
-								</div>
-
-								<div class="col-md-6">
-									<label class="form-label fw-semibold">Teléfono</label>
-									<input th:field="*{telefono}" type="text" placeholder="997249492"
+									<input th:field="*{deportistas[__${iStat.index}__].apellido}" type="text"
 										class="form-control"
-										th:classappend="${#fields.hasErrors('telefono')} ? 'is-invalid' : ''" />
-									<div class="invalid-feedback" th:if="${#fields.hasErrors('telefono')}"
-										th:errors="*{telefono}"></div>
-								</div>
-
-								<div class="col-md-6">
-									<label class="form-label fw-semibold">Dirección</label>
-									<input th:field="*{direccion}" type="text" class="form-control"
-										th:classappend="${#fields.hasErrors('direccion')} ? 'is-invalid' : ''" />
-									<div class="invalid-feedback" th:if="${#fields.hasErrors('direccion')}"
-										th:errors="*{direccion}"></div>
+										th:classappend="${#fields.hasErrors('deportistas[' + iStat.index + '].apellido')} ? 'is-invalid' : ''" />
+									<div class="invalid-feedback"
+										th:if="${#fields.hasErrors('deportistas[' + iStat.index + '].apellido')}"
+										th:errors="*{deportistas[__${iStat.index}__].apellido}"></div>
 								</div>
 
 								<div class="col-md-6">
 									<label class="form-label fw-semibold">RUT</label>
-									<input th:field="*{rut}" type="text" placeholder="11111111K" class="form-control"
-										th:classappend="${#fields.hasErrors('rut')} ? 'is-invalid' : ''" />
-									<div class="invalid-feedback" th:if="${#fields.hasErrors('rut')}"
-										th:errors="*{rut}"></div>
+									<input th:field="*{deportistas[__${iStat.index}__].rut}" type="text"
+										class="form-control"
+										th:classappend="${#fields.hasErrors('deportistas[' + iStat.index + '].rut')} ? 'is-invalid' : ''" />
+									<div class="invalid-feedback"
+										th:if="${#fields.hasErrors('deportistas[' + iStat.index + '].rut')}"
+										th:errors="*{deportistas[__${iStat.index}__].rut}"></div>
+								</div>
+
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">Fecha Nacimiento</label>
+									<input type="date"
+										th:field="*{deportistas[__${iStat.index}__].fechaNacimiento}"
+										th:value="${#temporals.format(deportista.fechaNacimiento, 'yyyy-MM-dd')}"
+										class="form-control"
+										th:classappend="${#fields.hasErrors('deportistas[' + iStat.index + '].fechaNacimiento')} ? 'is-invalid' : ''" />
+									<div class="invalid-feedback"
+										th:if="${#fields.hasErrors('deportistas[' + iStat.index + '].fechaNacimiento')}"
+										th:errors="*{deportistas[__${iStat.index}__].fechaNacimiento}"></div>
+								</div>
+
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">Sexo</label>
+									<select th:field="*{deportistas[__${iStat.index}__].sexo}" class="form-select"
+										th:classappend="${#fields.hasErrors('deportistas[' + iStat.index + '].sexo')} ? 'is-invalid' : ''">
+										<option value="">Seleccione</option>
+										<option value="M">Masculino</option>
+										<option value="F">Femenino</option>
+									</select>
+									<div class="invalid-feedback"
+										th:if="${#fields.hasErrors('deportistas[' + iStat.index + '].sexo')}"
+										th:errors="*{deportistas[__${iStat.index}__].sexo}"></div>
+								</div>
+
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">Categoría</label>
+									<select th:if="${categorias != null and !categorias.isEmpty()}"
+										th:field="*{deportistas[__${iStat.index}__].categoria}" class="form-select"
+										th:classappend="${#fields.hasErrors('deportistas[' + iStat.index + '].categoria')} ? 'is-invalid' : ''">
+										<option value="">Seleccione...</option>
+										<option th:each="cat : ${categorias}" th:value="${cat.id}"
+											th:text="${cat.nombre}"></option>
+									</select>
+									<div th:if="${categorias == null or categorias.isEmpty()}"
+										class="text-danger fw-semibold small mt-1">
+										<i class="fas fa-exclamation-triangle me-1"></i>Debe crear al menos una categoría
+									</div>
+									<div class="invalid-feedback"
+										th:if="${#fields.hasErrors('deportistas[' + iStat.index + '].categoria')}"
+										th:errors="*{deportistas[__${iStat.index}__].categoria}"></div>
 								</div>
 
 								<div class="col-md-6">
 									<label class="form-label fw-semibold">Estado</label>
-									<select th:field="*{estado}" class="form-select"
-										th:classappend="${#fields.hasErrors('estado')} ? 'is-invalid' : ''">
-										<option th:each="estado: ${estados.entrySet()}" th:value="${estado.key}"
-											th:text="${estado.value}"></option>
+									<select th:field="*{deportistas[__${iStat.index}__].estado}" class="form-select"
+										th:classappend="${#fields.hasErrors('deportistas[' + iStat.index + '].estado')} ? 'is-invalid' : ''">
+										<option th:each="est: ${estados.entrySet()}" th:value="${est.key}"
+											th:text="${est.value}"></option>
 									</select>
-									<div class="invalid-feedback" th:if="${#fields.hasErrors('estado')}"
-										th:errors="*{estado}"></div>
+									<div class="invalid-feedback"
+										th:if="${#fields.hasErrors('deportistas[' + iStat.index + '].estado')}"
+										th:errors="*{deportistas[__${iStat.index}__].estado}"></div>
 								</div>
 
-								<!-- SECCIÓN DEPORTISTA -->
-								<h5 class="text-primary mt-5 border-bottom pb-2">
-									<i class="fas fa-running"></i> Datos del Deportista
-								</h5>
-
-								<div class="form-check mb-3">
-									<input class="form-check-input" type="checkbox" id="chkMismo" />
-									<label class="form-check-label" for="chkMismo">
-										El apoderado también es el deportista
-									</label>
+								<div class="col-md-6">
+									<label class="form-label fw-semibold">Fecha Ingreso</label>
+									<input type="date"
+										th:field="*{deportistas[__${iStat.index}__].fechaIngreso}"
+										th:value="${#temporals.format(deportista.fechaIngreso, 'yyyy-MM-dd')}"
+										class="form-control"
+										th:classappend="${#fields.hasErrors('deportistas[' + iStat.index + '].fechaIngreso')} ? 'is-invalid' : ''" />
+									<div class="invalid-feedback"
+										th:if="${#fields.hasErrors('deportistas[' + iStat.index + '].fechaIngreso')}"
+										th:errors="*{deportistas[__${iStat.index}__].fechaIngreso}"></div>
 								</div>
 
-								<div id="deportistasContainer">
-									<div th:each="deportista, iStat : *{deportistas}"
-										class="deportista-item row g-3 mb-4 border rounded p-3">
-
-										<div class="col-md-6">
-											<label class="form-label fw-semibold">Nombre</label>
-											<input th:field="*{deportistas[__${iStat.index}__].nombre}" type="text"
-												class="form-control"
-												th:classappend="${#fields.hasErrors('deportistas[' + iStat.index + '].nombre')} ? 'is-invalid' : ''" />
-											<div class="invalid-feedback"
-												th:if="${#fields.hasErrors('deportistas[' + iStat.index + '].nombre')}"
-												th:errors="*{deportistas[__${iStat.index}__].nombre}"></div>
-										</div>
-
-										<div class="col-md-6">
-											<label class="form-label fw-semibold">Apellido</label>
-											<input th:field="*{deportistas[__${iStat.index}__].apellido}" type="text"
-												class="form-control"
-												th:classappend="${#fields.hasErrors('deportistas[' + iStat.index + '].apellido')} ? 'is-invalid' : ''" />
-											<div class="invalid-feedback"
-												th:if="${#fields.hasErrors('deportistas[' + iStat.index + '].apellido')}"
-												th:errors="*{deportistas[__${iStat.index}__].apellido}"></div>
-										</div>
-
-										<div class="col-md-6">
-											<label class="form-label fw-semibold">RUT</label>
-											<input th:field="*{deportistas[__${iStat.index}__].rut}" type="text"
-												class="form-control"
-												th:classappend="${#fields.hasErrors('deportistas[' + iStat.index + '].rut')} ? 'is-invalid' : ''" />
-											<div class="invalid-feedback"
-												th:if="${#fields.hasErrors('deportistas[' + iStat.index + '].rut')}"
-												th:errors="*{deportistas[__${iStat.index}__].rut}"></div>
-										</div>
-
-										<div class="col-md-6">
-											<label class="form-label fw-semibold">Fecha Nacimiento</label>
-											<input type="date"
-												th:field="*{deportistas[__${iStat.index}__].fechaNacimiento}"
-												th:value="${#temporals.format(deportista.fechaNacimiento, 'yyyy-MM-dd')}"
-												class="form-control"
-												th:classappend="${#fields.hasErrors('deportistas[' + iStat.index + '].fechaNacimiento')} ? 'is-invalid' : ''" />
-											<div class="invalid-feedback"
-												th:if="${#fields.hasErrors('deportistas[' + iStat.index + '].fechaNacimiento')}"
-												th:errors="*{deportistas[__${iStat.index}__].fechaNacimiento}"></div>
-										</div>
-
-
-										<div class="col-md-6">
-											<label class="form-label fw-semibold">Sexo</label>
-											<select th:field="*{deportistas[__${iStat.index}__].sexo}"
-												class="form-select"
-												th:classappend="${#fields.hasErrors('deportistas[' + iStat.index + '].sexo')} ? 'is-invalid' : ''">
-												<option value="">Seleccione</option>
-												<option value="M">Masculino</option>
-												<option value="F">Femenino</option>
-											</select>
-											<div class="invalid-feedback"
-												th:if="${#fields.hasErrors('deportistas[' + iStat.index + '].sexo')}"
-												th:errors="*{deportistas[__${iStat.index}__].sexo}"></div>
-										</div>
-
-										<div class="col-md-6">
-											<label class="form-label fw-semibold">Categoría</label>
-
-											<!-- Si hay categorías, muestra el select -->
-											<select th:if="${categorias != null and !categorias.isEmpty()}"
-												th:field="*{deportistas[__${iStat.index}__].categoria}"
-												class="form-select"
-												th:classappend="${#fields.hasErrors('deportistas[' + iStat.index + '].categoria')} ? 'is-invalid' : ''">
-
-												<option value="">Seleccione...</option>
-												<option th:each="cat : ${categorias}" th:value="${cat.id}"
-													th:text="${cat.nombre}"></option>
-											</select>
-
-											<!-- Si la lista está vacía, muestra mensaje en rojo -->
-											<div th:if="${categorias == null or categorias.isEmpty()}"
-												class="text-danger fw-semibold mt-2">
-												Debe crear categoría
-											</div>
-
-											<!-- Mensaje de error de validación -->
-											<div class="invalid-feedback"
-												th:if="${#fields.hasErrors('deportistas[' + iStat.index + '].categoria')}"
-												th:errors="*{deportistas[__${iStat.index}__].categoria}"></div>
-										</div>
-
-
-										<div class="col-md-6">
-											<label class="form-label fw-semibold">Estado</label>
-											<select th:field="*{deportistas[__${iStat.index}__].estado}"
-												class="form-select"
-												th:classappend="${#fields.hasErrors('deportistas[' + iStat.index + '].estado')} ? 'is-invalid' : ''">
-												<option th:each="est: ${estados.entrySet()}" th:value="${est.key}"
-													th:text="${est.value}"></option>
-											</select>
-											<div class="invalid-feedback"
-												th:if="${#fields.hasErrors('deportistas[' + iStat.index + '].estado')}"
-												th:errors="*{deportistas[__${iStat.index}__].estado}"></div>
-										</div>
-
-
-										<div class="col-12 text-end">
-											<button type="button"
-												class="btn btn-outline-danger btn-sm remove-deportista">
-												<i class="fas fa-trash"></i> Eliminar deportista
-											</button>
-										</div>
-									</div>
-								</div>
-
-
-
-								<div class="col-12 text-end">
-									<button type="button" id="btnAgregarDeportista"
-										class="btn btn-outline-primary btn-sm">
-										<i class="fas fa-plus"></i> Agregar otro deportista
+								<div class="col-12 text-end pt-1">
+									<button type="button" class="btn btn-outline-danger btn-sm rounded-pill remove-deportista">
+										<i class="fas fa-trash"></i> Eliminar deportista
 									</button>
 								</div>
-
-								<!-- Botones -->
-								<div class="col-12 text-center mt-4">
-									<a th:href="@{/listadoUsuarios}"
-										class="btn btn-outline-secondary rounded-pill px-4 me-2">
-										<i class="fas fa-arrow-left"></i> Volver
-									</a>
-									<button type="submit" class="btn btn-primary rounded-pill px-4">
-										<i class="fas fa-save"></i> <span th:text="${btn}"></span>
-									</button>
-								</div>
-
-							</form>
-
-
+							</div>
 						</div>
-					</div>
+
+						<div class="col-12">
+							<button type="button" id="btnAgregarDeportista"
+								class="btn btn-outline-primary btn-sm rounded-pill">
+								<i class="fas fa-plus me-1"></i> Agregar otro deportista
+							</button>
+						</div>
+
+						<div class="col-12 border-top pt-4 mt-2 d-flex flex-wrap justify-content-center gap-2">
+							<a th:href="@{/listadoDeportistas}" class="btn btn-outline-secondary rounded-pill px-4">
+								<i class="fas fa-arrow-left me-1"></i> Volver
+							</a>
+							<button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+								<i class="fas fa-save me-1"></i> <span th:text="${btn}">Guardar</span>
+							</button>
+						</div>
+
+					</form>
 				</div>
 			</div>
 
+			<p class="small text-muted mt-3 mb-0" th:if="${!isEditing}">
+				<i class="fas fa-info-circle me-1"></i>
+				Al crear un usuario nuevo se genera una contraseña provisional y se envía por correo.
+			</p>
 		</div>
 	</main>
 
-	<script th:src="@{/js/usuario.js}"></script>
 	<footer th:replace="~{layout/layout :: footer}"></footer>
-
+	<script th:src="@{/js/usuario.js}"></script>
 </body>
 
 </html>

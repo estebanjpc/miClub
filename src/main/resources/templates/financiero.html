@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout/layout :: head}" />
+
+<body class="d-flex flex-column min-vh-100">
+	<header th:replace="~{layout/layout :: header}"></header>
+
+	<main class="flex-grow-1 bg-light">
+		<div class="container-fluid px-3 px-lg-4 py-3 py-lg-4" style="max-width: 1400px;">
+
+			<div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3">
+				<div>
+					<h3 class="fw-bold text-primary mb-0" th:text="${titulo}">Dashboard financiero</h3>
+					<p class="text-muted small mb-0 mt-1">Indicadores, filtros por período y categoría, exportación y conciliación Khipu.</p>
+				</div>
+				<a th:href="@{/listadoPagos}" class="btn btn-outline-secondary btn-sm rounded-pill">
+					<i class="fas fa-arrow-left"></i> Volver a pagos
+				</a>
+			</div>
+
+			<!-- Filtros -->
+			<div class="card border-0 shadow-sm mb-3 rounded-3">
+				<div class="card-body">
+					<form id="formFinanciero" th:action="@{/financiero}" method="get" class="row g-2 align-items-end">
+						<div class="col-6 col-md-2">
+							<label class="form-label small text-muted mb-0">Mes desde</label>
+							<select name="mesDesde" class="form-select form-select-sm">
+								<option th:each="e : ${meses}" th:value="${e.key}" th:text="${e.value}"
+									th:selected="${e.key == mesDesde}"></option>
+							</select>
+						</div>
+						<div class="col-6 col-md-2">
+							<label class="form-label small text-muted mb-0">Año desde</label>
+							<select name="anioDesde" class="form-select form-select-sm">
+								<option th:each="y : ${anios}" th:value="${y}" th:text="${y}"
+									th:selected="${y == anioDesde}"></option>
+							</select>
+						</div>
+						<div class="col-6 col-md-2">
+							<label class="form-label small text-muted mb-0">Mes hasta</label>
+							<select name="mesHasta" class="form-select form-select-sm">
+								<option th:each="e : ${meses}" th:value="${e.key}" th:text="${e.value}"
+									th:selected="${e.key == mesHasta}"></option>
+							</select>
+						</div>
+						<div class="col-6 col-md-2">
+							<label class="form-label small text-muted mb-0">Año hasta</label>
+							<select name="anioHasta" class="form-select form-select-sm">
+								<option th:each="y : ${anios}" th:value="${y}" th:text="${y}"
+									th:selected="${y == anioHasta}"></option>
+							</select>
+						</div>
+						<div class="col-md-3">
+							<label class="form-label small text-muted mb-0">Categoría (reporte)</label>
+							<select name="idCategoria" class="form-select form-select-sm">
+								<option value="">— Todas —</option>
+								<option th:each="cat : ${categorias}" th:value="${cat.id}" th:text="${cat.nombre}"
+									th:selected="${idCategoriaSel != null && idCategoriaSel == cat.id}"></option>
+							</select>
+						</div>
+						<div class="col-md-3">
+							<label class="form-label small text-muted mb-0">Medio de pago (reporte)</label>
+							<select name="medio" class="form-select form-select-sm">
+								<option value="">— Todos —</option>
+								<option th:each="m : ${mediosPago}" th:value="${m.name()}" th:text="${m.name()}"
+									th:selected="${medioSel != null && medioSel.name() == m.name()}"></option>
+							</select>
+						</div>
+						<div class="col-12 col-md-auto ms-md-auto d-flex gap-2 flex-wrap">
+							<button type="submit" class="btn btn-primary btn-sm rounded-pill">
+								<i class="fas fa-filter"></i> Aplicar
+							</button>
+							<button type="button" class="btn btn-outline-danger btn-sm rounded-pill" onclick="exportFinanciero('pdf');">
+								<i class="fas fa-file-pdf"></i> PDF
+							</button>
+							<button type="button" class="btn btn-outline-success btn-sm rounded-pill" onclick="exportFinanciero('xlsx');">
+								<i class="fas fa-file-excel"></i> Excel
+							</button>
+						</div>
+					</form>
+					<p class="small text-muted mb-0 mt-2" th:text="${'Período analizado: ' + dashboard.etiquetaPeriodo}">Período</p>
+				</div>
+			</div>
+
+			<!-- KPIs -->
+			<div class="row g-2 g-lg-3 mb-3">
+				<div class="col-md-4">
+					<div class="card border-0 shadow-sm h-100 rounded-3 bg-primary text-white">
+						<div class="card-body py-3 px-3">
+							<h6 class="small mb-1 opacity-90">Total recaudado</h6>
+							<p class="small mb-2 opacity-75">Solo pagos <strong>PAGADO</strong> en el rango</p>
+							<h3 class="mb-0 fw-semibold">$ <span th:text="${dashboard.totalRecaudado}">0</span></h3>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-4">
+					<div class="card border-0 shadow-sm h-100 rounded-3 bg-warning">
+						<div class="card-body py-3 px-3">
+							<h6 class="text-dark small mb-1">Deuda total estimada</h6>
+							<p class="small text-dark mb-2 opacity-75">Cuotas no pagadas hasta el fin del período (por valor categoría)</p>
+							<h3 class="mb-0 fw-semibold text-dark">$ <span th:text="${dashboard.deudaTotal}">0</span></h3>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-4">
+					<div class="card border-0 shadow-sm h-100 rounded-3 bg-danger text-white">
+						<div class="card-body py-3 px-3">
+							<h6 class="small mb-1 opacity-90">Morosos</h6>
+							<p class="small mb-2 opacity-75">Activos sin cuota <strong>PAGADO</strong> en el mes fin de período</p>
+							<h3 class="mb-0 fw-semibold" th:text="${dashboard.cantidadMorosos}">0</h3>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Vista previa reporte -->
+			<div class="card border-0 shadow-sm mb-3 rounded-3">
+				<div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+					<span class="fw-semibold"><i class="fas fa-table text-primary"></i> Vista previa del reporte</span>
+					<span class="small text-muted" th:text="${filasPreview.size() + ' filas'}">0 filas</span>
+				</div>
+				<div class="card-body p-0 table-responsive">
+					<table class="table table-sm table-hover mb-0 small">
+						<thead class="table-light">
+							<tr>
+								<th>Deportista</th>
+								<th>Categoría</th>
+								<th>Período</th>
+								<th>Estado</th>
+								<th>Medio</th>
+								<th class="text-end">Monto</th>
+								<th>Fecha</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="f : ${filasPreview}">
+								<td th:text="${f.deportista}">—</td>
+								<td th:text="${f.categoria}">—</td>
+								<td th:text="${f.periodoCuota}">—</td>
+								<td th:text="${f.estado}">—</td>
+								<td th:text="${f.medio}">—</td>
+								<td class="text-end" th:text="${f.monto}">0</td>
+								<td th:text="${f.fechaRegistro}">—</td>
+							</tr>
+							<tr th:if="${#lists.isEmpty(filasPreview)}">
+								<td colspan="7" class="text-center text-muted py-4">Sin movimientos con los filtros actuales.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+			<!-- Conciliación Khipu -->
+			<div class="card border-0 shadow-sm rounded-3">
+				<div class="card-header bg-white py-2">
+					<span class="fw-semibold"><i class="fas fa-link text-primary"></i> Conciliación Khipu</span>
+					<p class="small text-muted mb-0 mt-1">Órdenes generadas vía Khipu; montos de ítems en PAGADO vs total de orden.</p>
+				</div>
+				<div class="card-body p-0 table-responsive">
+					<table class="table table-sm table-hover mb-0 small">
+						<thead class="table-light">
+							<tr>
+								<th>ID orden</th>
+								<th>Fecha</th>
+								<th class="text-end">Monto orden</th>
+								<th>ID pago Khipu</th>
+								<th>Estado orden</th>
+								<th class="text-center">Cuotas</th>
+								<th class="text-end">Suma ítems PAGADO</th>
+								<th class="text-center">Pend./otros</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="k : ${conciliacionKhipu}">
+								<td th:text="${k.idOrden}">—</td>
+								<td th:text="${k.fechaCreacion != null ? #temporals.format(k.fechaCreacion, 'dd/MM/yyyy HH:mm') : ''}">—</td>
+								<td class="text-end" th:text="${k.montoTotal}">—</td>
+								<td class="text-break" style="max-width:140px;" th:text="${k.khipuPaymentId}">—</td>
+								<td th:text="${k.estadoOrden}">—</td>
+								<td class="text-center" th:text="${k.cantidadPagos}">0</td>
+								<td class="text-end" th:text="${k.montoItemsPagados}">0</td>
+								<td class="text-center" th:text="${k.itemsPendientesOtro}">0</td>
+							</tr>
+							<tr th:if="${#lists.isEmpty(conciliacionKhipu)}">
+								<td colspan="8" class="text-center text-muted py-4">No hay órdenes Khipu registradas para este club.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+		</div>
+	</main>
+
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+		(function () {
+			const baseExport = /*[[@{/financiero}]]*/ '/financiero';
+			window.exportFinanciero = function (ext) {
+				const f = document.getElementById('formFinanciero');
+				if (!f) return;
+				const fd = new FormData(f);
+				const params = new URLSearchParams();
+				fd.forEach(function (value, key) {
+					if (value !== null && String(value).trim() !== '') {
+						params.append(key, value);
+					}
+				});
+				const q = params.toString();
+				window.location.href = baseExport + '/export.' + ext + (q ? '?' + q : '');
+			};
+		})();
+		/*]]>*/
+	</script>
+
+	<footer th:replace="~{layout/layout :: footer}"></footer>
+</body>
+</html>

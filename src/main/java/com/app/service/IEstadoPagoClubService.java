@@ -6,6 +6,7 @@ import com.app.dto.EstadoPagoDeportistaDTO;
 
 public interface IEstadoPagoClubService {
 
-	public List<EstadoPagoDeportistaDTO> obtenerEstadoPorMes(Long idClub, Integer mes, Integer anio);
+	public List<EstadoPagoDeportistaDTO> obtenerEstadoPorMes(Long idClub, Integer mes, Integer anio, String tipo);
+
 	
 }

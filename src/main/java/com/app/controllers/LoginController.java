@@ -3,8 +3,6 @@ package com.app.controllers;
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -19,7 +17,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.app.entity.Club;
 import com.app.entity.Usuario;
 import com.app.service.IClubService;
-import com.app.service.IEmailService;
+import com.app.service.AsyncEmailService;
 import com.app.service.IUsuarioService;
 import com.app.util.Util;
 
@@ -35,7 +33,7 @@ public class LoginController {
 	private BCryptPasswordEncoder passEncoder;
 
 	@Autowired
-	private IEmailService emailService;
+	private AsyncEmailService asyncEmailService;
 
 	@Autowired
 	private IClubService clubService;
@@ -73,18 +71,22 @@ public class LoginController {
 			SessionStatus status) {
 
 		model.put("titulo", "Recuperar Clave");
-		Usuario usuario = usuarioService.findByEmail(email);
+		List<Usuario> usuarios = usuarioService.findAllByEmail(email);
 
-		if (null == usuario) {
+		if (usuarios == null || usuarios.isEmpty()) {
 			flash.addFlashAttribute("msjLogin", "error;Usuario no existe;Usuario no existe con los datos ingresados");
 		} else {
 			String pass = Util.generatePassword(10);
-			usuario.setPassword(passEncoder.encode(pass));
-			usuario.setEstado("0");
-			usuarioService.save(usuario);
+			String encoded = passEncoder.encode(pass);
+			for (Usuario u : usuarios) {
+				u.setPassword(encoded);
+				u.setEstado("0");
+				usuarioService.save(u);
+			}
 			status.setComplete();
-			usuario.setPassAux(pass);
-			Executors.newSingleThreadExecutor().execute(() -> emailService.recuperacionClave(usuario));
+			Usuario paraCorreo = usuarios.get(0);
+			paraCorreo.setPassAux(pass);
+			asyncEmailService.recuperacionClave(paraCorreo);
 			flash.addFlashAttribute("msjLogin",
 					"success;Exito;Se envio un correo con una nueva contraseña para su ingreso");
 		}
@@ -127,7 +129,9 @@ public class LoginController {
 
 	@GetMapping("/seleccionarClub")
 	public String seleccionarClub(Model model, Principal principal) {
-		Usuario usuario = usuarioService.findByEmail(principal.getName());
+		List<Usuario> filas = usuarioService.findAllByEmail(principal.getName());
+		Usuario usuario = filas.stream().filter(u -> Boolean.TRUE.equals(u.getEnabled())).findFirst()
+				.orElse(filas.isEmpty() ? null : filas.get(0));
 		List<Club> clubes = usuarioService.findClubesByUsuario(principal.getName());
 		model.addAttribute("clubes", clubes);
 		model.addAttribute("usuario", usuario);
@@ -135,7 +139,8 @@ public class LoginController {
 	}
 
 	@PostMapping("/setClubActivo")
-	public String setClubActivo(@RequestParam Long clubId, RedirectAttributes flash, HttpServletRequest request) {
+	public String setClubActivo(@RequestParam Long clubId, RedirectAttributes flash, HttpServletRequest request,
+			Principal principal) {
 
 		Club club = clubService.findById(clubId);
 
@@ -146,6 +151,12 @@ public class LoginController {
 		}
 
 		request.getSession().setAttribute("idClubSession", clubId);
+		if (principal != null) {
+			usuarioService.findAllByEmail(principal.getName()).stream()
+					.filter(u -> u.getClub() != null && clubId.equals(u.getClub().getId()))
+					.findFirst()
+					.ifPresent(u -> request.getSession().setAttribute("usuarioLogin", u));
+		}
 		return "redirect:/consulta";
 	}
 

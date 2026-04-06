@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estado de tu pago</title>
+</head>
+<body style="margin:0; padding:0; background-color:#eef2f7; font-family:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#eef2f7; padding:32px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width:560px; background:#ffffff; border-radius:16px; overflow:hidden; border:1px solid #e2e8f0; box-shadow:0 10px 40px rgba(15,23,42,0.08);">
+          <tr>
+            <td th:if="${exitoso}" style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%); padding:28px 24px; text-align:center; border-bottom:3px solid #0ea5e9;">
+              <img src="cid:logoImage" alt="" width="120" style="max-height:48px; display:block; margin:0 auto 12px;">
+              <p style="margin:0; color:rgba(255,255,255,0.75); font-size:11px; letter-spacing:0.12em; text-transform:uppercase;">AdminClub</p>
+              <h1 style="margin:8px 0 0; color:#ffffff; font-size:22px; font-weight:700;" th:text="${tituloEstado}">Estado del pago</h1>
+            </td>
+            <td th:unless="${exitoso}" style="background:linear-gradient(135deg,#7f1d1d 0%,#b91c1c 100%); padding:28px 24px; text-align:center;">
+              <img src="cid:logoImage" alt="" width="120" style="max-height:48px; display:block; margin:0 auto 12px;">
+              <p style="margin:0; color:rgba(255,255,255,0.75); font-size:11px; letter-spacing:0.12em; text-transform:uppercase;">AdminClub</p>
+              <h1 style="margin:8px 0 0; color:#ffffff; font-size:22px; font-weight:700;" th:text="${tituloEstado}">Estado del pago</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 24px; color:#334155; font-size:15px; line-height:1.65;">
+              <p style="margin:0 0 8px;">Hola <strong th:text="${nombreUsuario}">Usuario</strong>,</p>
+              <p style="margin:0 0 16px;">Club: <strong th:text="${nombreClub}">Club</strong></p>
+              <table th:if="${lineas != null and !lineas.isEmpty()}" role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; margin:16px 0;">
+                <tr>
+                  <td style="padding:16px 18px;">
+                    <p style="margin:0 0 12px; font-size:12px; color:#64748b; text-transform:uppercase; letter-spacing:0.06em;">Cuotas incluidas</p>
+                    <ul style="margin:0; padding-left:18px; color:#0f172a;">
+                      <li th:each="l : ${lineas}" th:text="${l}" style="margin:6px 0;">—</li>
+                    </ul>
+                    <p style="margin:12px 0 0; font-size:12px; color:#64748b; text-transform:uppercase; letter-spacing:0.06em;">Medio</p>
+                    <p style="margin:4px 0 0;" th:text="${medioPago}">KHIPU</p>
+                  </td>
+                </tr>
+              </table>
+              <table th:if="${lineas == null or lineas.isEmpty()}" role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; margin:16px 0;">
+                <tr>
+                  <td style="padding:16px 18px;">
+                    <p style="margin:0 0 8px; font-size:12px; color:#64748b; text-transform:uppercase; letter-spacing:0.06em;">Deportista</p>
+                    <p style="margin:0; font-weight:600; color:#0f172a;" th:text="${nombreDeportista}">—</p>
+                    <p style="margin:12px 0 8px; font-size:12px; color:#64748b; text-transform:uppercase; letter-spacing:0.06em;">Período</p>
+                    <p style="margin:0;" th:text="${periodoLabel}">Enero 2026</p>
+                    <p style="margin:12px 0 8px; font-size:12px; color:#64748b; text-transform:uppercase; letter-spacing:0.06em;">Medio</p>
+                    <p style="margin:0;" th:text="${medioPago}">EFECTIVO</p>
+                  </td>
+                </tr>
+              </table>
+              <div th:if="${motivo != null && !#strings.isEmpty(motivo)}" style="background:#fffbeb; border:1px solid #fde68a; border-radius:12px; padding:14px 16px; margin:16px 0;">
+                <p style="margin:0 0 6px; font-size:12px; color:#92400e; font-weight:600;">Detalle / motivo</p>
+                <p style="margin:0; color:#78350f; font-size:14px; white-space:pre-wrap;" th:text="${motivo}">—</p>
+              </div>
+              <p style="text-align:center; margin:24px 0 0;">
+                <a th:href="${loginUrl}" style="display:inline-block; background:#0ea5e9; color:#ffffff; text-decoration:none; font-weight:600; font-size:14px; padding:12px 24px; border-radius:10px;">Ingresar al portal</a>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 24px 24px; text-align:center; font-size:12px; color:#94a3b8; border-top:1px solid #f1f5f9;">
+              Mensaje automático. No responda a este correo.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

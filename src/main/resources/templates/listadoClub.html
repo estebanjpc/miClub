@@ -4,80 +4,103 @@
 <head th:replace="~{layout/layout :: head}" />
 
 <body class="d-flex flex-column min-vh-100">
-	<!-- Header -->
 	<header th:replace="~{layout/layout :: header}"></header>
 
-	<!-- Contenido principal -->
-	<main class="flex-grow-1">
-		<div class="container py-4">
+	<main class="flex-grow-1 bg-light">
+		<div class="container-fluid px-3 px-lg-4 py-3 py-lg-4" style="max-width: 1400px;">
 
-			<!-- Título -->
-			<div class="row mb-4">
-				<div class="col text-center">
-					<h3 th:text="${titulo}" class="fw-bold text-primary border-bottom pb-2"></h3>
+			<div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
+				<div>
+					<h3 class="fw-bold text-primary mb-0" th:text="${titulo}">Mantenedor Club</h3>
+					<p class="text-muted small mb-0 mt-1">Clubes registrados en la plataforma.</p>
 				</div>
+				<a th:href="@{/crearClub}" class="btn btn-primary btn-sm rounded-pill shadow-sm">
+					<i class="fas fa-plus-circle me-1"></i> Nuevo club
+				</a>
 			</div>
 
-			<!-- Tabla con botón Crear Club alineado a la derecha -->
-			<div class="row justify-content-center">
-				<div class="col-lg-10">
-
-					<!-- Botón Crear Club -->
-					<div class="d-flex justify-content-end mb-3">
-						<a th:href="@{/crearClub}" class="btn btn-success rounded-pill px-4 py-2 shadow-sm">
-							<i class="fas fa-plus-circle me-2"></i> Nuevo Club
-						</a>
-					</div>
-
-					<!-- Tabla -->
-					<div class="card shadow-sm border-0">
-						<div class="card-body table-responsive">
-							<table class="table table-hover align-middle table-striped">
-								<thead class="bg-primary text-white">
-									<tr>
-										<th>#</th>
-										<th>Nombre Club</th>
-										<th>Rut</th>
-										<th>Email</th>
-										<th>Estado</th>
-										<th class="text-center">Editar</th>
-										<th class="text-center">Eliminar</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr th:each="u,cont: ${listadoClub}">
-										<td th:text="${cont.index + 1}"></td>
-										<td th:text="${u.nombre}"></td>
-										<td ></td>
-										<td th:text="${u.email}"></td>
-										<td> <span th:if="${u.estado} == 0"
-												class="badge bg-warning text-dark">Pendiente</span> <span
-												th:if="${u.estado} == 1" class="badge bg-success">Activo</span> <span
-												th:if="${u.estado} == 2" class="badge bg-secondary">Deshabilitado</span>
-										</td>
-										<td class="text-center"> <a th:href="@{/editarClub/} + ${u.id}"
-												class="btn btn-outline-primary btn-sm rounded-pill"
-												data-bs-toggle="tooltip" title="Editar"> <i class="fas fa-edit"></i>
-											</a> </td>
-										<td class="text-center"> <button th:onclick="eliminarUsuario([[${u.id}]]);"
-												class="btn btn-outline-danger btn-sm rounded-pill"
-												data-bs-toggle="tooltip" title="Eliminar"> <i
-													class="fas fa-trash-alt"></i> </button> </td>
-									</tr>
-								</tbody>
-							</table>
+			<div class="row g-2 g-lg-3 mb-3" th:with="total=${listadoClub != null ? #lists.size(listadoClub) : 0}">
+				<div class="col-6 col-md-3">
+					<div class="card border-0 shadow-sm h-100 rounded-3">
+						<div class="card-body py-3 px-3 d-flex align-items-center gap-3">
+							<span class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center flex-shrink-0"
+								style="width:44px;height:44px;">
+								<i class="fas fa-building"></i>
+							</span>
+							<div>
+								<h6 class="text-muted text-uppercase small mb-0">Clubes</h6>
+								<h4 class="mb-0 fw-semibold" th:text="${total}">0</h4>
+							</div>
 						</div>
 					</div>
 				</div>
 			</div>
 
+			<div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+				<div class="card-header bg-white border-bottom py-3 px-3 px-lg-4 d-flex flex-wrap align-items-center gap-2">
+					<span class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center"
+						style="width:40px;height:40px;">
+						<i class="fas fa-list"></i>
+					</span>
+					<div>
+						<h3 class="h6 mb-0 fw-semibold text-dark">Listado de clubes</h3>
+						<p class="small text-muted mb-0">Nombre, contacto y estado</p>
+					</div>
+				</div>
+				<div class="card-body p-0">
+					<div class="table-responsive">
+						<table class="table table-hover align-middle table-striped table-sm mb-0">
+							<thead class="bg-primary text-white">
+								<tr>
+									<th class="text-nowrap" style="width:3rem;">#</th>
+									<th>Nombre club</th>
+									<th class="d-none d-md-table-cell">RUT</th>
+									<th class="d-none d-lg-table-cell">Email</th>
+									<th class="text-nowrap">Estado</th>
+									<th class="text-center text-nowrap" style="width:6rem;">Editar</th>
+									<th class="text-center text-nowrap" style="width:6rem;">Eliminar</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr th:each="u, cont : ${listadoClub}">
+									<td class="text-muted small" th:text="${cont.index + 1}">1</td>
+									<td class="fw-medium" th:text="${u.nombre}">—</td>
+									<td class="d-none d-md-table-cell">—</td>
+									<td class="d-none d-lg-table-cell small" th:text="${u.email}">—</td>
+									<td>
+										<span th:if="${u.estado == '0'}" class="badge rounded-pill bg-warning text-dark">Pendiente</span>
+										<span th:if="${u.estado == '1'}" class="badge rounded-pill bg-success">Activo</span>
+										<span th:if="${u.estado == '2'}" class="badge rounded-pill bg-secondary">Deshabilitado</span>
+									</td>
+									<td class="text-center">
+										<a th:href="@{/editarClub/{id}(id=${u.id})}"
+											class="btn btn-outline-primary btn-sm rounded-pill px-2"
+											data-bs-toggle="tooltip" title="Editar">
+											<i class="fas fa-edit"></i>
+										</a>
+									</td>
+									<td class="text-center">
+										<button type="button" th:onclick="eliminarUsuario([[${u.id}]])"
+											class="btn btn-outline-danger btn-sm rounded-pill px-2"
+											data-bs-toggle="tooltip" title="Eliminar">
+											<i class="fas fa-trash-alt"></i>
+										</button>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+
+			<p class="small text-muted mt-3 mb-0">
+				<i class="fas fa-info-circle me-1"></i>
+				Desplaza horizontalmente en pantallas pequeñas si hay muchas columnas.
+			</p>
 		</div>
 	</main>
 
-	<!-- Footer -->
 	<footer th:replace="~{layout/layout :: footer}"></footer>
-
-	<!-- Scripts -->
 	<script th:src="@{/js/club.js}"></script>
 </body>
 
