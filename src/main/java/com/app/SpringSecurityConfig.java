@@ -41,6 +41,7 @@ public class SpringSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
+            .csrf(csrf -> csrf.ignoringRequestMatchers("/api/khipu/**"))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/css/**", "/js/**", "/images/**", "/api/**", "/recuperacion", "/recuperarClave").permitAll()
                 .anyRequest().authenticated()

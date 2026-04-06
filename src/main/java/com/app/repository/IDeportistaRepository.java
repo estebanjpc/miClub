@@ -1,9 +1,11 @@
 package com.app.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.app.entity.Deportista;
 
@@ -21,8 +23,8 @@ public interface IDeportistaRepository extends JpaRepository<Deportista, Long> {
 	@Query("SELECT d FROM Deportista d JOIN FETCH d.usuario u LEFT JOIN FETCH d.categoria c WHERE u.club.id = ?1 ORDER BY d.apellido ASC, d.nombre ASC")
 	List<Deportista> findAllByClubWithUsuarioAndCategoria(Long idClub);
 
-	@Query(" SELECT COUNT(d) FROM Deportista d WHERE d.usuario.club.id = ?1 AND d.fechaIngreso <= DATE(CONCAT(?3,'-',?2 ,'-01')) ")
-	Long countActivosHastaMes(Long idClub, int mes, int anio);
+	@Query("SELECT COUNT(d) FROM Deportista d WHERE d.usuario.club.id = :idClub AND d.fechaIngreso <= :hasta")
+	Long countActivosHastaMes(@Param("idClub") Long idClub, @Param("hasta") LocalDate hasta);
 
 }
 

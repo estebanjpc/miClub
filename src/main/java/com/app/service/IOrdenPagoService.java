@@ -1,5 +1,7 @@
 package com.app.service;
 
+import java.util.Optional;
+
 import com.app.entity.OrdenPago;
 
 public interface IOrdenPagoService {
@@ -9,5 +11,7 @@ public interface IOrdenPagoService {
 	public void save(OrdenPago orden);
 
 	public OrdenPago buscarPorId(Long id);
+
+	Optional<OrdenPago> buscarPorIdOptional(Long id);
 
 }

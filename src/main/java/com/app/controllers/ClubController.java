@@ -259,7 +259,14 @@ public class ClubController {
 
 	@GetMapping("/club/logo/{id}")
 	@ResponseBody
-	public ResponseEntity<byte[]> verLogo(@PathVariable Long id) {
+	public ResponseEntity<byte[]> verLogo(@PathVariable Long id, HttpServletRequest request, Principal principal) {
+
+		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
+		Usuario u = usuarioService.refrescarUsuarioSesion(request, principal.getName());
+		if (u == null || u.getClub() == null || idClubSession == null || !id.equals(idClubSession)
+				|| !id.equals(u.getClub().getId())) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
 
 		Club club = clubService.findById(id);
 		if (club == null || club.getLogo() == null) {

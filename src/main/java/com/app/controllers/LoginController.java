@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.util.StringUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -71,7 +72,11 @@ public class LoginController {
 			SessionStatus status) {
 
 		model.put("titulo", "Recuperar Clave");
-		List<Usuario> usuarios = usuarioService.findAllByEmail(email);
+		if (!StringUtils.hasText(email) || email.length() > 254 || !email.contains("@")) {
+			flash.addFlashAttribute("msjLogin", "error;Email;Ingrese un correo válido.");
+			return "redirect:/login";
+		}
+		List<Usuario> usuarios = usuarioService.findAllByEmail(email.trim());
 
 		if (usuarios == null || usuarios.isEmpty()) {
 			flash.addFlashAttribute("msjLogin", "error;Usuario no existe;Usuario no existe con los datos ingresados");
@@ -111,6 +116,10 @@ public class LoginController {
 			flash.addFlashAttribute("msjLayout", "error;Error;Las contraseñas no coinciden");
 			return "redirect:/actualizarPass";
 		}
+		if (password1.length() < 8) {
+			flash.addFlashAttribute("msjLayout", "error;Error;La contraseña debe tener al menos 8 caracteres.");
+			return "redirect:/actualizarPass";
+		}
 
 		List<Usuario> usuarios = usuarioService.findAllByEmail(principal.getName());
 
@@ -142,9 +151,17 @@ public class LoginController {
 	public String setClubActivo(@RequestParam Long clubId, RedirectAttributes flash, HttpServletRequest request,
 			Principal principal) {
 
+		boolean autorizado = usuarioService.findAllByEmail(principal.getName()).stream()
+				.anyMatch(u -> Boolean.TRUE.equals(u.getEnabled()) && u.getClub() != null
+						&& clubId.equals(u.getClub().getId()));
+		if (!autorizado) {
+			flash.addFlashAttribute("msjLogin", "error;Permisos;No pertenece a ese club.");
+			return "redirect:/seleccionarClub";
+		}
+
 		Club club = clubService.findById(clubId);
 
-		if (!"1".equals(club.getEstado())) {
+		if (club == null || !"1".equals(club.getEstado())) {
 			flash.addFlashAttribute("msjLogin",
 					"error;Club deshabilitado;El club seleccionado se encuentra deshabilitado.");
 			return "redirect:/seleccionarClub";

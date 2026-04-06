@@ -13,14 +13,14 @@ public interface IPagoService {
 	public List<MesPagoDTO> obtenerMesesParaPagar(Long usuarioId, Long idClub);
 //	public void guardarPago(Long deportistaId, int mes, int anio, MedioPago medioPago);
 	public List<Pago> obtenerPagosRealizados(Long usuarioId, Long idClub);
-	public void registrarPagoEfectivo(List<String> seleccionados);
-	public OrdenPago generarOrdenPagoKhipu(List<String> seleccionados, Long usuarioId);
+	public void registrarPagoEfectivo(List<String> seleccionados, Long usuarioId, Long idClub);
+	public OrdenPago generarOrdenPagoKhipu(List<String> seleccionados, Long usuarioId, Long idClub);
     void confirmarPagoKhipu(String paymentId, String status);
 	public void save(Pago p);
 	public List<Pago> buscarPagosPorClub(Long idClubSession);
-	public void aprobarPagoEfectivo(Long id);
+	public void aprobarPagoEfectivo(Long idPago, Long idClub);
 	public List<Pago> buscarPagosFiltrados(Long idClubSession, Integer mes, EstadoPago estado, Long idDeportista);
-	public void rechazarYReactivarPago(Long id, String observacion);
+	public void rechazarYReactivarPago(Long id, String observacion, Long idClub);
 	public List<Pago> obtenerPendientesAprobacion(Long idClubSession);
 	public List<MorosidadClubDTO> obtenerMorososCriticos(Long idClubSession, Integer mes, Integer anio, int minimoCuotas);
 

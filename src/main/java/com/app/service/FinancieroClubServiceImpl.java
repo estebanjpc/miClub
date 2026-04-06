@@ -1,5 +1,6 @@
 package com.app.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.YearMonth;
@@ -79,7 +80,7 @@ public class FinancieroClubServiceImpl implements IFinancieroClubService {
 
 		dto.setDeudaTotal(calcularDeudaTotal(idClub, mh, ah));
 
-		long totalActivos = deportistaRepository.countActivosHastaMes(idClub, mh, ah);
+		long totalActivos = deportistaRepository.countActivosHastaMes(idClub, LocalDate.of(ah, mh, 1));
 		Long alDia = pagoRepository.deportistasAlDia(idClub, mh, ah);
 		long alDiaL = alDia != null ? alDia : 0L;
 		dto.setCantidadMorosos(Math.max(0L, totalActivos - alDiaL));

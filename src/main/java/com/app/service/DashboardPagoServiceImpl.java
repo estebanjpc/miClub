@@ -24,7 +24,7 @@ public class DashboardPagoServiceImpl implements IDashboardPagoService {
 		int m = mes != null ? mes : hoy.getMonthValue();
 		int a = anio != null ? anio : hoy.getYear();
 
-		Long total = deportistaRepository.countActivosHastaMes(idClub, m, a);
+		Long total = deportistaRepository.countActivosHastaMes(idClub, LocalDate.of(a, m, 1));
 		Long alDia = pagoRepository.deportistasAlDia(idClub, m, a);
 
 		DashboardPagoDTO dto = new DashboardPagoDTO();

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -137,16 +138,32 @@ public class PagoServiceImpl implements IPagoService {
 		return lista;
 	}
 
+	private Deportista requireDeportistaDelUsuarioEnClub(Long deportistaId, Long usuarioId, Long idClub) {
+		Deportista d = deportistaRepository.findById(deportistaId)
+				.orElseThrow(() -> new AccessDeniedException("Deportista no encontrado"));
+		if (d.getUsuario() == null || !d.getUsuario().getId().equals(usuarioId)) {
+			throw new AccessDeniedException("Deportista no pertenece al usuario");
+		}
+		if (d.getCategoria() == null || d.getCategoria().getClub() == null
+				|| !d.getCategoria().getClub().getId().equals(idClub)) {
+			throw new AccessDeniedException("Deportista no pertenece al club seleccionado");
+		}
+		return d;
+	}
+
 	@Override
-	public void registrarPagoEfectivo(List<String> seleccionados) {
+	public void registrarPagoEfectivo(List<String> seleccionados, Long usuarioId, Long idClub) {
 		List<Long> idsRegistrados = new ArrayList<>();
 		for (String item : seleccionados) {
             String[] data = item.split("-");
+            if (data.length != 3) {
+            	throw new IllegalArgumentException("Formato de selección inválido");
+            }
             Long deportistaId = Long.parseLong(data[0]);
             int mes = Integer.parseInt(data[1]);
             int anio = Integer.parseInt(data[2]);
 
-            Deportista d = deportistaRepository.findById(deportistaId).orElseThrow();
+            Deportista d = requireDeportistaDelUsuarioEnClub(deportistaId, usuarioId, idClub);
             Pago pago = new Pago();
             pago.setDeportista(d);
             pago.setClub(d.getCategoria().getClub());
@@ -167,17 +184,20 @@ public class PagoServiceImpl implements IPagoService {
 
 	@Override
 	@Transactional
-	public OrdenPago generarOrdenPagoKhipu(List<String> seleccionados, Long idUsuario) {
+	public OrdenPago generarOrdenPagoKhipu(List<String> seleccionados, Long idUsuario, Long idClub) {
 		List<Pago> pagos = new ArrayList<>();
         int total = 0;
 
         for (String item : seleccionados) {
             String[] d = item.split("-");
+            if (d.length != 3) {
+            	throw new IllegalArgumentException("Formato de selección inválido");
+            }
             Long deportistaId = Long.parseLong(d[0]);
             int mes = Integer.parseInt(d[1]);
             int anio = Integer.parseInt(d[2]);
 
-            Deportista dep = deportistaRepository.findById(deportistaId).orElseThrow();
+            Deportista dep = requireDeportistaDelUsuarioEnClub(deportistaId, idUsuario, idClub);
 
             Pago p = new Pago();
             p.setDeportista(dep);
@@ -262,8 +282,11 @@ public class PagoServiceImpl implements IPagoService {
 	}
 	
 	@Transactional
-    public void aprobarPagoEfectivo(Long idPago) {
+    public void aprobarPagoEfectivo(Long idPago, Long idClub) {
         Pago pago = pagoRepository.findById(idPago).orElseThrow(() -> new RuntimeException("Pago no encontrado"));
+        if (pago.getClub() == null || !pago.getClub().getId().equals(idClub)) {
+        	throw new AccessDeniedException("El pago no pertenece a su club");
+        }
 
         pago.setEstado(EstadoPago.PAGADO);
         pago.setFecha(LocalDateTime.now());
@@ -279,10 +302,13 @@ public class PagoServiceImpl implements IPagoService {
 	}
 
 	@Override
-	public void rechazarYReactivarPago(Long id, String observacion) {
+	public void rechazarYReactivarPago(Long id, String observacion, Long idClub) {
 		Pago pagoRechazado = pagoRepository.findById(id).orElse(null);
 	    
 	    if (pagoRechazado != null) {
+	    	if (pagoRechazado.getClub() == null || !pagoRechazado.getClub().getId().equals(idClub)) {
+	    		throw new AccessDeniedException("El pago no pertenece a su club");
+	    	}
 	        String observacionOriginal = pagoRechazado.getObservacion();
 	        String observacionRechazo = "RECHAZO: " + observacion;
 	        if (observacionOriginal != null && !observacionOriginal.isBlank()) {

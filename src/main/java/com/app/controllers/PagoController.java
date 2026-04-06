@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -73,6 +75,7 @@ public class PagoController {
 	private IUsuarioService usuarioService;
 
 	@GetMapping({ "/consulta" })
+	@Secured("ROLE_USER")
 	public String consulta(Model model, RedirectAttributes flash, Authentication authentication,
 			HttpServletRequest request) {
 
@@ -128,6 +131,7 @@ public class PagoController {
 //	}
 
 	@GetMapping("/listadoPagos")
+	@Secured("ROLE_CLUB")
 	public String listarPagosClub(@RequestParam(required = false) Integer mes,
 			@RequestParam(required = false) EstadoPago estado, @RequestParam(required = false) Long idDeportista,
 			@RequestParam(required = false) Long idCategoria,
@@ -264,23 +268,45 @@ public class PagoController {
 	}
 
 	@PostMapping("/aprobar/{id}")
-	public String aprobarPagoEfectivo(@PathVariable Long id, RedirectAttributes flash) {
+	@Secured("ROLE_CLUB")
+	public String aprobarPagoEfectivo(@PathVariable Long id, RedirectAttributes flash, HttpServletRequest request) {
 
-		pagoService.aprobarPagoEfectivo(id);
+		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
+		if (idClubSession == null) {
+			flash.addFlashAttribute("msjLayout", "error;Sesión;Selecciona un club para continuar.");
+			return "redirect:/seleccionarClub";
+		}
+		try {
+			pagoService.aprobarPagoEfectivo(id, idClubSession);
+		} catch (AccessDeniedException e) {
+			flash.addFlashAttribute("msjLayout", "error;Permisos;No puede modificar este pago.");
+			return "redirect:/listadoPagos?tab=pendientes";
+		}
 		flash.addFlashAttribute("msjLayout", "success;Pago OK;Pago en efectivo aprobado correctamente");
 		return "redirect:/listadoPagos?tab=pendientes";
 	}
 	
 	@PostMapping("/rechazar/{id}")
-	public String rechazarPagoEfectivo(@PathVariable Long id, @RequestParam String observacion, RedirectAttributes flash) {
-	    
-	    pagoService.rechazarYReactivarPago(id, observacion);
-	    
+	@Secured("ROLE_CLUB")
+	public String rechazarPagoEfectivo(@PathVariable Long id, @RequestParam(required = false) String observacion,
+			RedirectAttributes flash, HttpServletRequest request) {
+		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
+		if (idClubSession == null) {
+			flash.addFlashAttribute("msjLayout", "error;Sesión;Selecciona un club para continuar.");
+			return "redirect:/seleccionarClub";
+		}
+		try {
+			pagoService.rechazarYReactivarPago(id, observacion != null ? observacion : "", idClubSession);
+		} catch (AccessDeniedException e) {
+			flash.addFlashAttribute("msjLayout", "error;Permisos;No puede modificar este pago.");
+			return "redirect:/listadoPagos?tab=pendientes";
+		}
 	    flash.addFlashAttribute("msjLayout", "warning;Pago Rechazado;Se registró el rechazo en el historial. El mes vuelve a quedar disponible para pagar.");
 	    return "redirect:/listadoPagos?tab=pendientes";
 	}
 
 	@PostMapping("/pagar")
+	@Secured("ROLE_USER")
 	public String pagar(@RequestParam(required = false) List<String> seleccionados,
 			@RequestParam(name = "medioPago", required = false) String medioPagoStr, RedirectAttributes flash,
 			Authentication authentication, HttpServletRequest request) {
@@ -295,22 +321,46 @@ public class PagoController {
 			return "redirect:/consulta";
 		}
 
+		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
+		if (idClubSession == null) {
+			flash.addFlashAttribute("msjLayout", "error;Seleccione Club;No hay club seleccionado");
+			return "redirect:/seleccionarClub";
+		}
+
+		Usuario usuarioLogin = usuarioService.refrescarUsuarioSesion(request, authentication.getName());
+		if (usuarioLogin == null) {
+			flash.addFlashAttribute("msjLayout", "error;Sesión;Selecciona un club para continuar.");
+			return "redirect:/seleccionarClub";
+		}
+
 		String medioUpper = medioPagoStr.toUpperCase();
 
 		if ("EFECTIVO".equals(medioUpper)) {
-			pagoService.registrarPagoEfectivo(seleccionados);
+			try {
+				pagoService.registrarPagoEfectivo(seleccionados, usuarioLogin.getId(), idClubSession);
+			} catch (AccessDeniedException e) {
+				flash.addFlashAttribute("msjLayout", "error;Permisos;No puede registrar pagos para esos datos.");
+				return "redirect:/consulta";
+			} catch (IllegalArgumentException e) {
+				flash.addFlashAttribute("msjLayout", "error;Datos;Solicitud inválida.");
+				return "redirect:/consulta";
+			}
 			flash.addFlashAttribute("msjLayout", "success;Pago OK;Pago en efectivo registrado correctamente");
 			return "redirect:/consulta";
 		} else if ("KHIPU".equals(medioUpper)) {
-			Usuario usuarioLogin = usuarioService.refrescarUsuarioSesion(request, authentication.getName());
-			if (usuarioLogin == null) {
-				flash.addFlashAttribute("msjLayout", "error;Sesión;Selecciona un club para continuar.");
-				return "redirect:/seleccionarClub";
+			try {
+				OrdenPago orden = pagoService.generarOrdenPagoKhipu(seleccionados, usuarioLogin.getId(), idClubSession);
+				return "redirect:" + orden.getKhipuUrl();
+			} catch (AccessDeniedException e) {
+				flash.addFlashAttribute("msjLayout", "error;Permisos;No puede pagar esos ítems.");
+				return "redirect:/consulta";
+			} catch (IllegalArgumentException e) {
+				flash.addFlashAttribute("msjLayout", "error;Datos;Solicitud inválida.");
+				return "redirect:/consulta";
+			} catch (IllegalStateException e) {
+				flash.addFlashAttribute("msjLayout", "error;Khipu;No se pudo iniciar el pago. Intente más tarde.");
+				return "redirect:/consulta";
 			}
-			Long usuarioId = usuarioLogin.getId();
-			OrdenPago orden = pagoService.generarOrdenPagoKhipu(seleccionados, usuarioId);
-			return "redirect:" + orden.getKhipuUrl();
-//            return "redirect:/consulta";
 		} else {
 			flash.addFlashAttribute("error", "Método de pago inválido");
 			flash.addFlashAttribute("msjLayout", "error;Pago Invalido;Método de pago inválido");
@@ -319,15 +369,26 @@ public class PagoController {
 	}
 
 	@GetMapping("/orden/{id}")
-	public String verOrdenPago(@PathVariable Long id, Model model) {
+	@Secured("ROLE_USER")
+	public String verOrdenPago(@PathVariable Long id, Model model, HttpServletRequest request,
+			Authentication authentication, RedirectAttributes flash) {
 
-		OrdenPago orden = ordenPagoService.buscarPorId(id);
-
-		model.addAttribute("orden", orden);
-		return "/orden-detalle";
+		Usuario usuario = usuarioService.refrescarUsuarioSesion(request, authentication.getName());
+		if (usuario == null) {
+			return "redirect:/seleccionarClub";
+		}
+		return ordenPagoService.buscarPorIdOptional(id).filter(o -> usuario.getId().equals(o.getIdUsuario()))
+				.map(orden -> {
+					model.addAttribute("orden", orden);
+					return "/orden-detalle";
+				}).orElseGet(() -> {
+					flash.addFlashAttribute("msjLayout", "error;Permisos;No puede ver esta orden.");
+					return "redirect:/consulta";
+				});
 	}
 
 	@GetMapping("/pago/khipu/retorno")
+	@Secured("ROLE_USER")
 	public String khipuRetorno(@RequestParam(name = "orden", required = false) Long ordenId, Model model) {
 		model.addAttribute("ordenId", ordenId);
 		model.addAttribute("estado", "PROCESANDO");
@@ -335,6 +396,7 @@ public class PagoController {
 	}
 
 	@GetMapping("/pago/ok")
+	@Secured("ROLE_USER")
 	public String pagoOk(@RequestParam(name = "orden", required = false) Long ordenId, Model model) {
 		model.addAttribute("ordenId", ordenId);
 		model.addAttribute("estado", "OK");
@@ -342,6 +404,7 @@ public class PagoController {
 	}
 
 	@GetMapping("/pago/cancelado")
+	@Secured("ROLE_USER")
 	public String pagoCancelado(@RequestParam(name = "orden", required = false) Long ordenId, Model model) {
 		model.addAttribute("ordenId", ordenId);
 		model.addAttribute("estado", "CANCELADO");

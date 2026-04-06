@@ -1,5 +1,7 @@
 package com.app.service;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +27,11 @@ public class OrdenPagoServiceImpl implements IOrdenPagoService {
 	@Override
 	public OrdenPago buscarPorId(Long id) {
 		return ordenPagoRepository.findById(id).orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+	}
+
+	@Override
+	public Optional<OrdenPago> buscarPorIdOptional(Long id) {
+		return ordenPagoRepository.findById(id);
 	}
 
 }
