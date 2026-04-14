@@ -81,4 +81,10 @@ public class AsyncEmailService {
 	public void notificarUsuarioEstadoPagoEfectivo(Long idPago, boolean aprobado, String motivo) {
 		emailService.notificarUsuarioEstadoPagoEfectivo(idPago, aprobado, motivo);
 	}
+
+	@Async("emailTaskExecutor")
+	public void enviarNotificacionClub(String emailDestino, String asunto, String mensaje, String nombreClub,
+			String nombreDestinatario, Long clubId) {
+		emailService.enviarNotificacionClub(emailDestino, asunto, mensaje, nombreClub, nombreDestinatario, clubId);
+	}
 }

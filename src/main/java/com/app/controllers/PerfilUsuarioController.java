@@ -31,7 +31,7 @@ import com.app.service.IUsuarioService;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
-@Secured("ROLE_USER")
+@Secured({ "ROLE_USER", "ROLE_SOCIO" })
 public class PerfilUsuarioController {
 
 	@Autowired

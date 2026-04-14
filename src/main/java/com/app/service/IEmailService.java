@@ -35,4 +35,12 @@ public interface IEmailService {
 	/** Usuario: resultado del pago Khipu (varios ítems en un solo correo). */
 	void notificarUsuarioResultadoKhipu(OrdenPago orden, boolean exitoso, String motivo);
 
+	/**
+	 * Campañas de correo del club hacia usuarios (deportistas/apoderados). Usa el logo del club si existe.
+	 *
+	 * @param clubId identificador del club (para cargar logo); si es null, solo se usa nombreClub en el texto.
+	 */
+	void enviarNotificacionClub(String emailDestino, String asunto, String mensaje, String nombreClub,
+			String nombreDestinatario, Long clubId);
+
 }

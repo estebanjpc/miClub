@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<title th:text="${asunto}">Notificación del club</title>
+</head>
+<body style="font-family: Arial, sans-serif; background:#f4f6f8; margin:0; padding:24px;">
+	<table style="max-width:650px; margin:0 auto; background:#ffffff; border-radius:8px; overflow:hidden; border:1px solid #e6e9ef;">
+		<tr>
+			<td style="background:#0d6efd; color:white; padding:18px 24px;">
+				<img src="cid:logoImage" alt="Logo club" style="height:42px; vertical-align:middle;">
+				<h2 style="margin:8px 0 0; font-size:20px; font-weight:600;">Comunicado del club</h2>
+			</td>
+		</tr>
+		<tr>
+			<td style="padding:24px; color:#212529;">
+				<p style="margin-top:0;">Hola <strong th:text="${nombreDestinatario}">Socio/a</strong>,</p>
+				<p>El club <strong th:text="${nombreClub}">Tu club</strong> te envía la siguiente notificación:</p>
+				<div style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px; padding:14px; margin:16px 0;">
+					<div th:utext="${mensaje}">Contenido del mensaje</div>
+				</div>
+				<p style="margin-bottom:0;">Puedes ingresar a tu cuenta en:</p>
+				<p style="margin-top:4px;"><a th:href="${loginUrl}" th:text="${loginUrl}">http://localhost:8081/login</a></p>
+			</td>
+		</tr>
+		<tr>
+			<td style="padding:12px 24px; color:#6c757d; font-size:12px; border-top:1px solid #e9ecef;">
+				Este correo fue enviado automáticamente por la plataforma de administración del club.
+			</td>
+		</tr>
+	</table>
+</body>
+</html>

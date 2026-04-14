@@ -38,7 +38,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
 @RequestMapping("/financiero")
-@Secured("ROLE_CLUB")
+@Secured({ "ROLE_CLUB", "ROLE_TESORERO" })
 public class FinancieroClubController {
 
 	@Autowired

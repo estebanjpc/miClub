@@ -67,13 +67,22 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 		if (usuario.getRoles().stream().anyMatch(r -> "ROLE_ADMIN".equals(r.getAuthority())))
 			return "/listadoClub";
 
-		if (usuario.getRoles().stream().anyMatch(r -> "ROLE_CLUB".equals(r.getAuthority())))
-			return "/listadoDeportistas";
-		
-		if(usuario.getEstado().equalsIgnoreCase("0")) {
+		// Debe ir antes que esPersonalClub: club/tesorero/entrenador con clave temporal iban siempre a listadoDeportistas
+		if ("0".equals(usuario.getEstado())) {
 			return "/actualizarPass";
 		}
 
+		if (esPersonalClub(usuario))
+			return "/listadoDeportistas";
+
 		return "/consulta";
+	}
+
+	/** Director técnico, tesorero o administración de club: mismo punto de entrada por ahora. */
+	private boolean esPersonalClub(Usuario usuario) {
+		return usuario.getRoles().stream().anyMatch(r -> {
+			String a = r.getAuthority();
+			return "ROLE_CLUB".equals(a) || "ROLE_TESORERO".equals(a) || "ROLE_ENTRENADOR".equals(a);
+		});
 	}
 }

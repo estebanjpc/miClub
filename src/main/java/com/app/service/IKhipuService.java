@@ -7,6 +7,6 @@ import com.app.entity.Pago;
 
 public interface IKhipuService {
 
-	KhipuResponse crearPago(Integer montoEnPesos, List<Pago> pagos, Long ordenId);
-	
+	KhipuResponse crearPago(Integer montoEnPesos, List<Pago> pagos, Long ordenId, Long idClub);
+
 }

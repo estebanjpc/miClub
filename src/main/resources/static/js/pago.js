@@ -52,6 +52,19 @@ function selectCard(card, hiddenInput, allCards) {
 	const val = card.dataset.value || '';
 	hiddenInput.value = val;
 
+	const bloqueTransf = document.getElementById('bloqueComprobanteTransferencia');
+	const inputFile = document.getElementById('comprobanteTransferencia');
+	if (bloqueTransf && inputFile) {
+		if (val === 'TRANSFERENCIA') {
+			bloqueTransf.classList.remove('d-none');
+			inputFile.required = true;
+		} else {
+			bloqueTransf.classList.add('d-none');
+			inputFile.required = false;
+			inputFile.value = '';
+		}
+	}
+
 	// opcional: disparar evento change en el hidden (por si lo escuchas)
 	hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
 }
@@ -83,6 +96,16 @@ if (form) {
 			const firstChk = document.querySelector('.chkMes');
 			if (firstChk) firstChk.focus();
 			return;
+		}
+
+		if (hiddenInput.value === 'TRANSFERENCIA') {
+			const inputFile = document.getElementById('comprobanteTransferencia');
+			if (!inputFile || !inputFile.files || inputFile.files.length === 0) {
+				e.preventDefault();
+				mostrarAlerta("error;Comprobante;Adjunta una imagen o PDF del comprobante de transferencia.");
+				if (inputFile) inputFile.focus();
+				return;
+			}
 		}
 
 	});

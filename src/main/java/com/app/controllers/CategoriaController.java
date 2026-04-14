@@ -4,6 +4,7 @@ import java.security.Principal;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -25,6 +26,7 @@ import jakarta.validation.Valid;
 
 @Controller
 @RequestMapping("/categorias")
+@Secured({ "ROLE_CLUB", "ROLE_TESORERO" })
 public class CategoriaController {
 
     @Autowired
@@ -125,7 +127,7 @@ public class CategoriaController {
         categoria.setClub(club);
         categoriaService.save(categoria);
         
-        flash.addFlashAttribute("msjLayout","success;Existo;Categoría guardada con éxito");
+        flash.addFlashAttribute("msjLayout","success;Exito;Categoría guardada con éxito");
         return "redirect:/categorias/listar";
     }
 
@@ -143,7 +145,7 @@ public class CategoriaController {
 
         if (categoria != null && categoria.getClub().getId().equals(club.getId())) {
             categoriaService.delete(id);
-            flash.addFlashAttribute("msjLayout","success;Existo;Categoría eliminada correctamente");
+            flash.addFlashAttribute("msjLayout","success;Exito;Categoría eliminada correctamente");
         } else {
             flash.addFlashAttribute("msjLayout", "error;Error;No puede eliminar una categoría que no pertenece a su club");
         }

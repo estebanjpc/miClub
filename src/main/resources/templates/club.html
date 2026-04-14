@@ -39,6 +39,8 @@
 						class="row g-4" enctype="multipart/form-data">
 
 						<input type="hidden" th:field="*{id}" />
+						<!-- El formulario no enlaza usuario.estado; @NotEmpty en la entidad y sync antes de guardar -->
+						<input type="hidden" th:field="*{estado}" id="usuarioEstadoHidden" />
 
 						<div class="col-12">
 							<h5 class="text-primary fw-semibold border-bottom pb-2 d-flex align-items-center gap-2">
@@ -62,16 +64,18 @@
 
 						<div class="col-md-6">
 							<label class="form-label">Tipo de club</label>
-							<select class="form-select" th:field="*{club.tipo}">
+							<select class="form-select" th:field="*{club.tipo}" th:errorclass="is-invalid">
 								<option value="">Seleccione</option>
 								<option th:each="tipo: ${listaTipoClub.entrySet()}" th:value="${tipo.key}"
 									th:text="${tipo.value}"></option>
 							</select>
+							<div class="invalid-feedback" th:if="${#fields.hasErrors('club.tipo')}" th:errors="*{club.tipo}"></div>
 						</div>
 
 						<div class="col-md-6">
 							<label class="form-label">Estado</label>
-							<select class="form-select" th:field="*{club.estado}">
+							<select class="form-select" th:field="*{club.estado}"
+								onchange="document.getElementById('usuarioEstadoHidden').value=this.value">
 								<option th:each="estado : ${estados.entrySet()}" th:value="${estado.key}"
 									th:text="${estado.value}"></option>
 							</select>
@@ -198,6 +202,18 @@
 								style="display:none;width:150px;height:150px;object-fit:cover;">
 
 							<input type="hidden" name="eliminarLogo" id="eliminarLogo" value="false">
+						</div>
+
+						<div class="col-12 mt-4">
+							<h5 class="text-secondary fw-semibold border-bottom pb-2 d-flex align-items-center gap-2">
+								<span class="rounded-circle bg-secondary bg-opacity-10 text-secondary d-inline-flex align-items-center justify-content-center"
+									style="width:28px;height:28px;font-size:0.75rem;"><i class="fas fa-key"></i></span>
+								Seguridad
+							</h5>
+							<p class="small text-muted mb-2">Actualiza la contraseña de acceso a la plataforma.</p>
+							<a th:href="@{/actualizarPass}" class="btn btn-outline-secondary rounded-pill btn-sm">
+								<i class="fas fa-key me-1"></i> Cambiar contraseña
+							</a>
 						</div>
 
 						<div class="col-12 border-top pt-4 mt-2 d-flex flex-wrap justify-content-center gap-2">

@@ -2,6 +2,7 @@ package com.app.entity;
 
 import java.io.Serializable;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -11,8 +12,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "cuentas_bancarias")
@@ -22,30 +21,35 @@ public class CuentaBancaria implements Serializable {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@NotBlank(message = "El nombre del titular es obligatorio")
 	private String nombreTitular;
 
-	@NotBlank(message = "El RUT es obligatorio")
 	private String rut;
-	
-//	@Email(message = "Debe ingresar un correo electrónico válido")
-	@NotBlank(message = "El email es obligatorio")
+
 	private String email;
 
-	@NotNull(message = "Debe seleccionar un banco")
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "id_banco")
+	@JoinColumn(name = "id_banco", nullable = true)
 	private Banco banco;
 
-	@NotBlank(message = "Debe seleccionar el tipo de cuenta")
 	private String tipoCuenta;
 
-	@NotBlank(message = "Debe ingresar el número de cuenta")
 	private String numeroCuenta;
 
 	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "id_club")
 	private Club club;
+
+	/** URL API Khipu (opcional; por defecto la de documentación). */
+	@Column(length = 500)
+	private String khipuApiUrl;
+
+	/** API key de Khipu para crear cobros (por club). */
+	@Column(length = 256)
+	private String khipuApiKey;
+
+	/** Secreto del comercio para validar webhook HMAC (por club). */
+	@Column(length = 256)
+	private String khipuMerchantSecret;
 
 	private static final long serialVersionUID = 1L;
 
@@ -111,6 +115,30 @@ public class CuentaBancaria implements Serializable {
 
 	public void setBanco(Banco banco) {
 		this.banco = banco;
+	}
+
+	public String getKhipuApiUrl() {
+		return khipuApiUrl;
+	}
+
+	public void setKhipuApiUrl(String khipuApiUrl) {
+		this.khipuApiUrl = khipuApiUrl;
+	}
+
+	public String getKhipuApiKey() {
+		return khipuApiKey;
+	}
+
+	public void setKhipuApiKey(String khipuApiKey) {
+		this.khipuApiKey = khipuApiKey;
+	}
+
+	public String getKhipuMerchantSecret() {
+		return khipuMerchantSecret;
+	}
+
+	public void setKhipuMerchantSecret(String khipuMerchantSecret) {
+		this.khipuMerchantSecret = khipuMerchantSecret;
 	}
 
 }

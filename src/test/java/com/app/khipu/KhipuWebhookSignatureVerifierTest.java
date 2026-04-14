@@ -18,7 +18,6 @@ class KhipuWebhookSignatureVerifierTest {
 
 	@BeforeEach
 	void setUp() {
-		ReflectionTestUtils.setField(verifier, "merchantSecret", "mi-secreto-test");
 		ReflectionTestUtils.setField(verifier, "maxTimestampSkewMs", 300_000L);
 	}
 
@@ -29,7 +28,7 @@ class KhipuWebhookSignatureVerifierTest {
 		String s = firmar("mi-secreto-test", t, body);
 		String header = "t=" + t + ",s=" + s;
 
-		assertThat(verifier.isValid(body, header)).isTrue();
+		assertThat(verifier.isValid(body, header, "mi-secreto-test")).isTrue();
 	}
 
 	@Test
@@ -40,7 +39,7 @@ class KhipuWebhookSignatureVerifierTest {
 		String header = "t=" + t + ",s=" + s;
 
 		String bodyManipulado = "{\"payment_id\":\"otro\",\"status\":\"done\"}";
-		assertThat(verifier.isValid(bodyManipulado, header)).isFalse();
+		assertThat(verifier.isValid(bodyManipulado, header, "mi-secreto-test")).isFalse();
 	}
 
 	@Test
@@ -50,21 +49,19 @@ class KhipuWebhookSignatureVerifierTest {
 		String s = firmar("otro-secreto", t, body);
 		String header = "t=" + t + ",s=" + s;
 
-		assertThat(verifier.isValid(body, header)).isFalse();
+		assertThat(verifier.isValid(body, header, "mi-secreto-test")).isFalse();
 	}
 
 	@Test
 	void rechazaCabeceraVaciaOMalformada() {
-		ReflectionTestUtils.setField(verifier, "merchantSecret", "s");
-		assertThat(verifier.isValid("{}", "")).isFalse();
-		assertThat(verifier.isValid("{}", "solo-texto")).isFalse();
-		assertThat(verifier.isValid("{}", "t=123")).isFalse();
+		assertThat(verifier.isValid("{}", "", "s")).isFalse();
+		assertThat(verifier.isValid("{}", "solo-texto", "s")).isFalse();
+		assertThat(verifier.isValid("{}", "t=123", "s")).isFalse();
 	}
 
 	@Test
 	void rechazaSecretoComercioVacio() {
-		ReflectionTestUtils.setField(verifier, "merchantSecret", "");
-		assertThat(verifier.isValid("{}", "t=1,s=abc")).isFalse();
+		assertThat(verifier.isValid("{}", "t=1,s=abc", "")).isFalse();
 	}
 
 	@Test
@@ -74,7 +71,7 @@ class KhipuWebhookSignatureVerifierTest {
 		String s = firmar("mi-secreto-test", String.valueOf(viejo), body);
 		String header = "t=" + viejo + ",s=" + s;
 
-		assertThat(verifier.isValid(body, header)).isFalse();
+		assertThat(verifier.isValid(body, header, "mi-secreto-test")).isFalse();
 	}
 
 	@Test
@@ -85,7 +82,7 @@ class KhipuWebhookSignatureVerifierTest {
 		String s = firmar("mi-secreto-test", String.valueOf(viejo), body);
 		String header = "t=" + viejo + ",s=" + s;
 
-		assertThat(verifier.isValid(body, header)).isTrue();
+		assertThat(verifier.isValid(body, header, "mi-secreto-test")).isTrue();
 	}
 
 	private static String firmar(String secret, String t, String body) throws Exception {

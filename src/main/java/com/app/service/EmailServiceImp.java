@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.SimpleMailMessage;
@@ -20,18 +21,24 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.app.entity.Club;
 import com.app.entity.Email;
 import com.app.entity.OrdenPago;
 import com.app.entity.Pago;
 import com.app.entity.Usuario;
 import com.app.enums.MedioPago;
 import com.app.repository.IPagoRepository;
+import com.app.security.AppRoles;
 
 import jakarta.mail.internet.MimeMessage;
 
 @Service
 public class EmailServiceImp implements IEmailService {
+
+	private static final Logger log = LoggerFactory.getLogger(EmailServiceImp.class);
 
 	@Autowired
 	private JavaMailSender mailSender;
@@ -44,6 +51,9 @@ public class EmailServiceImp implements IEmailService {
 
 	@Autowired
 	private IUsuarioService usuarioService;
+
+	@Autowired
+	private IClubService clubService;
 
 	@Value("${mail.set.from}")
 	private String emailSetFrom;
@@ -77,11 +87,15 @@ public class EmailServiceImp implements IEmailService {
 			helper.setSubject("Bienvenido al Club - " + usuario.getClub().getNombre());
 			helper.setFrom(emailSetFrom);
 			helper.setText(htmlContent, true);
-			inlineLogo(helper);
+			Club clubLogo = null;
+			if (usuario.getClub() != null && usuario.getClub().getId() != null) {
+				clubLogo = clubService.findById(usuario.getClub().getId());
+			}
+			inlineLogoClub(helper, clubLogo);
 
 			mailSender.send(mimeMessage);
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Error enviando correo de creación de usuario. email={}", usuario.getEmail(), e);
 		}
 	}
 
@@ -104,11 +118,11 @@ public class EmailServiceImp implements IEmailService {
 			helper.setSubject("Bienvenido a la Plataforma - Creación de cuenta");
 			helper.setFrom(emailSetFrom);
 			helper.setText(htmlContent, true);
-			inlineLogo(helper);
+			inlineLogoPlataforma(helper);
 
 			mailSender.send(mimeMessage);
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Error enviando correo de creación de club. email={}", usuario.getEmail(), e);
 		}
 	}
 
@@ -131,11 +145,11 @@ public class EmailServiceImp implements IEmailService {
 			helper.setSubject("Recuperación de Contraseña - Plataforma");
 			helper.setFrom(emailSetFrom);
 			helper.setText(htmlContent, true);
-			inlineLogo(helper);
+			inlineLogoPlataforma(helper);
 
 			mailSender.send(mimeMessage);
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Error enviando correo de recuperación de clave. email={}", usuario.getEmail(), e);
 		}
 	}
 
@@ -168,9 +182,10 @@ public class EmailServiceImp implements IEmailService {
 		}
 		Pago primero = pagos.get(0);
 		try {
-			List<Usuario> destinatarios = usuarioService.findUsuarioByIdClub(primero.getClub().getId(), "ROLE_CLUB");
+			List<Usuario> destinatarios = usuarioService.findUsuarioByIdClubAndRoles(primero.getClub().getId(),
+					List.of(AppRoles.CLUB, AppRoles.TESORERO));
 			if (destinatarios == null || destinatarios.isEmpty()) {
-				System.out.println("Aviso club: no hay usuario ROLE_CLUB para club id " + primero.getClub().getId());
+				log.warn("Aviso club omitido: no hay usuario club/tesorero. clubId={}", primero.getClub().getId());
 				return;
 			}
 			List<String> emails = destinatarios.stream()
@@ -193,9 +208,10 @@ public class EmailServiceImp implements IEmailService {
 				List<String> lineas = pagos.stream().map(this::lineaResumen).toList();
 				context.setVariable("lineas", lineas);
 				int total = pagos.stream()
-						.mapToInt(p -> p.getDeportista().getCategoria() != null
-								? p.getDeportista().getCategoria().getValorCuota()
-								: 0)
+						.mapToInt(p -> p.getMonto() != null ? p.getMonto()
+								: (p.getDeportista().getCategoria() != null
+										? p.getDeportista().getCategoria().getValorCuota()
+										: 0))
 						.sum();
 				context.setVariable("monto", formatMonto(total));
 			} else {
@@ -211,10 +227,12 @@ public class EmailServiceImp implements IEmailService {
 			helper.setSubject(asunto);
 			helper.setFrom(emailSetFrom);
 			helper.setText(html, true);
-			inlineLogo(helper);
+			inlineLogoClub(helper, clubService.findById(primero.getClub().getId()));
 			mailSender.send(mimeMessage);
+			log.info("Correo de aviso pago efectivo enviado a club. clubId={} totalPagos={} destinatarios={}",
+					primero.getClub().getId(), pagos.size(), emails.size());
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Error enviando aviso de pago efectivo al club. clubId={}", primero.getClub().getId(), e);
 		}
 	}
 
@@ -225,7 +243,8 @@ public class EmailServiceImp implements IEmailService {
 		}
 		Pago primero = orden.getPagos().get(0);
 		try {
-			List<Usuario> destinatarios = usuarioService.findUsuarioByIdClub(primero.getClub().getId(), "ROLE_CLUB");
+			List<Usuario> destinatarios = usuarioService.findUsuarioByIdClubAndRoles(primero.getClub().getId(),
+					List.of(AppRoles.CLUB, AppRoles.TESORERO));
 			if (destinatarios == null || destinatarios.isEmpty()) {
 				return;
 			}
@@ -252,10 +271,12 @@ public class EmailServiceImp implements IEmailService {
 			helper.setSubject("Pago Khipu confirmado — " + primero.getClub().getNombre());
 			helper.setFrom(emailSetFrom);
 			helper.setText(html, true);
-			inlineLogo(helper);
+			inlineLogoClub(helper, clubService.findById(primero.getClub().getId()));
 			mailSender.send(mimeMessage);
+			log.info("Correo de pago Khipu confirmado enviado a club. ordenId={} clubId={} destinatarios={}",
+					orden.getId(), primero.getClub().getId(), emails.size());
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Error enviando aviso de pago Khipu al club. ordenId={}", orden.getId(), e);
 		}
 	}
 
@@ -289,10 +310,13 @@ public class EmailServiceImp implements IEmailService {
 						: "Tu pago fue rechazado — " + pago.getClub().getNombre());
 				helper.setFrom(emailSetFrom);
 				helper.setText(html, true);
-				inlineLogo(helper);
+				inlineLogoClub(helper, clubService.findById(pago.getClub().getId()));
 				mailSender.send(mimeMessage);
+				log.info("Correo de estado pago efectivo enviado al usuario. pagoId={} aprobado={} email={}",
+						pago.getId(), aprobado, usuario.getEmail());
 			} catch (Exception e) {
-				e.printStackTrace();
+				log.error("Error enviando estado de pago efectivo al usuario. pagoId={} email={}",
+						pago.getId(), usuario.getEmail(), e);
 			}
 		});
 	}
@@ -337,23 +361,26 @@ public class EmailServiceImp implements IEmailService {
 					: "Pago Khipu no completado — " + primero.getClub().getNombre());
 			helper.setFrom(emailSetFrom);
 			helper.setText(html, true);
-			inlineLogo(helper);
+			inlineLogoClub(helper, clubService.findById(primero.getClub().getId()));
 			mailSender.send(mimeMessage);
+			log.info("Correo de resultado Khipu enviado al usuario. ordenId={} exitoso={} email={}",
+					orden.getId(), exitoso, usuario.getEmail());
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Error enviando resultado Khipu al usuario. ordenId={} email={}",
+					orden.getId(), usuario.getEmail(), e);
 		}
 	}
 
 	private Context buildContextNuevoPagoClub(Pago pago, OrdenPago orden) {
 		Context context = new Context();
+		context.setVariable("logoCid", Boolean.TRUE);
 		context.setVariable("nombreClub", pago.getClub().getNombre());
 		context.setVariable("nombreDeportista", pago.getDeportista().getNombre() + " " + pago.getDeportista().getApellido());
 		context.setVariable("periodoLabel", periodoLabel(pago.getMes(), pago.getAnio()));
 		context.setVariable("medioPago", pago.getMedioPago() != null ? pago.getMedioPago().name() : "");
 		context.setVariable("loginUrl", loginUrl());
-		Integer valor = pago.getDeportista().getCategoria() != null
-				? pago.getDeportista().getCategoria().getValorCuota()
-				: null;
+		Integer valor = pago.getMonto() != null ? pago.getMonto()
+				: (pago.getDeportista().getCategoria() != null ? pago.getDeportista().getCategoria().getValorCuota() : null);
 		if (valor != null) {
 			context.setVariable("monto", formatMonto(valor));
 		}
@@ -372,7 +399,8 @@ public class EmailServiceImp implements IEmailService {
 	private String lineaResumen(Pago p) {
 		String nom = p.getDeportista().getNombre() + " " + p.getDeportista().getApellido();
 		String per = periodoLabel(p.getMes(), p.getAnio());
-		Integer v = p.getDeportista().getCategoria() != null ? p.getDeportista().getCategoria().getValorCuota() : null;
+		Integer v = p.getMonto() != null ? p.getMonto()
+				: (p.getDeportista().getCategoria() != null ? p.getDeportista().getCategoria().getValorCuota() : null);
 		if (v != null) {
 			return nom + " — " + per + " — " + formatMonto(v);
 		}
@@ -403,7 +431,8 @@ public class EmailServiceImp implements IEmailService {
 		return base + "/login";
 	}
 
-	private void inlineLogo(MimeMessageHelper helper) {
+	/** Logo genérico de la plataforma (correos del administrador y del sistema). */
+	private void inlineLogoPlataforma(MimeMessageHelper helper) {
 		try {
 			ClassPathResource logoResource = new ClassPathResource("static/images/logo.png");
 			if (logoResource.exists()) {
@@ -415,8 +444,44 @@ public class EmailServiceImp implements IEmailService {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.warn("No se pudo adjuntar logo de plataforma inline en correo", e);
 		}
+	}
+
+	/**
+	 * Logo del club en correos hacia usuarios/apoderados; si no hay imagen, el logo genérico de la plataforma.
+	 */
+	private void inlineLogoClub(MimeMessageHelper helper, Club club) {
+		try {
+			if (club != null && club.getLogo() != null && club.getLogo().length > 0) {
+				ByteArrayResource res = new ByteArrayResource(club.getLogo());
+				helper.addInline("logoImage", res, guessImageContentType(club.getLogo()));
+				return;
+			}
+		} catch (Exception e) {
+			log.warn("No se pudo adjuntar logo del club inline; usando logo de plataforma. clubId={}",
+					club != null ? club.getId() : null, e);
+		}
+		inlineLogoPlataforma(helper);
+	}
+
+	private static String guessImageContentType(byte[] data) {
+		if (data == null || data.length < 4) {
+			return "image/jpeg";
+		}
+		if (data[0] == (byte) 0xFF && data[1] == (byte) 0xD8) {
+			return "image/jpeg";
+		}
+		if (data.length >= 8 && data[0] == (byte) 0x89 && data[1] == 'P' && data[2] == 'N' && data[3] == 'G') {
+			return "image/png";
+		}
+		if (data[0] == 'G' && data[1] == 'I' && data[2] == 'F') {
+			return "image/gif";
+		}
+		if (data[0] == 'R' && data[1] == 'I' && data[2] == 'F' && data[3] == 'F') {
+			return "image/webp";
+		}
+		return "image/jpeg";
 	}
 
 	@Override
@@ -424,7 +489,9 @@ public class EmailServiceImp implements IEmailService {
 		try {
 			mailSender.send(message);
 		} catch (Exception e) {
-			e.printStackTrace();
+			String[] recipients = message.getTo();
+			String to = recipients == null ? "" : String.join(",", recipients);
+			log.error("Error enviando correo simple. to={} subject={}", to, message.getSubject(), e);
 		}
 	}
 
@@ -438,7 +505,40 @@ public class EmailServiceImp implements IEmailService {
 			message.setText(email.getBody());
 			mailSender.send(message);
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Error enviando correo de entidad Email. to={} subject={}", email.getEmailTo(), email.getSubject(), e);
+		}
+	}
+
+	@Override
+	public void enviarNotificacionClub(String emailDestino, String asunto, String mensaje, String nombreClub,
+			String nombreDestinatario, Long clubId) {
+		if (emailDestino == null || emailDestino.isBlank()) {
+			return;
+		}
+		try {
+			MimeMessage mimeMessage = mailSender.createMimeMessage();
+			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+			Context context = new Context();
+			context.setVariable("nombreDestinatario", nombreDestinatario != null ? nombreDestinatario : "");
+			context.setVariable("nombreClub", nombreClub != null ? nombreClub : "Tu club");
+			context.setVariable("asunto", asunto);
+			context.setVariable("mensaje", (mensaje != null ? mensaje : "").replace("\n", "<br/>"));
+			context.setVariable("loginUrl", loginUrl());
+
+			String html = templateEngine.process("email/notificacionClub.html", context);
+			helper.setTo(emailDestino);
+			helper.setSubject(asunto);
+			helper.setFrom(emailSetFrom);
+			helper.setText(html, true);
+			Club clubLogo = clubId != null ? clubService.findById(clubId) : null;
+			inlineLogoClub(helper, clubLogo);
+			mailSender.send(mimeMessage);
+			log.info("Correo de notificación de campaña enviado. club={} to={} subject={}",
+					nombreClub, emailDestino, asunto);
+		} catch (Exception e) {
+			log.error("Error enviando correo de campaña. club={} to={} subject={}",
+					nombreClub, emailDestino, asunto, e);
 		}
 	}
 

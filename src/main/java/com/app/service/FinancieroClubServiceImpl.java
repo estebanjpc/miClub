@@ -180,7 +180,8 @@ public class FinancieroClubServiceImpl implements IFinancieroClubService {
 		dto.setPeriodoCuota(p.getNombreMes() + " " + p.getAnio());
 		dto.setEstado(p.getEstado() != null ? p.getEstado().name() : "");
 		dto.setMedio(p.getMedioPago() != null ? p.getMedioPago().name() : "");
-		int valor = p.getDeportista().getCategoria() != null ? p.getDeportista().getCategoria().getValorCuota() : 0;
+		int valor = p.getMonto() != null ? p.getMonto()
+				: (p.getDeportista().getCategoria() != null ? p.getDeportista().getCategoria().getValorCuota() : 0);
 		dto.setMonto(valor);
 		LocalDateTime f = p.getFecha();
 		dto.setFechaRegistro(f != null ? f.format(FMT_FECHA) : "");
@@ -215,9 +216,10 @@ public class FinancieroClubServiceImpl implements IFinancieroClubService {
 				for (Pago p : pagos) {
 					if (p.getEstado() == EstadoPago.PAGADO) {
 						pag++;
-						int v = p.getDeportista().getCategoria() != null
-								? p.getDeportista().getCategoria().getValorCuota()
-								: 0;
+						int v = p.getMonto() != null ? p.getMonto()
+								: (p.getDeportista().getCategoria() != null
+										? p.getDeportista().getCategoria().getValorCuota()
+										: 0);
 						montoPag += v;
 					} else {
 						otros++;

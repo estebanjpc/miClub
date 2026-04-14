@@ -19,6 +19,11 @@ public class CuentaBancariaServiceImpl implements ICuentaBancariaService {
 	}
 
 	@Override
+	public CuentaBancaria findByClubId(Long clubId) {
+		return cuentaBancariaRepository.findByClub_Id(clubId);
+	}
+
+	@Override
 	public void save(CuentaBancaria cuenta) {
 		cuentaBancariaRepository.save(cuenta);
 	}

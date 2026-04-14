@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout/layout :: head}"></head>
+
+<body class="d-flex flex-column min-vh-100">
+	<header th:replace="~{layout/layout :: header}"></header>
+
+	<main class="flex-grow-1 bg-light d-flex align-items-center">
+		<div class="container py-5">
+			<div class="row justify-content-center">
+				<div class="col-12 col-md-8 col-lg-6">
+					<div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+						<div class="card-header bg-secondary text-white text-center py-4 border-0">
+							<span class="rounded-circle bg-white bg-opacity-25 d-inline-flex align-items-center justify-content-center mb-2"
+								style="width:56px;height:56px;">
+								<i class="fas fa-exclamation-triangle fa-lg"></i>
+							</span>
+							<h1 class="h4 mb-0 fw-bold">Error del sistema</h1>
+							<p class="small mb-0 mt-2 opacity-90">No se pudo completar la operación</p>
+						</div>
+						<div class="card-body text-center p-4 p-lg-5">
+							<p class="text-muted mb-4"
+								th:text="${mensajeUsuario != null ? mensajeUsuario : 'Ocurrió un error inesperado. Intenta de nuevo más tarde o contacta al administrador.'}">
+								Ocurrió un error inesperado.
+							</p>
+							<a class="btn btn-primary rounded-pill px-4" role="button" th:href="@{/}">
+								<i class="fas fa-home me-1"></i> Volver al inicio
+							</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</main>
+
+	<footer th:replace="~{layout/layout :: footer}"></footer>
+</body>
+
+</html>

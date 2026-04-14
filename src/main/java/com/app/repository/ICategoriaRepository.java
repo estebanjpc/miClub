@@ -9,6 +9,8 @@ import com.app.entity.Club;
 
 public interface ICategoriaRepository extends JpaRepository<Categoria, Long> {
 
+	long countByClub_Id(Long idClub);
+
     List<Categoria> findByClub(Club club);
 
     Categoria findByNombreAndClub(String nombre, Club club);

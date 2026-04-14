@@ -20,6 +20,11 @@ public class OrdenPagoServiceImpl implements IOrdenPagoService {
 	}
 
 	@Override
+	public OrdenPago findByKhipuPaymentIdWithDetalle(String paymentId) {
+		return ordenPagoRepository.findByKhipuPaymentIdWithDetalle(paymentId);
+	}
+
+	@Override
 	public void save(OrdenPago orden) {
 		ordenPagoRepository.save(orden);		
 	}

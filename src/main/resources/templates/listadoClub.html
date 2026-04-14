@@ -7,16 +7,21 @@
 	<header th:replace="~{layout/layout :: header}"></header>
 
 	<main class="flex-grow-1 bg-light">
-		<div class="container-fluid px-3 px-lg-4 py-3 py-lg-4" style="max-width: 1400px;">
+		<div class="container-fluid px-3 px-lg-4 py-3 py-lg-4" style="max-width: 1600px;">
 
 			<div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
 				<div>
 					<h3 class="fw-bold text-primary mb-0" th:text="${titulo}">Mantenedor Club</h3>
-					<p class="text-muted small mb-0 mt-1">Clubes registrados en la plataforma.</p>
+					<p class="text-muted small mb-0 mt-1">Clubes registrados: estado, métricas y acciones.</p>
 				</div>
-				<a th:href="@{/crearClub}" class="btn btn-primary btn-sm rounded-pill shadow-sm">
-					<i class="fas fa-plus-circle me-1"></i> Nuevo club
-				</a>
+				<div class="d-flex flex-wrap gap-2">
+					<a th:href="@{/admin/incidencias-pagos}" class="btn btn-outline-warning btn-sm rounded-pill shadow-sm">
+						<i class="fas fa-exclamation-triangle me-1"></i> Incidencias pagos
+					</a>
+					<a th:href="@{/crearClub}" class="btn btn-primary btn-sm rounded-pill shadow-sm">
+						<i class="fas fa-plus-circle me-1"></i> Nuevo club
+					</a>
+				</div>
 			</div>
 
 			<div class="row g-2 g-lg-3 mb-3" th:with="total=${listadoClub != null ? #lists.size(listadoClub) : 0}">
@@ -44,7 +49,7 @@
 					</span>
 					<div>
 						<h3 class="h6 mb-0 fw-semibold text-dark">Listado de clubes</h3>
-						<p class="small text-muted mb-0">Nombre, contacto y estado</p>
+						<p class="small text-muted mb-0">Usuarios, deportistas, categorías y estados</p>
 					</div>
 				</div>
 				<div class="card-body p-0">
@@ -54,33 +59,51 @@
 								<tr>
 									<th class="text-nowrap" style="width:3rem;">#</th>
 									<th>Nombre club</th>
-									<th class="d-none d-md-table-cell">RUT</th>
 									<th class="d-none d-lg-table-cell">Email</th>
-									<th class="text-nowrap">Estado</th>
+									<th class="text-nowrap">Estado club</th>
+									<th class="text-nowrap">Usuario</th>
+									<th class="text-center text-nowrap d-none d-xl-table-cell">Usuarios</th>
+									<th class="text-center text-nowrap d-none d-xl-table-cell">Deportistas</th>
+									<th class="text-center text-nowrap d-none d-xl-table-cell">Categorías</th>
+									<th class="text-center text-nowrap" style="width:6rem;">Detalle</th>
 									<th class="text-center text-nowrap" style="width:6rem;">Editar</th>
 									<th class="text-center text-nowrap" style="width:6rem;">Eliminar</th>
 								</tr>
 							</thead>
 							<tbody>
-								<tr th:each="u, cont : ${listadoClub}">
+								<tr th:each="item, cont : ${listadoClub}">
 									<td class="text-muted small" th:text="${cont.index + 1}">1</td>
-									<td class="fw-medium" th:text="${u.nombre}">—</td>
-									<td class="d-none d-md-table-cell">—</td>
-									<td class="d-none d-lg-table-cell small" th:text="${u.email}">—</td>
+									<td class="fw-medium" th:text="${item.nombreClub}">—</td>
+									<td class="d-none d-lg-table-cell small" th:text="${item.emailContacto}">—</td>
 									<td>
-										<span th:if="${u.estado == '0'}" class="badge rounded-pill bg-warning text-dark">Pendiente</span>
-										<span th:if="${u.estado == '1'}" class="badge rounded-pill bg-success">Activo</span>
-										<span th:if="${u.estado == '2'}" class="badge rounded-pill bg-secondary">Deshabilitado</span>
+										<span th:if="${item.estadoClub == '1'}" class="badge rounded-pill bg-success">Club activo</span>
+										<span th:if="${item.estadoClub == '2'}" class="badge rounded-pill bg-secondary">Club inactivo</span>
+										<span th:if="${item.estadoClub != '1' and item.estadoClub != '2'}" class="badge rounded-pill bg-light text-dark border" th:text="${item.estadoClub}">—</span>
+									</td>
+									<td>
+										<span th:if="${item.estadoUsuario == '0'}" class="badge rounded-pill bg-warning text-dark">Pendiente</span>
+										<span th:if="${item.estadoUsuario == '1'}" class="badge rounded-pill bg-success">Activo</span>
+										<span th:if="${item.estadoUsuario == '2'}" class="badge rounded-pill bg-secondary">Deshabilitado</span>
+									</td>
+									<td class="text-center d-none d-xl-table-cell font-monospace" th:text="${item.totalUsuarios}">0</td>
+									<td class="text-center d-none d-xl-table-cell font-monospace" th:text="${item.totalDeportistas}">0</td>
+									<td class="text-center d-none d-xl-table-cell font-monospace" th:text="${item.totalCategorias}">0</td>
+									<td class="text-center">
+										<a th:href="@{/admin/club/{id}(id=${item.idClub})}"
+											class="btn btn-outline-info btn-sm rounded-pill px-2"
+											data-bs-toggle="tooltip" title="Ver detalle">
+											<i class="fas fa-eye"></i>
+										</a>
 									</td>
 									<td class="text-center">
-										<a th:href="@{/editarClub/{id}(id=${u.id})}"
+										<a th:href="@{/editarClub/{id}(id=${item.idUsuarioPrincipal})}"
 											class="btn btn-outline-primary btn-sm rounded-pill px-2"
 											data-bs-toggle="tooltip" title="Editar">
 											<i class="fas fa-edit"></i>
 										</a>
 									</td>
 									<td class="text-center">
-										<button type="button" th:onclick="eliminarUsuario([[${u.id}]])"
+										<button type="button" th:onclick="eliminarUsuario([[${item.idUsuarioPrincipal}]])"
 											class="btn btn-outline-danger btn-sm rounded-pill px-2"
 											data-bs-toggle="tooltip" title="Eliminar">
 											<i class="fas fa-trash-alt"></i>

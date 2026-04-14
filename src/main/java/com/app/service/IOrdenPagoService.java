@@ -8,6 +8,8 @@ public interface IOrdenPagoService {
 
 	public OrdenPago findByKhipuPaymentId(String paymentId);
 
+	OrdenPago findByKhipuPaymentIdWithDetalle(String paymentId);
+
 	public void save(OrdenPago orden);
 
 	public OrdenPago buscarPorId(Long id);

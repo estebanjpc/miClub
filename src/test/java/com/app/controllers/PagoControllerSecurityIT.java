@@ -58,4 +58,10 @@ class PagoControllerSecurityIT {
 				.andExpect(redirectedUrl("/seleccionarClub"));
 	}
 
+	@Test
+	@WithMockUser(roles = "ENTRENADOR")
+	void listadoPagos_entrenador_prohibido() throws Exception {
+		mockMvc.perform(get("/listadoPagos")).andExpect(status().isForbidden());
+	}
+
 }

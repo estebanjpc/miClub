@@ -2,6 +2,9 @@ package com.app.service;
 
 import java.util.List;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import com.app.dto.ComprobanteTransferenciaDTO;
 import com.app.dto.MesPagoDTO;
 import com.app.dto.MorosidadClubDTO;
 import com.app.entity.OrdenPago;
@@ -14,6 +17,10 @@ public interface IPagoService {
 //	public void guardarPago(Long deportistaId, int mes, int anio, MedioPago medioPago);
 	public List<Pago> obtenerPagosRealizados(Long usuarioId, Long idClub);
 	public void registrarPagoEfectivo(List<String> seleccionados, Long usuarioId, Long idClub);
+
+	/** Transferencia con comprobante; queda en PENDIENTE hasta aprobación del club. */
+	void registrarPagoTransferencia(List<String> seleccionados, Long usuarioId, Long idClub, MultipartFile comprobante);
+
 	public OrdenPago generarOrdenPagoKhipu(List<String> seleccionados, Long usuarioId, Long idClub);
     void confirmarPagoKhipu(String paymentId, String status);
 	public void save(Pago p);
@@ -27,5 +34,9 @@ public interface IPagoService {
 	long contarPagadosEnMes(Long idClub, Integer mes, Integer anio);
 
 	List<Pago> obtenerHistorialDeportistaClub(Long idClub, Long deportistaId);
+
+	/** Apoderado (mismo usuario del deportista) o personal del club (sesión del club). */
+	ComprobanteTransferenciaDTO obtenerComprobanteTransferenciaSiAutorizado(Long pagoId, Long usuarioId,
+			Long idClubSession, boolean esApoderado);
 
 }

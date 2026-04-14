@@ -11,8 +11,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.app.entity.Role;
 import com.app.entity.Usuario;
@@ -28,22 +28,23 @@ class JpaUserDetailsServiceTest {
 	private JpaUserDetailsService jpaUserDetailsService;
 
 	@Test
-	void emailInexistente_lanzaBadCredentials() {
+	void emailInexistente_lanzaUsernameNotFound() {
 		when(usuarioRepository.findByEmail("nada@test.cl")).thenReturn(List.of());
 
 		assertThatThrownBy(() -> jpaUserDetailsService.loadUserByUsername("nada@test.cl"))
-				.isInstanceOf(BadCredentialsException.class)
+				.isInstanceOf(UsernameNotFoundException.class)
 				.hasMessageContaining("EMAIL_NO_EXISTE");
 	}
 
 	@Test
-	void ningunUsuarioHabilitado_lanzaBadCredentials() {
+	void ningunUsuarioHabilitado_devuelveUsuarioDeshabilitado() {
 		Usuario u = usuario("a@test.cl", false, "ROLE_USER");
 		when(usuarioRepository.findByEmail("a@test.cl")).thenReturn(List.of(u));
 
-		assertThatThrownBy(() -> jpaUserDetailsService.loadUserByUsername("a@test.cl"))
-				.isInstanceOf(BadCredentialsException.class)
-				.hasMessageContaining("USUARIO_DESHABILITADO");
+		UserDetails details = jpaUserDetailsService.loadUserByUsername("a@test.cl");
+
+		assertThat(details.isEnabled()).isFalse();
+		assertThat(details.getAuthorities()).isEmpty();
 	}
 
 	@Test

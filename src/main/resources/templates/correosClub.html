@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout/layout :: head}" />
+
+<body class="d-flex flex-column min-vh-100">
+	<header th:replace="~{layout/layout :: header}"></header>
+
+	<main class="flex-grow-1 bg-light">
+		<div class="container py-4">
+			<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+				<div>
+					<h3 class="fw-bold text-primary mb-0" th:text="${titulo}">Comunicaciones por correo</h3>
+					<p class="text-muted small mb-0">Envía correos masivos, por filtros y con historial para auditoría.</p>
+				</div>
+			</div>
+
+			<div class="row g-3">
+				<div class="col-lg-7">
+					<div class="card shadow-sm border-0">
+						<div class="card-header bg-white border-bottom">
+							<h5 class="mb-0">Nueva campaña</h5>
+						</div>
+						<div class="card-body">
+							<form th:action="@{/correos/enviar}" th:object="${campanaForm}" method="post">
+								<div class="row g-3">
+									<div class="col-md-6">
+										<label class="form-label">Tipo de envío</label>
+										<select class="form-select" th:field="*{tipoEnvio}">
+											<option th:each="t : ${tiposEnvio}" th:value="${t}" th:text="${t}"></option>
+										</select>
+									</div>
+									<div class="col-md-6">
+										<label class="form-label">Categoría (filtro)</label>
+										<select class="form-select" th:field="*{categoriaId}">
+											<option value="">Todas</option>
+											<option th:each="c : ${categorias}" th:value="${c.id}" th:text="${c.nombre}"></option>
+										</select>
+									</div>
+									<div class="col-12">
+										<label class="form-label">Asunto</label>
+										<input type="text" class="form-control" th:field="*{asunto}" maxlength="180"
+											placeholder="Ej: Recordatorio cuota abril" />
+									</div>
+									<div class="col-12">
+										<label class="form-label">Mensaje</label>
+										<textarea class="form-control" rows="8" th:field="*{mensaje}"
+											placeholder="Escribe aquí el contenido del correo..."></textarea>
+									</div>
+									<div class="col-md-3">
+										<label class="form-label">Edad mín</label>
+										<input type="number" class="form-control" th:field="*{edadMin}" min="0" max="100" />
+									</div>
+									<div class="col-md-3">
+										<label class="form-label">Edad máx</label>
+										<input type="number" class="form-control" th:field="*{edadMax}" min="0" max="100" />
+									</div>
+									<div class="col-md-3">
+										<label class="form-label">Estado deportista</label>
+										<select class="form-select" th:field="*{estadoDeportista}">
+											<option th:each="e : ${estadosDeportista.entrySet()}" th:value="${e.key}" th:text="${e.value}"></option>
+										</select>
+									</div>
+									<div class="col-md-3 d-flex align-items-end">
+										<div class="form-check form-switch">
+											<input class="form-check-input" type="checkbox" th:field="*{soloMorosos}">
+											<label class="form-check-label">Solo morosos</label>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<label class="form-label">Mes período (morosidad)</label>
+										<input type="number" class="form-control" th:field="*{mesPeriodo}" min="1" max="12" />
+									</div>
+									<div class="col-md-6">
+										<label class="form-label">Año período (morosidad)</label>
+										<input type="number" class="form-control" th:field="*{anioPeriodo}" min="2000" max="2100" />
+									</div>
+								</div>
+								<div class="mt-3">
+									<button class="btn btn-primary rounded-pill px-4" type="submit">
+										<i class="fas fa-paper-plane me-1"></i> Enviar campaña
+									</button>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+
+				<div class="col-lg-5">
+					<div class="card shadow-sm border-0 mb-3">
+						<div class="card-header bg-white border-bottom">
+							<h5 class="mb-0">Plantillas sugeridas</h5>
+						</div>
+						<div class="card-body small">
+							<ul class="mb-0">
+								<li><strong>Morosidad:</strong> recordatorio por cuota pendiente del período.</li>
+								<li><strong>Evento:</strong> invitación con fecha, hora y lugar del entrenamiento.</li>
+								<li><strong>Bienvenida:</strong> mensaje a nuevos socios/apoderados.</li>
+								<li><strong>Masivo:</strong> comunicación institucional para todo el club.</li>
+							</ul>
+						</div>
+					</div>
+
+					<div class="card shadow-sm border-0">
+						<div class="card-header bg-white border-bottom">
+							<h5 class="mb-0">Historial de envíos</h5>
+						</div>
+						<div class="card-body p-0">
+							<div class="table-responsive">
+								<table class="table table-sm table-striped mb-0">
+									<thead>
+										<tr>
+											<th>Fecha</th>
+											<th>Tipo</th>
+											<th>Asunto</th>
+											<th>Dest.</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr th:if="${historialEnvios == null || historialEnvios.isEmpty()}">
+											<td colspan="4" class="text-center text-muted py-3">Sin envíos registrados</td>
+										</tr>
+										<tr th:each="h : ${historialEnvios}">
+											<td class="small text-nowrap"
+												th:text="${h.fechaEnvio != null} ? ${#temporals.format(h.fechaEnvio, 'dd/MM/yyyy HH:mm')} : '-'">-</td>
+											<td th:text="${h.tipo}">-</td>
+											<td class="small" th:text="${h.asunto}">-</td>
+											<td th:text="${h.totalDestinatarios}">0</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</main>
+
+	<footer th:replace="~{layout/layout :: footer}"></footer>
+</body>
+
+</html>

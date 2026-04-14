@@ -17,6 +17,9 @@ public interface IUsuarioService {
 	public void delete(Usuario usuario);
 	public List<Usuario> findUsuarioByAuthority(String role);
 	public List<Usuario> findUsuarioByIdClub(Long idClubSession, String role);
+
+	/** Usuarios del club con cualquiera de los roles indicados (notificaciones a personal de club). */
+	List<Usuario> findUsuarioByIdClubAndRoles(Long idClub, List<String> roles);
 	public List<Long> findClubIdsByUsuario(String email);
 	public List<Club> findClubesByUsuario(String email);
 	public List<Usuario> findAllByEmail(String email);

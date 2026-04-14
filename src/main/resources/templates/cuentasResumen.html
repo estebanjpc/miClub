@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:replace="~{layout/layout :: head}"></head>
+
+<body class="d-flex flex-column min-vh-100">
+	<header th:replace="~{layout/layout :: header}"></header>
+
+	<main class="flex-grow-1 bg-light">
+		<div class="container-fluid px-3 px-lg-4 py-3 py-lg-4" style="max-width: 960px;">
+
+			<div class="mb-3">
+				<h3 class="fw-bold text-primary mb-1" th:text="${titulo}">Pagos y cobros</h3>
+				<p class="text-muted small mb-0">Qué verán los apoderados al pagar y qué tienes configurado en el sistema.</p>
+			</div>
+
+			<nav th:replace="~{fragments/cuentasNav :: subnav}"></nav>
+
+			<div class="row g-3">
+				<!-- Transferencia -->
+				<div class="col-md-6">
+					<div class="card border-0 shadow-sm rounded-3 h-100">
+						<div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+							<span class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center"
+								style="width:40px;height:40px;">
+								<i class="fas fa-exchange-alt"></i>
+							</span>
+							<div>
+								<h4 class="h6 mb-0 fw-semibold">Transferencia bancaria</h4>
+								<p class="small text-muted mb-0">Datos para que suban comprobante</p>
+							</div>
+						</div>
+						<div class="card-body">
+							<div th:if="${transferenciaOk}" class="d-flex align-items-center gap-2 text-success mb-2">
+								<i class="fas fa-check-circle"></i>
+								<span class="fw-medium">Configurado</span>
+							</div>
+							<div th:if="${!transferenciaOk}" class="d-flex align-items-center gap-2 text-warning mb-2">
+								<i class="fas fa-exclamation-circle"></i>
+								<span class="fw-medium">Incompleto o sin datos</span>
+							</div>
+							<p class="small text-muted mb-3" th:if="${cuenta != null and cuenta.banco != null}">
+								<span th:text="${cuenta.banco.nombre}">Banco</span>
+								· <span th:text="${cuenta.tipoCuenta}">Tipo</span>
+								· N° <span th:text="${cuenta.numeroCuenta}">—</span>
+							</p>
+							<p class="small text-muted mb-3" th:if="${cuenta == null or cuenta.banco == null}">
+								Los apoderados no verán la opción de transferencia hasta completar la cuenta bancaria.
+							</p>
+							<a th:href="@{/cuentas/cuentaBancaria}" class="btn btn-outline-primary btn-sm rounded-pill">
+								<i class="fas fa-edit me-1"></i> Editar cuenta bancaria
+							</a>
+						</div>
+					</div>
+				</div>
+
+				<!-- Khipu -->
+				<div class="col-md-6">
+					<div class="card border-0 shadow-sm rounded-3 h-100">
+						<div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+							<span class="rounded-circle bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center"
+								style="width:40px;height:40px;">
+								<i class="fas fa-plug"></i>
+							</span>
+							<div>
+								<h4 class="h6 mb-0 fw-semibold">Khipu</h4>
+								<p class="small text-muted mb-0">Pagos en línea</p>
+							</div>
+						</div>
+						<div class="card-body">
+							<div th:if="${khipuEnBd}" class="d-flex align-items-center gap-2 text-success mb-2">
+								<i class="fas fa-check-circle"></i>
+								<span class="fw-medium">API key guardada en el club</span>
+							</div>
+							<div th:if="${!khipuEnBd}" class="d-flex align-items-center gap-2 text-secondary mb-2">
+								<i class="fas fa-minus-circle"></i>
+								<span class="fw-medium">No configurado en ficha del club</span>
+							</div>
+							<p class="small text-muted mb-2" th:if="${khipuCobroListo and !khipuEnBd}">
+								<i class="fas fa-info-circle me-1"></i> El servidor puede tener credenciales globales, pero en la consulta de pagos solo se ofrece Khipu si guardas la API key aquí.
+							</p>
+							<a th:href="@{/cuentas/khipu}" class="btn btn-outline-success btn-sm rounded-pill">
+								<i class="fas fa-edit me-1"></i> Editar Khipu
+							</a>
+						</div>
+					</div>
+				</div>
+
+				<!-- Webpay (reservado) -->
+				<div class="col-md-6">
+					<div class="card border-0 shadow-sm rounded-3 h-100 opacity-75">
+						<div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+							<span class="rounded-circle bg-secondary bg-opacity-10 text-secondary d-inline-flex align-items-center justify-content-center"
+								style="width:40px;height:40px;">
+								<i class="fas fa-credit-card"></i>
+							</span>
+							<div>
+								<h4 class="h6 mb-0 fw-semibold">Webpay</h4>
+								<p class="small text-muted mb-0">Próximamente</p>
+							</div>
+						</div>
+						<div class="card-body">
+							<p class="small text-muted mb-0">Cuando esté disponible, podrás activarlo desde aquí y los apoderados lo verán como opción de pago.</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div th:if="${cuenta != null}" class="mt-4 text-center">
+				<button type="button" th:onclick="eliminarCuenta([[${cuenta.id}]])"
+					class="btn btn-outline-danger btn-sm rounded-pill">
+					<i class="fas fa-trash-alt me-1"></i> Eliminar registro completo (banco + Khipu)
+				</button>
+			</div>
+
+		</div>
+	</main>
+
+	<footer th:replace="~{layout/layout :: footer}"></footer>
+	<script th:src="@{/js/cuenta.js}"></script>
+</body>
+</html>

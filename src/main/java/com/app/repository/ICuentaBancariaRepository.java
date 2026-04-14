@@ -9,5 +9,7 @@ public interface ICuentaBancariaRepository extends JpaRepository<CuentaBancaria,
 
 	CuentaBancaria findByClub(Club club);
 
+	CuentaBancaria findByClub_Id(Long clubId);
+
 }
 

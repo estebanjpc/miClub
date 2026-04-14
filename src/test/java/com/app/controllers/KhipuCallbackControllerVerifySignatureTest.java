@@ -16,6 +16,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.app.khipu.KhipuWebhookSignatureVerifier;
+import com.app.service.ICuentaBancariaService;
 import com.app.service.IOrdenPagoService;
 import com.app.service.IPagoService;
 
@@ -37,6 +38,9 @@ class KhipuCallbackControllerVerifySignatureTest {
 	private IPagoService pagoService;
 
 	@MockBean
+	private ICuentaBancariaService cuentaBancariaService;
+
+	@MockBean
 	private KhipuWebhookSignatureVerifier signatureVerifier;
 
 	@Test
@@ -48,7 +52,7 @@ class KhipuCallbackControllerVerifySignatureTest {
 
 	@Test
 	void firmaInvalida_devuelve401() throws Exception {
-		when(signatureVerifier.isValid(any(), any())).thenReturn(false);
+		when(signatureVerifier.isValid(any(), any(), any())).thenReturn(false);
 
 		mockMvc.perform(post("/api/khipu/notify").contentType(MediaType.APPLICATION_JSON).content("{}")
 				.header("x-khipu-signature", "t=1,s=xxx")).andExpect(status().isUnauthorized())

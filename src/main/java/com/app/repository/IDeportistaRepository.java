@@ -11,6 +11,8 @@ import com.app.entity.Deportista;
 
 public interface IDeportistaRepository extends JpaRepository<Deportista, Long> {
 
+	long countByUsuario_Club_Id(Long idClub);
+
 	@Query("SELECT d FROM Deportista d LEFT JOIN FETCH d.categoria WHERE d.usuario.id = ?1 ORDER BY d.id")
 	List<Deportista> findByUsuarioIdOrderById(Long usuarioId);
 

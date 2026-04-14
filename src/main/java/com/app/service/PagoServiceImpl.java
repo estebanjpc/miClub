@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,20 +13,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.app.repository.IDeportistaRepository;
 import com.app.repository.IOrdenPagoRepository;
 import com.app.repository.IPagoRepository;
 import com.app.util.AfterCommitRunner;
+import com.app.dto.ComprobanteTransferenciaDTO;
 import com.app.dto.KhipuResponse;
 import com.app.dto.MesPagoDTO;
 import com.app.dto.MorosidadClubDTO;
 import com.app.entity.Deportista;
 import com.app.entity.OrdenPago;
 import com.app.entity.Pago;
+import com.app.enums.ConceptoPago;
 import com.app.enums.EstadoPago;
 import com.app.enums.MedioPago;
-
 @Service
 public class PagoServiceImpl implements IPagoService {
 	
@@ -172,10 +175,77 @@ public class PagoServiceImpl implements IPagoService {
             pago.setAnio(anio);
             pago.setEstado(EstadoPago.PENDIENTE);
             pago.setMedioPago(MedioPago.EFECTIVO);
+            pago.setConcepto(ConceptoPago.MENSUALIDAD);
+            pago.setMonto(d.getCategoria() != null ? d.getCategoria().getValorCuota() : null);
             pago.setObservacion("Pago registrado desde portal MiClub (efectivo)");
             pagoRepository.save(pago);
             idsRegistrados.add(pago.getId());
         }
+		if (!idsRegistrados.isEmpty()) {
+			List<Long> copia = List.copyOf(idsRegistrados);
+			AfterCommitRunner.run(() -> asyncEmailService.notificarClubNuevoPagoEfectivoLote(copia));
+		}
+	}
+
+	private static final long MAX_COMPROBANTE_BYTES = 5 * 1024 * 1024;
+
+	@Override
+	@Transactional
+	public void registrarPagoTransferencia(List<String> seleccionados, Long usuarioId, Long idClub,
+			MultipartFile comprobante) {
+		if (comprobante == null || comprobante.isEmpty()) {
+			throw new IllegalArgumentException("Debe adjuntar el comprobante de la transferencia (imagen o PDF).");
+		}
+		String ct = comprobante.getContentType() != null ? comprobante.getContentType() : "";
+		if (!ct.startsWith("image/") && !"application/pdf".equalsIgnoreCase(ct)) {
+			throw new IllegalArgumentException("El comprobante debe ser una imagen (JPG, PNG, etc.) o un PDF.");
+		}
+		if (comprobante.getSize() > MAX_COMPROBANTE_BYTES) {
+			throw new IllegalArgumentException("El archivo no puede superar 5 MB.");
+		}
+		byte[] bytes;
+		try {
+			bytes = comprobante.getBytes();
+		} catch (Exception e) {
+			throw new IllegalArgumentException("No se pudo leer el archivo adjunto.");
+		}
+		if (bytes.length == 0) {
+			throw new IllegalArgumentException("El archivo adjunto está vacío.");
+		}
+
+		String nombre = comprobante.getOriginalFilename();
+		if (nombre != null && nombre.length() > 240) {
+			nombre = nombre.substring(0, 240);
+		}
+
+		List<Long> idsRegistrados = new ArrayList<>();
+		for (String item : seleccionados) {
+			String[] data = item.split("-");
+			if (data.length != 3) {
+				throw new IllegalArgumentException("Formato de selección inválido");
+			}
+			Long deportistaId = Long.parseLong(data[0]);
+			int mes = Integer.parseInt(data[1]);
+			int anio = Integer.parseInt(data[2]);
+
+			Deportista d = requireDeportistaDelUsuarioEnClub(deportistaId, usuarioId, idClub);
+			Pago pago = new Pago();
+			pago.setDeportista(d);
+			pago.setClub(d.getCategoria().getClub());
+			pago.setFecha(LocalDateTime.now());
+			pago.setMes(mes);
+			pago.setAnio(anio);
+			pago.setEstado(EstadoPago.PENDIENTE);
+			pago.setMedioPago(MedioPago.TRANSFERENCIA);
+			pago.setConcepto(ConceptoPago.MENSUALIDAD);
+			pago.setMonto(d.getCategoria() != null ? d.getCategoria().getValorCuota() : null);
+			pago.setObservacion("Transferencia bancaria — comprobante adjunto (pendiente de validación del club)");
+			pago.setComprobanteTransferencia(bytes);
+			pago.setComprobanteContentType(ct);
+			pago.setComprobanteNombreArchivo(nombre);
+			pagoRepository.save(pago);
+			idsRegistrados.add(pago.getId());
+		}
 		if (!idsRegistrados.isEmpty()) {
 			List<Long> copia = List.copyOf(idsRegistrados);
 			AfterCommitRunner.run(() -> asyncEmailService.notificarClubNuevoPagoEfectivoLote(copia));
@@ -207,14 +277,14 @@ public class PagoServiceImpl implements IPagoService {
             p.setAnio(anio);
             p.setEstado(EstadoPago.PENDIENTE_KHIPU);
             p.setMedioPago(MedioPago.KHIPU);
+            p.setConcepto(ConceptoPago.MENSUALIDAD);
+            Integer valor = dep.getCategoria() != null ? dep.getCategoria().getValorCuota() : null;
+            p.setMonto(valor);
             p.setObservacion("Pago vía Khipu iniciado");
             pagoRepository.save(p);
 
             pagos.add(p);
 
-            // calcular valor por deportista: asumo m.getValorCuota o similar
-            // si no tienes el valor en Deportista, reemplaza con m.valorCuota pasado desde front
-            Integer valor = dep.getCategoria().getValorCuota(); // ajusta segun tu modelo
             total += (valor != null ? valor : 0);
         }
 
@@ -228,7 +298,7 @@ public class PagoServiceImpl implements IPagoService {
         OrdenPago saved = ordenPagoRepository.save(orden);
 
         // llamar a Khipu
-        KhipuResponse resp = khipuService.crearPago(total, pagos, saved.getId());
+        KhipuResponse resp = khipuService.crearPago(total, pagos, saved.getId(), idClub);
 
         saved.setKhipuPaymentId(resp.getPaymentId());
         saved.setKhipuUrl(resp.getPaymentUrl());
@@ -290,6 +360,9 @@ public class PagoServiceImpl implements IPagoService {
 
         pago.setEstado(EstadoPago.PAGADO);
         pago.setFecha(LocalDateTime.now());
+        if (pago.getMonto() == null && pago.getDeportista() != null && pago.getDeportista().getCategoria() != null) {
+        	pago.setMonto(pago.getDeportista().getCategoria().getValorCuota());
+        }
 
         pagoRepository.save(pago);
         AfterCommitRunner.run(() -> asyncEmailService.notificarUsuarioEstadoPagoEfectivo(idPago, true,
@@ -329,10 +402,8 @@ public class PagoServiceImpl implements IPagoService {
 	
 	@Override
 	public List<Pago> obtenerPendientesAprobacion(Long idClubSession) {
-		return pagoRepository.findByClubIdAndEstadoAndMedioPagoOrderByFechaDesc(
-				idClubSession,
-				EstadoPago.PENDIENTE,
-				MedioPago.EFECTIVO);
+		return pagoRepository.findByClubIdAndEstadoAndMedioPagoInOrderByFechaDesc(idClubSession, EstadoPago.PENDIENTE,
+				EnumSet.of(MedioPago.EFECTIVO, MedioPago.TRANSFERENCIA));
 	}
 	
 	@Override
@@ -407,7 +478,7 @@ public class PagoServiceImpl implements IPagoService {
 
 	@Override
 	public long contarPagadosEnMes(Long idClub, Integer mes, Integer anio) {
-		return pagoRepository.countByClub_IdAndMesAndAnioAndEstado(idClub, mes, anio, EstadoPago.PAGADO);
+		return pagoRepository.countPagadosMensualesEnMes(idClub, mes, anio, EstadoPago.PAGADO);
 	}
 
 	@Override
@@ -416,4 +487,28 @@ public class PagoServiceImpl implements IPagoService {
 		return pagoRepository.findByClub_IdAndDeportista_IdOrderByFechaDesc(idClub, deportistaId);
 	}
 
+	@Override
+	@Transactional(readOnly = true)
+	public ComprobanteTransferenciaDTO obtenerComprobanteTransferenciaSiAutorizado(Long pagoId, Long usuarioId,
+			Long idClubSession, boolean esApoderado) {
+		Pago p = pagoRepository.findByIdWithDetalle(pagoId)
+				.orElseThrow(() -> new AccessDeniedException("Pago no encontrado"));
+		if (!p.hasComprobanteTransferencia() || p.getMedioPago() != MedioPago.TRANSFERENCIA) {
+			throw new AccessDeniedException("Comprobante no disponible");
+		}
+		if (esApoderado) {
+			if (p.getDeportista() == null || p.getDeportista().getUsuario() == null
+					|| !p.getDeportista().getUsuario().getId().equals(usuarioId)) {
+				throw new AccessDeniedException("No autorizado");
+			}
+		} else {
+			if (idClubSession == null || p.getClub() == null || !p.getClub().getId().equals(idClubSession)) {
+				throw new AccessDeniedException("No autorizado");
+			}
+		}
+		String ct = p.getComprobanteContentType() != null ? p.getComprobanteContentType() : "application/octet-stream";
+		return new ComprobanteTransferenciaDTO(p.getComprobanteTransferencia(), ct, p.getComprobanteNombreArchivo());
+	}
+
 }
+

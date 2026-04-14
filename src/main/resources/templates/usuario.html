@@ -32,6 +32,19 @@
 					<p class="text-muted small mb-0 mt-1"
 						th:text="${isEditing} ? 'Modifica los datos del apoderado y deportistas.' : 'Completa el alta de un apoderado y al menos un deportista asociado.'">
 					</p>
+					<div th:if="${!isEditing and (categorias == null or categorias.isEmpty())}"
+						class="alert alert-warning border-0 shadow-sm rounded-3 mt-3 mb-0 d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-2 gap-sm-3">
+						<div class="d-flex align-items-start gap-2 flex-grow-1">
+							<i class="fas fa-layer-group mt-1 text-warning"></i>
+							<div>
+								<strong class="d-block">Sin categorías en el club</strong>
+								<span class="small">Crea al menos una categoría antes de continuar con el alta; así podrás asignar la cuota correcta a cada deportista.</span>
+							</div>
+						</div>
+						<a th:href="@{/categorias/crear}" class="btn btn-sm btn-warning text-dark fw-semibold rounded-pill flex-shrink-0">
+							<i class="fas fa-plus-circle me-1"></i> Ir a categorías
+						</a>
+					</div>
 				</div>
 				<a th:href="@{/listadoDeportistas}" class="btn btn-outline-secondary btn-sm rounded-pill">
 					<i class="fas fa-arrow-left me-1"></i> Volver al listado

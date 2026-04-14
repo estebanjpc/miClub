@@ -4,30 +4,39 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.time.format.TextStyle;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.app.dto.ComprobanteTransferenciaDTO;
 import com.app.dto.DashboardPagoDTO;
+import com.app.dto.OpcionesPagoApoderadoDTO;
 import com.app.dto.EstadoPagoDeportistaDTO;
 import com.app.dto.MesPagoDTO;
 import com.app.dto.MorosidadClubDTO;
-import com.app.dto.ResumenCategoriaDTO;
 import com.app.entity.Categoria;
 import com.app.entity.Club;
 import com.app.entity.Deportista;
@@ -35,7 +44,6 @@ import com.app.entity.OrdenPago;
 import com.app.entity.Pago;
 import com.app.entity.Usuario;
 import com.app.enums.EstadoPago;
-import com.app.enums.MedioPago;
 import com.app.service.ICategoriaService;
 import com.app.service.IClubService;
 import com.app.service.IDashboardPagoService;
@@ -44,6 +52,7 @@ import com.app.service.IEstadoPagoClubService;
 import com.app.service.IOrdenPagoService;
 import com.app.service.IPagoService;
 import com.app.service.IUsuarioService;
+import com.app.service.ClubMediosPagoService;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -74,8 +83,11 @@ public class PagoController {
 	@Autowired
 	private IUsuarioService usuarioService;
 
+	@Autowired
+	private ClubMediosPagoService clubMediosPagoService;
+
 	@GetMapping({ "/consulta" })
-	@Secured("ROLE_USER")
+	@Secured({ "ROLE_USER", "ROLE_SOCIO" })
 	public String consulta(Model model, RedirectAttributes flash, Authentication authentication,
 			HttpServletRequest request) {
 
@@ -99,7 +111,8 @@ public class PagoController {
 
 		model.addAttribute("meses", meses);
 		model.addAttribute("pagosRealizados", pagosRealizados);
-		model.addAttribute("mediosPago", MedioPago.values());
+		OpcionesPagoApoderadoDTO opciones = clubMediosPagoService.opcionesParaApoderado(idClubSession);
+		model.addAttribute("mediosPago", opciones);
 		model.addAttribute("clubUsuario", usuario.getClub().getNombre());
 
 		return "consulta";
@@ -131,16 +144,22 @@ public class PagoController {
 //	}
 
 	@GetMapping("/listadoPagos")
-	@Secured("ROLE_CLUB")
+	@Secured({ "ROLE_CLUB", "ROLE_TESORERO", "ROLE_ADMIN" })
 	public String listarPagosClub(@RequestParam(required = false) Integer mes,
 			@RequestParam(required = false) EstadoPago estado, @RequestParam(required = false) Long idDeportista,
 			@RequestParam(required = false) Long idCategoria,
 			@RequestParam(required = false, defaultValue = "3") Integer minCuotasMorosos,
-			@RequestParam(required = false, defaultValue = "pendientes") String tab,
-			Model model, HttpServletRequest request, RedirectAttributes flash) {
+			@RequestParam(required = false, defaultValue = "mensual") String tab,
+			Model model, HttpServletRequest request, RedirectAttributes flash, Authentication authentication) {
 
 		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
 		if (idClubSession == null) {
+			boolean esAdmin = authentication != null && authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+			if (esAdmin) {
+				flash.addFlashAttribute("msjLayout",
+						"info;Administrador;Elige un club en el listado y usa «Entrar como soporte» para ver sus pagos.");
+				return "redirect:/listadoClub";
+			}
 			flash.addFlashAttribute("msjLayout", "error;Sesión;Selecciona un club para continuar.");
 			return "redirect:/seleccionarClub";
 		}
@@ -162,12 +181,14 @@ public class PagoController {
 			mes = mesActual;
 		}
 
+		if (tab == null || (!"mensual".equals(tab) && !"pendientes".equals(tab) && !"morosos".equals(tab))) {
+			tab = "mensual";
+		}
+
 		int minCuotas = minCuotasMorosos == null ? 3 : Math.min(24, Math.max(1, minCuotasMorosos));
 
 		List<EstadoPagoDeportistaDTO> estadosCompletos = estadoPagoClubService.obtenerEstadoPorMes(idClubSession, mes, anio,
 				"MES");
-		List<ResumenCategoriaDTO> resumenPorCategoria = buildResumenPorCategoria(estadosCompletos);
-
 		List<EstadoPagoDeportistaDTO> estados = new ArrayList<>(estadosCompletos);
 
 		if (estado != null) {
@@ -231,7 +252,6 @@ public class PagoController {
 		model.addAttribute("dashboard", dashboard);
 		model.addAttribute("deportistas", deportistas);
 		model.addAttribute("categorias", categorias);
-		model.addAttribute("resumenPorCategoria", resumenPorCategoria);
 		model.addAttribute("meses", meses);
 		model.addAttribute("activeTab", tab);
 
@@ -240,35 +260,13 @@ public class PagoController {
 		model.addAttribute("deportistaSeleccionado", idDeportista);
 		model.addAttribute("categoriaSeleccionada", idCategoria);
 		model.addAttribute("minCuotasMorosos", minCuotas);
+		model.addAttribute("adminSoporte", Boolean.TRUE.equals(request.getSession().getAttribute("adminSoporte")));
 
 		return "listadoPagos";
 	}
 
-	private List<ResumenCategoriaDTO> buildResumenPorCategoria(List<EstadoPagoDeportistaDTO> lista) {
-		Map<Long, ResumenCategoriaDTO> map = new LinkedHashMap<>();
-		for (EstadoPagoDeportistaDTO e : lista) {
-			Long key = e.getIdCategoria() != null ? e.getIdCategoria() : 0L;
-			String nombre = e.getNombreCategoria() != null ? e.getNombreCategoria() : "Sin categoría";
-			ResumenCategoriaDTO r = map.computeIfAbsent(key, k -> {
-				ResumenCategoriaDTO dto = new ResumenCategoriaDTO();
-				dto.setIdCategoria(k == 0L ? null : k);
-				dto.setNombreCategoria(nombre);
-				return dto;
-			});
-			if (e.getEstado() == EstadoPago.MOROSO) {
-				r.setMorosos(r.getMorosos() + 1);
-			} else if (e.getEstado() == EstadoPago.PENDIENTE || e.getEstado() == EstadoPago.PENDIENTE_KHIPU) {
-				r.setPendientesPago(r.getPendientesPago() + 1);
-			}
-		}
-		return map.values().stream()
-				.sorted(Comparator.comparing(ResumenCategoriaDTO::getNombreCategoria,
-						Comparator.nullsLast(String::compareToIgnoreCase)))
-				.toList();
-	}
-
 	@PostMapping("/aprobar/{id}")
-	@Secured("ROLE_CLUB")
+	@Secured({ "ROLE_CLUB", "ROLE_TESORERO" })
 	public String aprobarPagoEfectivo(@PathVariable Long id, RedirectAttributes flash, HttpServletRequest request) {
 
 		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
@@ -287,7 +285,7 @@ public class PagoController {
 	}
 	
 	@PostMapping("/rechazar/{id}")
-	@Secured("ROLE_CLUB")
+	@Secured({ "ROLE_CLUB", "ROLE_TESORERO" })
 	public String rechazarPagoEfectivo(@PathVariable Long id, @RequestParam(required = false) String observacion,
 			RedirectAttributes flash, HttpServletRequest request) {
 		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
@@ -306,9 +304,10 @@ public class PagoController {
 	}
 
 	@PostMapping("/pagar")
-	@Secured("ROLE_USER")
+	@Secured({ "ROLE_USER", "ROLE_SOCIO" })
 	public String pagar(@RequestParam(required = false) List<String> seleccionados,
-			@RequestParam(name = "medioPago", required = false) String medioPagoStr, RedirectAttributes flash,
+			@RequestParam(name = "medioPago", required = false) String medioPagoStr,
+			@RequestParam(required = false) MultipartFile comprobanteTransferencia, RedirectAttributes flash,
 			Authentication authentication, HttpServletRequest request) {
 
 		if (seleccionados == null || seleccionados.isEmpty()) {
@@ -347,7 +346,31 @@ public class PagoController {
 			}
 			flash.addFlashAttribute("msjLayout", "success;Pago OK;Pago en efectivo registrado correctamente");
 			return "redirect:/consulta";
+		} else if ("TRANSFERENCIA".equals(medioUpper)) {
+			if (!clubMediosPagoService.puedeUsarTransferencia(idClubSession)) {
+				flash.addFlashAttribute("msjLayout",
+						"error;Transferencia;El club no tiene configurada una cuenta bancaria para transferencias.");
+				return "redirect:/consulta";
+			}
+			try {
+				pagoService.registrarPagoTransferencia(seleccionados, usuarioLogin.getId(), idClubSession,
+						comprobanteTransferencia);
+			} catch (AccessDeniedException e) {
+				flash.addFlashAttribute("msjLayout", "error;Permisos;No puede registrar pagos para esos datos.");
+				return "redirect:/consulta";
+			} catch (IllegalArgumentException e) {
+				flash.addFlashAttribute("msjLayout", "error;Transferencia;" + e.getMessage());
+				return "redirect:/consulta";
+			}
+			flash.addFlashAttribute("msjLayout",
+					"success;Transferencia;Registro enviado con comprobante. El club lo validará antes de aprobar.");
+			return "redirect:/consulta";
 		} else if ("KHIPU".equals(medioUpper)) {
+			if (!clubMediosPagoService.puedeApoderadoUsarKhipu(idClubSession)) {
+				flash.addFlashAttribute("msjLayout",
+						"error;Khipu;Khipu no está habilitado para este club en la consulta de pagos.");
+				return "redirect:/consulta";
+			}
 			try {
 				OrdenPago orden = pagoService.generarOrdenPagoKhipu(seleccionados, usuarioLogin.getId(), idClubSession);
 				return "redirect:" + orden.getKhipuUrl();
@@ -358,7 +381,8 @@ public class PagoController {
 				flash.addFlashAttribute("msjLayout", "error;Datos;Solicitud inválida.");
 				return "redirect:/consulta";
 			} catch (IllegalStateException e) {
-				flash.addFlashAttribute("msjLayout", "error;Khipu;No se pudo iniciar el pago. Intente más tarde.");
+				String msg = e.getMessage() != null ? e.getMessage() : "No se pudo iniciar el pago. Intente más tarde.";
+				flash.addFlashAttribute("msjLayout", "error;Khipu;" + msg);
 				return "redirect:/consulta";
 			}
 		} else {
@@ -368,8 +392,33 @@ public class PagoController {
 		}
 	}
 
+	@GetMapping("/pago/comprobante/{id}")
+	@Secured({ "ROLE_USER", "ROLE_SOCIO", "ROLE_CLUB", "ROLE_TESORERO" })
+	public ResponseEntity<byte[]> comprobanteTransferencia(@PathVariable Long id, Authentication authentication,
+			HttpServletRequest request) {
+		Usuario usuario = usuarioService.refrescarUsuarioSesion(request, authentication.getName());
+		if (usuario == null) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
+		boolean esApoderado = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority)
+				.anyMatch(a -> "ROLE_USER".equals(a) || "ROLE_SOCIO".equals(a));
+		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
+		try {
+			ComprobanteTransferenciaDTO dto = pagoService.obtenerComprobanteTransferenciaSiAutorizado(id,
+					usuario.getId(), idClubSession, esApoderado);
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.parseMediaType(dto.getContentType()));
+			String nombre = dto.getNombreArchivo() != null ? dto.getNombreArchivo() : "comprobante";
+			headers.setContentDisposition(
+					ContentDisposition.inline().filename(nombre, StandardCharsets.UTF_8).build());
+			return ResponseEntity.ok().headers(headers).body(dto.getData());
+		} catch (AccessDeniedException e) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		}
+	}
+
 	@GetMapping("/orden/{id}")
-	@Secured("ROLE_USER")
+	@Secured({ "ROLE_USER", "ROLE_SOCIO" })
 	public String verOrdenPago(@PathVariable Long id, Model model, HttpServletRequest request,
 			Authentication authentication, RedirectAttributes flash) {
 
@@ -388,7 +437,7 @@ public class PagoController {
 	}
 
 	@GetMapping("/pago/khipu/retorno")
-	@Secured("ROLE_USER")
+	@Secured({ "ROLE_USER", "ROLE_SOCIO" })
 	public String khipuRetorno(@RequestParam(name = "orden", required = false) Long ordenId, Model model) {
 		model.addAttribute("ordenId", ordenId);
 		model.addAttribute("estado", "PROCESANDO");
@@ -396,7 +445,7 @@ public class PagoController {
 	}
 
 	@GetMapping("/pago/ok")
-	@Secured("ROLE_USER")
+	@Secured({ "ROLE_USER", "ROLE_SOCIO" })
 	public String pagoOk(@RequestParam(name = "orden", required = false) Long ordenId, Model model) {
 		model.addAttribute("ordenId", ordenId);
 		model.addAttribute("estado", "OK");
@@ -404,7 +453,7 @@ public class PagoController {
 	}
 
 	@GetMapping("/pago/cancelado")
-	@Secured("ROLE_USER")
+	@Secured({ "ROLE_USER", "ROLE_SOCIO" })
 	public String pagoCancelado(@RequestParam(name = "orden", required = false) Long ordenId, Model model) {
 		model.addAttribute("ordenId", ordenId);
 		model.addAttribute("estado", "CANCELADO");

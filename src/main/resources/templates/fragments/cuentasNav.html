@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+	<nav th:fragment="subnav" class="nav nav-pills flex-wrap gap-2 mb-4">
+		<a class="nav-link" th:classappend="${activeTab == 'resumen'} ? ' active'" th:href="@{/cuentas}">Resumen</a>
+		<a class="nav-link" th:classappend="${activeTab == 'bancaria'} ? ' active'" th:href="@{/cuentas/cuentaBancaria}">Cuenta bancaria</a>
+		<a class="nav-link" th:classappend="${activeTab == 'khipu'} ? ' active'" th:href="@{/cuentas/khipu}">Khipu</a>
+	</nav>
+</body>
+</html>

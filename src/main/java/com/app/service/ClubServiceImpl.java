@@ -38,6 +38,12 @@ public class ClubServiceImpl implements IClubService {
 	@Transactional
 	public void save(Club clubNuevo, Usuario usuarioLogeado) {
 
+		// Alta: sin id no hay historial que comparar; el flujo de edición usa findById(clubBD)
+		if (clubNuevo.getId() == null) {
+			clubRepository.save(clubNuevo);
+			return;
+		}
+
 		Club clubBD = clubRepository.findById(clubNuevo.getId()).orElseThrow(() -> new RuntimeException("Club no encontrado"));
 		Hibernate.initialize(clubBD.getCategorias());
 

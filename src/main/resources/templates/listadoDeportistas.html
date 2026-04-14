@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head th:replace="~{layout/layout :: head}" />
 
@@ -17,6 +17,25 @@
 				<a th:href="@{/crearUsuario}" class="btn btn-primary btn-sm rounded-pill shadow-sm">
 					<i class="fas fa-user-plus me-1"></i> Crear apoderado
 				</a>
+			</div>
+
+			<div th:if="${soloEfectivoMediosPago}" class="alert alert-warning border-0 shadow-sm rounded-3 mb-3 d-flex flex-column flex-md-row align-items-start gap-3">
+				<span class="rounded-circle bg-warning bg-opacity-25 text-dark d-inline-flex align-items-center justify-content-center flex-shrink-0"
+					style="width:40px;height:40px;">
+					<i class="fas fa-money-bill-wave"></i>
+				</span>
+				<div class="flex-grow-1">
+					<strong class="d-block text-dark">Medios de pago limitados</strong>
+					<p class="small mb-2 mb-md-0 text-dark text-opacity-75">
+						No tienes configurada la <strong>cuenta bancaria</strong> para transferencias ni <strong>Khipu</strong> para cobros en línea.
+						Los apoderados solo podrán registrar pagos <strong>en efectivo</strong> desde la consulta de cuotas.
+					</p>
+				</div>
+				<div class="flex-shrink-0" sec:authorize="hasAnyRole('ROLE_CLUB','ROLE_TESORERO')">
+					<a th:href="@{/cuentas}" class="btn btn-sm btn-outline-dark rounded-pill">
+						<i class="fas fa-cog me-1"></i> Configurar pagos
+					</a>
+				</div>
 			</div>
 
 			<div class="row g-2 g-lg-3 mb-3" th:with="total=${listadoDeportistas != null ? #lists.size(listadoDeportistas) : 0}">
@@ -75,7 +94,7 @@
 									<th class="d-none d-xxl-table-cell">Apoderado</th>
 									<th class="d-none d-lg-table-cell small text-break">Email apoderado</th>
 									<th class="text-center text-nowrap" style="width:6rem;">Editar</th>
-									<th class="text-center text-nowrap" style="width:6rem;">Eliminar</th>
+									<th class="text-center text-nowrap" style="width:6rem;" sec:authorize="hasAnyRole('ROLE_CLUB','ROLE_TESORERO')">Eliminar</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -105,7 +124,7 @@
 											<i class="fas fa-edit"></i>
 										</a>
 									</td>
-									<td class="text-center">
+									<td class="text-center" sec:authorize="hasAnyRole('ROLE_CLUB','ROLE_TESORERO')">
 										<button type="button" th:if="${d.usuario != null}"
 											th:onclick="eliminarUsuario([[${d.usuario.id}]])"
 											class="btn btn-outline-danger btn-sm rounded-pill px-2"
@@ -120,7 +139,7 @@
 				</div>
 			</div>
 
-			<p class="small text-muted mt-3 mb-0">
+			<p class="small text-muted mt-3 mb-0" sec:authorize="hasAnyRole('ROLE_CLUB','ROLE_TESORERO')">
 				<i class="fas fa-info-circle me-1"></i>
 				<i class="fas fa-exclamation-triangle text-warning me-1"></i>
 				Eliminar corresponde al <strong>apoderado</strong> (usuario): afecta a todos sus deportistas y datos vinculados.

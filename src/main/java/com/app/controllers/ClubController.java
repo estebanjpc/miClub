@@ -32,9 +32,10 @@ import com.app.entity.Club;
 import com.app.entity.Deportista;
 import com.app.entity.Role;
 import com.app.entity.Usuario;
+import com.app.service.AsyncEmailService;
+import com.app.service.ClubMediosPagoService;
 import com.app.service.ICategoriaService;
 import com.app.service.IClubService;
-import com.app.service.AsyncEmailService;
 import com.app.service.IDeportistaService;
 import com.app.service.IUsuarioService;
 import com.app.util.Util;
@@ -44,7 +45,6 @@ import jakarta.validation.Valid;
 
 @Controller
 @SessionAttributes("usuario")
-@Secured("ROLE_CLUB")
 public class ClubController {
 
 	@Autowired
@@ -65,12 +65,17 @@ public class ClubController {
 	@Autowired
 	private IDeportistaService deportistaService;
 
+	@Autowired
+	private ClubMediosPagoService clubMediosPagoService;
+
 	@GetMapping("/listadoUsuarios")
+	@Secured({ "ROLE_CLUB", "ROLE_TESORERO", "ROLE_ENTRENADOR" })
 	public String listadoUsuariosRedirect() {
 		return "redirect:/listadoDeportistas";
 	}
 
 	@GetMapping("/listadoDeportistas")
+	@Secured({ "ROLE_CLUB", "ROLE_TESORERO", "ROLE_ENTRENADOR" })
 	public String listadoDeportistas(Model model, HttpServletRequest request, Principal principal,
 			RedirectAttributes flash) {
 
@@ -91,12 +96,17 @@ public class ClubController {
 
 		List<Deportista> listadoDeportistas = deportistaService.listarTodosPorClub(idClubSession);
 
+		var opcionesPago = clubMediosPagoService.opcionesParaApoderado(idClubSession);
+		boolean soloEfectivoMediosPago = !opcionesPago.transferencia() && !opcionesPago.khipu();
+
 		model.addAttribute("titulo", "Listado de deportistas");
 		model.addAttribute("listadoDeportistas", listadoDeportistas);
+		model.addAttribute("soloEfectivoMediosPago", soloEfectivoMediosPago);
 		return "listadoDeportistas";
 	}
 
 	@GetMapping("/crearUsuario")
+	@Secured({ "ROLE_CLUB", "ROLE_TESORERO", "ROLE_ENTRENADOR" })
 	public String crearUsuario(Model model, HttpServletRequest request, Principal principal,
 			RedirectAttributes flash) {
 
@@ -122,6 +132,7 @@ public class ClubController {
 	}
 
 	@PostMapping("/guardarUsuarioClub")
+	@Secured({ "ROLE_CLUB", "ROLE_TESORERO", "ROLE_ENTRENADOR" })
 	public String guardarUsuarioClub(@Valid @ModelAttribute("usuario") Usuario usuario, BindingResult result, Model model,
 			SessionStatus status, RedirectAttributes flash, HttpServletRequest request, Principal principal) {
 
@@ -196,6 +207,7 @@ public class ClubController {
 	}
 
 	@GetMapping("/editarUsuario/{id}")
+	@Secured({ "ROLE_CLUB", "ROLE_TESORERO", "ROLE_ENTRENADOR" })
 	public String editarUsuario(@PathVariable Long id, Model model, HttpServletRequest request, Principal principal,
 			RedirectAttributes flash) {
 
@@ -227,6 +239,7 @@ public class ClubController {
 	}
 
 	@GetMapping("/eliminarUsuario/{id}")
+	@Secured({ "ROLE_CLUB", "ROLE_TESORERO" })
 	public String eliminarUsuarioApoderado(@PathVariable Long id, HttpServletRequest request, RedirectAttributes flash) {
 
 		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
@@ -259,6 +272,7 @@ public class ClubController {
 
 	@GetMapping("/club/logo/{id}")
 	@ResponseBody
+	@Secured({ "ROLE_CLUB", "ROLE_TESORERO", "ROLE_ENTRENADOR" })
 	public ResponseEntity<byte[]> verLogo(@PathVariable Long id, HttpServletRequest request, Principal principal) {
 
 		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
@@ -280,6 +294,7 @@ public class ClubController {
 	}
 
 	@GetMapping("/perfilClub")
+	@Secured({ "ROLE_CLUB", "ROLE_TESORERO" })
 	public String miPerfil(Model model, HttpServletRequest request, Principal principal, RedirectAttributes flash) {
 
 		Usuario usuario = usuarioService.refrescarUsuarioSesion(request, principal.getName());
@@ -299,6 +314,7 @@ public class ClubController {
 	}
 	
 	@PostMapping("/guardarPerfilClub")
+	@Secured({ "ROLE_CLUB", "ROLE_TESORERO" })
 	public String guardarPerfilClub(@Valid @ModelAttribute("club") Club club,
 	                                 BindingResult result,
 	                                 Model model,
@@ -403,7 +419,6 @@ public class ClubController {
 	@ModelAttribute("listaTipoClub")
 	public Map<String, String> listaTipoClub() {
 		Map<String, String> lista = new HashMap<String, String>();
-		lista.put("", "Seleccione");
 		lista.put("Baquetball", "Baquetball");
 		lista.put("Futbol", "Futbol");
 		lista.put("Pin-Pong", "Pin-Pong");

@@ -67,6 +67,11 @@ public class UsuarioServiceImpl implements IUsuarioService {
 	}
 
 	@Override
+	public List<Usuario> findUsuarioByIdClubAndRoles(Long idClub, List<String> roles) {
+		return usuarioRepository.findUsuarioByIdClubAndRoles(idClub, roles);
+	}
+
+	@Override
 	public List<Long> findClubIdsByUsuario(String email) {
 		return usuarioRepository.findClubIdsByUsuario(email);
 	}

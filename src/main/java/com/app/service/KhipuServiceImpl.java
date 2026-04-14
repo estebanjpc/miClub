@@ -18,24 +18,29 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import com.app.dto.KhipuResponse;
+import com.app.entity.CuentaBancaria;
 import com.app.entity.Pago;
 
 @Service
 public class KhipuServiceImpl implements IKhipuService {
 
-	@Value("${khipu.api.url}")
-	private String khipuApiUrl;
+	@Value("${khipu.api.url:}")
+	private String khipuApiUrlGlobal;
 
-	@Value("${khipu.api.key}")
-	private String apiKey;
+	@Value("${khipu.api.key:}")
+	private String apiKeyGlobal;
 
 	@Value("${app.public.url:http://localhost:8081}")
 	private String appPublicUrl;
 
 	private final RestTemplate restTemplate;
 
-	public KhipuServiceImpl(@Qualifier("serviceRest") RestTemplate restTemplate) {
+	private final ICuentaBancariaService cuentaBancariaService;
+
+	public KhipuServiceImpl(@Qualifier("serviceRest") RestTemplate restTemplate,
+			ICuentaBancariaService cuentaBancariaService) {
 		this.restTemplate = restTemplate;
+		this.cuentaBancariaService = cuentaBancariaService;
 	}
 
 	private String basePublicUrl() {
@@ -47,7 +52,19 @@ public class KhipuServiceImpl implements IKhipuService {
 	}
 
 	@Override
-	public KhipuResponse crearPago(Integer montoEnPesos, List<Pago> pagos, Long ordenId) {
+	public KhipuResponse crearPago(Integer montoEnPesos, List<Pago> pagos, Long ordenId, Long idClub) {
+
+		CuentaBancaria cuenta = cuentaBancariaService.findByClubId(idClub);
+		String apiKey = cuenta != null && StringUtils.hasText(cuenta.getKhipuApiKey()) ? cuenta.getKhipuApiKey().trim()
+				: (apiKeyGlobal != null ? apiKeyGlobal.trim() : "");
+		if (!StringUtils.hasText(apiKey)) {
+			throw new IllegalStateException(
+					"Configure la API key de Khipu en Menú → Datos de cuenta (Cuenta bancaria del club).");
+		}
+
+		String urlBase = cuenta != null && StringUtils.hasText(cuenta.getKhipuApiUrl()) ? cuenta.getKhipuApiUrl().trim()
+				: (StringUtils.hasText(khipuApiUrlGlobal) ? khipuApiUrlGlobal.trim()
+						: "https://payment-api.khipu.com/v3/payments/");
 
 		String base = basePublicUrl();
 		Map<String, Object> body = new HashMap<>();
@@ -65,7 +82,7 @@ public class KhipuServiceImpl implements IKhipuService {
 
 		HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
-		String url = StringUtils.hasText(khipuApiUrl) ? khipuApiUrl.trim() : "https://payment-api.khipu.com/v3/payments/";
+		String url = StringUtils.hasText(urlBase) ? urlBase : "https://payment-api.khipu.com/v3/payments/";
 		ResponseEntity<Map<String, Object>> response = restTemplate.exchange(url, HttpMethod.POST, request,
 				new ParameterizedTypeReference<Map<String, Object>>() {
 				});

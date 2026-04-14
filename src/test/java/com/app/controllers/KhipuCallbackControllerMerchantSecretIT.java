@@ -14,6 +14,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.app.khipu.KhipuWebhookSignatureVerifier;
+import com.app.service.ICuentaBancariaService;
 import com.app.service.IOrdenPagoService;
 import com.app.service.IPagoService;
 
@@ -33,6 +34,9 @@ class KhipuCallbackControllerMerchantSecretIT {
 
 	@MockBean
 	private IPagoService pagoService;
+
+	@MockBean
+	private ICuentaBancariaService cuentaBancariaService;
 
 	@MockBean
 	private KhipuWebhookSignatureVerifier signatureVerifier;

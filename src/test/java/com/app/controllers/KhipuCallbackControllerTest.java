@@ -24,6 +24,7 @@ import com.app.entity.OrdenPago;
 import com.app.entity.Pago;
 import com.app.enums.EstadoPago;
 import com.app.khipu.KhipuWebhookSignatureVerifier;
+import com.app.service.ICuentaBancariaService;
 import com.app.service.IOrdenPagoService;
 import com.app.service.IPagoService;
 
@@ -43,6 +44,9 @@ class KhipuCallbackControllerTest {
 
 	@MockBean
 	private IPagoService pagoService;
+
+	@MockBean
+	private ICuentaBancariaService cuentaBancariaService;
 
 	@MockBean
 	private KhipuWebhookSignatureVerifier signatureVerifier;
