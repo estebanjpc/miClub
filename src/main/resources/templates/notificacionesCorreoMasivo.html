@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout/layout :: head}" />
+
+<body class="d-flex flex-column min-vh-100">
+	<header th:replace="~{layout/layout :: header}"></header>
+
+	<main class="flex-grow-1 bg-light">
+		<div class="container py-4">
+			<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+				<div>
+					<h3 class="fw-bold text-primary mb-1" th:text="${titulo}">Envío masivo</h3>
+					<p class="text-muted small mb-0">Elige filtros, revisa destinatarios y envía. Los correos se procesan de forma asíncrona.</p>
+				</div>
+				<a th:href="@{/notificaciones/config}" class="btn btn-outline-primary btn-sm rounded-pill">
+					<i class="fas fa-sliders-h me-1"></i> Configuración de avisos automáticos
+				</a>
+			</div>
+
+			<form th:action="@{/notificaciones/correo-masivo/enviar}" method="post" id="formMasivo">
+				<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+				<div class="row g-3">
+					<div class="col-lg-8">
+						<div class="card shadow-sm border-0 mb-3">
+							<div class="card-header bg-white border-bottom">
+								<h5 class="mb-0">Contenido</h5>
+							</div>
+							<div class="card-body">
+								<label class="form-label">Asunto</label>
+								<input type="text" name="subject" class="form-control mb-3" maxlength="180" required
+									placeholder="Ej: Comunicado importante del club" />
+
+								<label class="form-label">Mensaje</label>
+								<textarea name="message" class="form-control" rows="8" required
+									placeholder="Escribe el cuerpo del correo..."></textarea>
+							</div>
+						</div>
+
+						<div class="card shadow-sm border-0 mb-3">
+							<div class="card-header bg-white border-bottom">
+								<h5 class="mb-0">Destinatarios</h5>
+							</div>
+							<div class="card-body">
+								<div class="btn-group flex-wrap mb-3" role="group" aria-label="Modo filtro">
+									<input type="radio" class="btn-check" name="filter" id="fAll" value="ALL" autocomplete="off" checked>
+									<label class="btn btn-outline-primary" for="fAll">Todos</label>
+									<input type="radio" class="btn-check" name="filter" id="fCat" value="CATEGORY" autocomplete="off">
+									<label class="btn btn-outline-primary" for="fCat">Por categorías</label>
+									<input type="radio" class="btn-check" name="filter" id="fCust" value="CUSTOM" autocomplete="off">
+									<label class="btn btn-outline-primary" for="fCust">Selección manual</label>
+									<input type="radio" class="btn-check" name="filter" id="fDebt" value="DEBTORS" autocomplete="off">
+									<label class="btn btn-outline-primary" for="fDebt">Morosos (mes)</label>
+								</div>
+
+								<div id="panelCat" class="border rounded p-3 mb-3 bg-white" style="display:none;">
+									<p class="small text-muted mb-2">Uno o más rubros (deportistas activos en esas categorías).</p>
+									<div class="row g-2">
+										<div class="col-md-4" th:each="cat : ${categorias}">
+											<div class="form-check">
+												<input class="form-check-input cat-check" type="checkbox" th:id="|cid${cat.id}|"
+													name="categoryIds" th:value="${cat.id}">
+												<label class="form-check-label" th:for="|cid${cat.id}|" th:text="${cat.nombre}">Cat</label>
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<div id="panelCustom" class="border rounded p-0 mb-3 bg-white overflow-hidden" style="display:none;">
+									<div class="p-2 border-bottom bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
+										<span class="small fw-semibold">Deportistas del club</span>
+										<div>
+											<button type="button" class="btn btn-sm btn-outline-secondary" id="btnSelTodosCustom">Seleccionar visibles</button>
+											<button type="button" class="btn btn-sm btn-outline-secondary" id="btnClearCustom">Limpiar</button>
+										</div>
+									</div>
+									<div class="p-2 border-bottom">
+										<input type="search" class="form-control form-control-sm" id="buscarCustom" placeholder="Buscar por nombre o categoría...">
+									</div>
+									<div class="table-responsive" style="max-height: 320px;">
+										<table class="table table-sm table-hover mb-0">
+											<thead class="table-light sticky-top">
+												<tr>
+													<th style="width:40px;"></th>
+													<th>Deportista</th>
+													<th>Categoría</th>
+													<th>Email apoderado</th>
+												</tr>
+											</thead>
+											<tbody id="tbodyCustom">
+												<tr th:each="d : ${deportistas}" class="fila-custom"
+													th:attr="data-nombre=${#strings.toLowerCase(d.nombre + ' ' + d.apellido)}, data-cat=${d.categoria != null ? #strings.toLowerCase(d.categoria.nombre) : ''}">
+													<td>
+														<input class="form-check-input chk-custom" type="checkbox" name="selectedDeportistaIds"
+															th:value="${d.id}"
+															th:attr="data-no-email=${d.usuario == null or d.usuario.email == null or #strings.isEmpty(d.usuario.email)}">
+													</td>
+													<td th:text="${d.nombre + ' ' + d.apellido}">—</td>
+													<td th:text="${d.categoria != null ? d.categoria.nombre : '—'}">—</td>
+													<td class="small text-muted" th:text="${d.usuario != null ? d.usuario.email : '—'}">—</td>
+												</tr>
+											</tbody>
+										</table>
+									</div>
+								</div>
+
+								<div id="panelDebt" class="border rounded p-3 mb-3 bg-white" style="display:none;">
+									<p class="small text-muted mb-2">Morosos: sin pago válido registrado para el mes indicado (según reglas de la aplicación).</p>
+									<div class="row g-2 align-items-end mb-2">
+										<div class="col-auto">
+											<label class="form-label small mb-0">Mes</label>
+											<input type="number" class="form-control form-control-sm" name="month" id="mesMorosos"
+												min="1" max="12" th:value="${mesDefault}" style="width:5rem;">
+										</div>
+										<div class="col-auto">
+											<label class="form-label small mb-0">Año</label>
+											<input type="number" class="form-control form-control-sm" name="year" id="anioMorosos"
+												min="2000" max="2100" th:value="${anioDefault}" style="width:6rem;">
+										</div>
+										<div class="col-auto">
+											<button type="button" class="btn btn-sm btn-outline-primary" id="btnRefrescarMorosos">
+												<i class="fas fa-sync-alt"></i> Actualizar lista
+											</button>
+										</div>
+										<div class="col-auto">
+											<span class="badge bg-secondary" id="badgeMorosos" th:text="|Morosos: ${morososCount}|">Morosos: 0</span>
+										</div>
+									</div>
+									<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+										<span class="small">Opcional: elige solo algunos morosos. Si no marcas ninguno, se envía a todos los del listado.</span>
+										<div>
+											<button type="button" class="btn btn-sm btn-outline-secondary" id="btnSelTodosDebt">Marcar todos</button>
+											<button type="button" class="btn btn-sm btn-outline-secondary" id="btnClearDebt">Limpiar</button>
+										</div>
+									</div>
+									<div class="table-responsive" style="max-height: 280px;">
+										<table class="table table-sm table-hover mb-0">
+											<thead class="table-light">
+												<tr>
+													<th style="width:40px;"></th>
+													<th>Deportista</th>
+													<th>Categoría</th>
+													<th>Email</th>
+												</tr>
+											</thead>
+											<tbody id="tbodyDebt">
+												<tr th:each="m : ${morosos}">
+													<td>
+														<input class="form-check-input chk-debt" type="checkbox" name="selectedDeportistaIds"
+															th:value="${m.id}">
+													</td>
+													<td th:text="${m.nombre + ' ' + m.apellido}">—</td>
+													<td th:text="${m.categoria != null ? m.categoria.nombre : '—'}">—</td>
+													<td class="small" th:text="${m.usuario != null ? m.usuario.email : '—'}">—</td>
+												</tr>
+											</tbody>
+										</table>
+									</div>
+								</div>
+
+								<p class="small text-muted mb-0">
+									<i class="fas fa-info-circle"></i> Se deduplican correos por apoderado (un mismo email no recibe dos veces el mismo envío).
+								</p>
+							</div>
+						</div>
+
+						<button type="submit" class="btn btn-primary rounded-pill px-4">
+							<i class="fas fa-paper-plane me-1"></i> Enviar
+						</button>
+					</div>
+
+					<div class="col-lg-4">
+						<div class="card shadow-sm border-0 sticky-top" style="top:1rem;">
+							<div class="card-header bg-white border-bottom">
+								<h6 class="mb-0">Resumen</h6>
+							</div>
+							<div class="card-body small">
+								<p class="mb-2"><strong>Modo:</strong> <span id="lblModo">Todos los deportistas</span></p>
+								<p class="mb-0"><strong>Seleccionados (checkbox):</strong> <span id="selCount">0</span></p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+	</main>
+
+	<footer th:replace="~{layout/layout :: footer}"></footer>
+
+	<script th:inline="javascript">
+		(function () {
+			const API = /*[[@{/api/notifications}]]*/ '/api/notifications';
+			const csrfHeader = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+			const csrfToken = /*[[${_csrf.token}]]*/ '';
+
+			const fAll = document.getElementById('fAll');
+			const fCat = document.getElementById('fCat');
+			const fCust = document.getElementById('fCust');
+			const fDebt = document.getElementById('fDebt');
+			const panelCat = document.getElementById('panelCat');
+			const panelCustom = document.getElementById('panelCustom');
+			const panelDebt = document.getElementById('panelDebt');
+			const lblModo = document.getElementById('lblModo');
+			const selCount = document.getElementById('selCount');
+			const badgeMorosos = document.getElementById('badgeMorosos');
+			const tbodyDebt = document.getElementById('tbodyDebt');
+			const mesMorosos = document.getElementById('mesMorosos');
+			const anioMorosos = document.getElementById('anioMorosos');
+			const buscarCustom = document.getElementById('buscarCustom');
+
+			const labels = {
+				ALL: 'Todos los deportistas',
+				CATEGORY: 'Por categorías seleccionadas',
+				CUSTOM: 'Selección manual',
+				DEBTORS: 'Morosos del mes indicado'
+			};
+
+			function modoActual() {
+				if (fCat.checked) return 'CATEGORY';
+				if (fCust.checked) return 'CUSTOM';
+				if (fDebt.checked) return 'DEBTORS';
+				return 'ALL';
+			}
+
+			function syncPanels() {
+				const m = modoActual();
+				panelCat.style.display = (m === 'CATEGORY') ? 'block' : 'none';
+				panelCustom.style.display = (m === 'CUSTOM') ? 'block' : 'none';
+				panelDebt.style.display = (m === 'DEBTORS') ? 'block' : 'none';
+				lblModo.textContent = labels[m] || m;
+				document.querySelectorAll('.cat-check').forEach(cb => { cb.disabled = m !== 'CATEGORY'; });
+				document.querySelectorAll('.chk-custom').forEach(cb => {
+					const emailMissing = cb.getAttribute('data-no-email') === 'true';
+					cb.disabled = m !== 'CUSTOM' || emailMissing;
+				});
+				document.querySelectorAll('.chk-debt').forEach(cb => { cb.disabled = m !== 'DEBTORS'; });
+				mesMorosos.disabled = m !== 'DEBTORS';
+				anioMorosos.disabled = m !== 'DEBTORS';
+				updateCount();
+			}
+
+			function countChecked() {
+				const m = modoActual();
+				if (m === 'CUSTOM') return document.querySelectorAll('.chk-custom:checked:not(:disabled)').length;
+				if (m === 'DEBTORS') return document.querySelectorAll('.chk-debt:checked:not(:disabled)').length;
+				return 0;
+			}
+
+			function updateCount() {
+				selCount.textContent = String(countChecked());
+			}
+
+			[fAll, fCat, fCust, fDebt].forEach(el => el.addEventListener('change', syncPanels));
+
+			document.getElementById('formMasivo').addEventListener('change', function (e) {
+				if (e.target && (e.target.classList.contains('chk-custom') || e.target.classList.contains('chk-debt'))) {
+					updateCount();
+				}
+			});
+
+			document.getElementById('btnSelTodosCustom').addEventListener('click', function () {
+				document.querySelectorAll('#tbodyCustom tr.fila-custom').forEach(tr => {
+					if (tr.style.display === 'none') return;
+					const cb = tr.querySelector('.chk-custom');
+					if (cb && !cb.disabled) cb.checked = true;
+				});
+				updateCount();
+			});
+			document.getElementById('btnClearCustom').addEventListener('click', function () {
+				document.querySelectorAll('.chk-custom').forEach(cb => { cb.checked = false; });
+				updateCount();
+			});
+			document.getElementById('btnSelTodosDebt').addEventListener('click', function () {
+				document.querySelectorAll('.chk-debt').forEach(cb => { if (!cb.disabled) cb.checked = true; });
+				updateCount();
+			});
+			document.getElementById('btnClearDebt').addEventListener('click', function () {
+				document.querySelectorAll('.chk-debt').forEach(cb => { cb.checked = false; });
+				updateCount();
+			});
+
+			if (buscarCustom) {
+				buscarCustom.addEventListener('input', function () {
+					const q = (buscarCustom.value || '').toLowerCase().trim();
+					document.querySelectorAll('#tbodyCustom tr.fila-custom').forEach(tr => {
+						const n = tr.getAttribute('data-nombre') || '';
+						const c = tr.getAttribute('data-cat') || '';
+						const ok = !q || n.indexOf(q) !== -1 || c.indexOf(q) !== -1;
+						tr.style.display = ok ? '' : 'none';
+					});
+				});
+			}
+
+			document.getElementById('btnRefrescarMorosos').addEventListener('click', async function () {
+				const month = mesMorosos.value;
+				const year = anioMorosos.value;
+				try {
+					const r = await fetch(API + '/debtors-preview?month=' + encodeURIComponent(month) + '&year=' + encodeURIComponent(year));
+					if (!r.ok) throw new Error('HTTP');
+					const rows = await r.json();
+					tbodyDebt.innerHTML = '';
+					rows.forEach(function (row) {
+						const tr = document.createElement('tr');
+						tr.innerHTML = '<td><input class="form-check-input chk-debt" type="checkbox" name="selectedDeportistaIds" value="' + row.id + '"></td>' +
+							'<td>' + escapeHtml(row.nombreCompleto) + '</td>' +
+							'<td>' + escapeHtml(row.categoria || '—') + '</td>' +
+							'<td class="small">' + escapeHtml(row.email || '—') + '</td>';
+						tbodyDebt.appendChild(tr);
+					});
+					badgeMorosos.textContent = 'Morosos: ' + rows.length;
+					document.querySelectorAll('.chk-debt').forEach(cb => {
+						cb.disabled = modoActual() !== 'DEBTORS';
+						cb.addEventListener('change', updateCount);
+					});
+					updateCount();
+				} catch (e) {
+					console.error(e);
+					alert('No se pudo actualizar la lista de morosos.');
+				}
+			});
+
+			function escapeHtml(s) {
+				if (!s) return '';
+				return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+			}
+
+			document.getElementById('formMasivo').addEventListener('submit', function () {
+				// Asegura que solo un grupo de selectedDeportistaIds se envía con el modo activo
+				const m = modoActual();
+				if (m === 'ALL' || m === 'CATEGORY') {
+					document.querySelectorAll('input[name="selectedDeportistaIds"]').forEach(cb => { cb.disabled = true; });
+				}
+				if (m === 'CUSTOM') {
+					document.querySelectorAll('.chk-debt').forEach(cb => { cb.disabled = true; });
+				}
+				if (m === 'DEBTORS') {
+					document.querySelectorAll('.chk-custom').forEach(cb => { cb.disabled = true; });
+				}
+			});
+
+			syncPanels();
+		})();
+	</script>
+</body>
+
+</html>

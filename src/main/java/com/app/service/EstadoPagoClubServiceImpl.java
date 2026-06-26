@@ -25,6 +25,9 @@ public class EstadoPagoClubServiceImpl implements IEstadoPagoClubService {
 	@Autowired
 	private IPagoRepository pagoRepository;
 
+	@Autowired
+	private INoPagoConfigService noPagoConfigService;
+
 	@Override
 	public List<EstadoPagoDeportistaDTO> obtenerEstadoPorMes(Long idClub, Integer mes, Integer anio,String tipo) {
 		List<Deportista> deportistas = deportistaRepository.findByClub(idClub);
@@ -74,7 +77,10 @@ public class EstadoPagoClubServiceImpl implements IEstadoPagoClubService {
 	            	dto.setNombreCategoria(d.getCategoria().getNombre());
 	            }
 
-	            if (pago != null) {
+	            if (noPagoConfigService.aplicaNoPago(idClub, d, mes, anio)) {
+	            	dto.setEstado(EstadoPago.PAGADO);
+	            	dto.setObservacion("Mes sin cobro (NO PAGO configurado)");
+	            } else if (pago != null) {
 	                dto.setEstado(pago.getEstado());
 	                dto.setMedioPago(pago.getMedioPago());
 	                dto.setIdPago(pago.getId());

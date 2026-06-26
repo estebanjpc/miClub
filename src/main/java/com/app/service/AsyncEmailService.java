@@ -70,6 +70,11 @@ public class AsyncEmailService {
 	}
 
 	@Async("emailTaskExecutor")
+	public void notificarClubPagoAcreditado(Long idPago) {
+		emailService.notificarClubPagoAcreditado(idPago);
+	}
+
+	@Async("emailTaskExecutor")
 	public void notificarUsuarioResultadoKhipu(Long ordenId, boolean exitoso, String motivo) {
 		OrdenPago orden = ordenPagoRepository.findByIdWithDetalle(ordenId);
 		if (orden != null) {

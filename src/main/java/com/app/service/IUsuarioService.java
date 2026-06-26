@@ -12,6 +12,9 @@ public interface IUsuarioService {
 	
 	public List<Usuario> findAll();
 	public Usuario findById(Long id);
+
+	/** Carga roles y deportistas (evita LazyInitializationException al decidir tipo de ficha). */
+	Usuario findByIdWithRolesAndDeportistas(Long id);
 	public void save(Usuario usuario);
 	public Usuario findByEmail(String email);
 	public void delete(Usuario usuario);

@@ -6,7 +6,7 @@
 <head th:fragment="head">
 	<meta charset="UTF-8" />
 	<title th:text="${titulo}">Título</title>
-	<link rel="icon" type="image/x-icon" href="images/favicon.ico">
+	<link rel="icon" type="image/x-icon" th:href="@{/images/favicon.ico}">
 
 	<!-- Bootstrap y librerías -->
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -123,6 +123,11 @@
 						</a>
 					</li>
 					<li class="nav-item">
+						<a class="nav-link" sec:authorize="hasAnyRole('ROLE_USER','ROLE_SOCIO')" th:href="@{/consulta}">
+							<i class="fas fa-wallet"></i> Consulta / Cuotas
+						</a>
+					</li>
+					<li class="nav-item">
 						<a class="nav-link" sec:authorize="hasAnyRole('ROLE_CLUB','ROLE_TESORERO','ROLE_ENTRENADOR')" th:href="@{/listadoDeportistas}">
 							<i class="fas fa-running"></i> Deportistas
 						</a>
@@ -133,14 +138,44 @@
 						</a>
 					</li>
 					<li class="nav-item">
+						<a class="nav-link" sec:authorize="hasAnyRole('ROLE_CLUB','ROLE_TESORERO')" th:href="@{/cobros-adicionales}">
+							<i class="fas fa-plus-square"></i> Cobros adicionales
+						</a>
+					</li>
+					<li class="nav-item">
 						<a class="nav-link" sec:authorize="hasAnyRole('ROLE_CLUB','ROLE_TESORERO')" th:href="@{/financiero}">
 							<i class="fas fa-chart-line"></i> Financiero
 						</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" sec:authorize="hasAnyRole('ROLE_CLUB','ROLE_TESORERO')" th:href="@{/correos}">
-							<i class="fas fa-envelope"></i> Correos
+						<a class="nav-link" sec:authorize="hasAnyRole('ROLE_CLUB','ROLE_TESORERO','ROLE_ENTRENADOR','ROLE_USER','ROLE_SOCIO')"
+							th:href="@{/asistencia/estadisticas}">
+							<i class="fas fa-clipboard-check"></i> Asistencia
 						</a>
+					</li>
+					<li class="nav-item dropdown" sec:authorize="hasAnyRole('ROLE_CLUB','ROLE_TESORERO')">
+						<a class="nav-link dropdown-toggle" href="#" id="navComunicaciones" role="button"
+							data-bs-toggle="dropdown" aria-expanded="false">
+							<i class="fas fa-envelope"></i> Comunicaciones
+						</a>
+						<ul class="dropdown-menu" aria-labelledby="navComunicaciones">
+							<li>
+								<a class="dropdown-item" th:href="@{/notificaciones/correo-masivo}">
+									<i class="fas fa-paper-plane"></i> Envío masivo (filtros)
+								</a>
+							</li>
+							<li><hr class="dropdown-divider"></li>
+							<li>
+								<a class="dropdown-item" th:href="@{/notificaciones/config}">
+									<i class="fas fa-sliders-h"></i> Config. notificaciones automáticas
+								</a>
+							</li>
+							<li>
+								<a class="dropdown-item" th:href="@{/no-pago}">
+									<i class="fas fa-calendar-times"></i> Config. meses sin cobro
+								</a>
+							</li>
+						</ul>
 					</li>
 				</ul>
 
@@ -188,8 +223,15 @@
 								</a>
 							</li>
 
-							<!-- ========== PERFIL USUARIO ========== -->
+							<!-- ========== PERFIL USUARIO (apoderado / socio) ========== -->
 							<li sec:authorize="hasAnyRole('ROLE_USER','ROLE_SOCIO')">
+								<h6 class="dropdown-header text-primary fw-bold">
+									<i class="fas fa-wallet"></i> Pagos
+								</h6>
+								<a th:href="@{/consulta}" class="dropdown-item">
+									<i class="fas fa-search-dollar"></i> Consulta / pagar cuotas
+								</a>
+								<h6 class="dropdown-header text-secondary small mb-0 mt-1">Cuenta</h6>
 								<a th:href="@{/perfilUsuario}" class="dropdown-item">
 									<i class="fas fa-user"></i> Mi Perfil
 								</a>

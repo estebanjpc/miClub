@@ -30,9 +30,14 @@
 				<div>
 					<h3 class="fw-bold text-primary mb-0" th:text="${titulo}">Usuario</h3>
 					<p class="text-muted small mb-0 mt-1"
+						th:if="${!esStaff}"
 						th:text="${isEditing} ? 'Modifica los datos del apoderado y deportistas.' : 'Completa el alta de un apoderado y al menos un deportista asociado.'">
 					</p>
-					<div th:if="${!isEditing and (categorias == null or categorias.isEmpty())}"
+					<p class="text-muted small mb-0 mt-1"
+						th:if="${esStaff}"
+						th:text="${isEditing} ? 'Modifica los datos de este usuario del club.' : 'Completa el alta de tesorero o entrenador (sin deportistas asociados).'">
+					</p>
+					<div th:if="${!isEditing and !esStaff and (categorias == null or categorias.isEmpty())}"
 						class="alert alert-warning border-0 shadow-sm rounded-3 mt-3 mb-0 d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-2 gap-sm-3">
 						<div class="d-flex align-items-start gap-2 flex-grow-1">
 							<i class="fas fa-layer-group mt-1 text-warning"></i>
@@ -61,13 +66,34 @@
 						<div>
 							<h3 class="h6 mb-0 fw-semibold text-dark"
 								th:text="${isEditing} ? 'Editar ficha' : 'Nuevo usuario'">Formulario</h3>
-							<p class="small text-muted mb-0">Apoderado y deportistas del club</p>
+							<p class="small text-muted mb-0" th:if="${!esStaff}">Apoderado y deportistas del club</p>
+							<p class="small text-muted mb-0" th:if="${esStaff}">Personal del club (tesorero o entrenador)</p>
 						</div>
 					</div>
 				</div>
 
 				<div class="card-body p-3 p-lg-4">
-					<form id="idForm" th:action="@{/guardarUsuarioClub}" th:object="${usuario}" method="post" class="row g-3">
+					<form id="idForm" th:action="@{/guardarUsuarioClub}" th:object="${usuario}" method="post" class="row g-3"
+						th:attr="data-es-staff=${esStaff}">
+
+						<input type="hidden" th:if="${isEditing or !puedeCrearStaff}" name="tipoAltaUsuario"
+							th:value="${tipoAltaSeleccionado != null ? tipoAltaSeleccionado : 'APODERADO'}" />
+
+						<div class="col-12" th:if="${puedeCrearStaff and !isEditing}">
+							<label class="form-label fw-semibold">Tipo de usuario</label>
+							<select id="tipoAltaUsuarioSelect" class="form-select" name="tipoAltaUsuario">
+								<option value="APODERADO" th:selected="${tipoAltaSeleccionado == 'APODERADO'}">Apoderado (con deportistas)</option>
+								<option value="TESORERO" th:selected="${tipoAltaSeleccionado == 'TESORERO'}">Tesorero</option>
+								<option value="ENTRENADOR" th:selected="${tipoAltaSeleccionado == 'ENTRENADOR'}">Entrenador</option>
+							</select>
+							<p class="small text-muted mb-0 mt-1">Solo el administrador del club puede dar de alta a tesoreros y entrenadores.</p>
+						</div>
+
+						<div class="col-12" th:if="${#fields.hasGlobalErrors()}">
+							<div class="alert alert-danger border-0 shadow-sm rounded-3 py-2 px-3 mb-0">
+								<div th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</div>
+							</div>
+						</div>
 
 						<!-- SECCIÓN APODERADO -->
 						<div class="col-12">
@@ -76,7 +102,8 @@
 									style="width:32px;height:32px;font-size:0.85rem;">
 									<i class="fas fa-user-tie"></i>
 								</span>
-								Datos del apoderado
+								<span th:if="${!esStaff}">Datos del apoderado</span>
+								<span th:if="${esStaff}">Datos del usuario</span>
 							</h5>
 						</div>
 
@@ -140,7 +167,7 @@
 						</div>
 
 						<!-- SECCIÓN DEPORTISTA -->
-						<div class="col-12 mt-4">
+						<div class="col-12 mt-4" th:if="${!esStaff}">
 							<h5 class="text-primary border-bottom pb-2 mb-3 d-flex align-items-center gap-2">
 								<span class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center"
 									style="width:32px;height:32px;font-size:0.85rem;">
@@ -272,7 +299,7 @@
 							</div>
 						</div>
 
-						<div class="col-12">
+						<div class="col-12" th:if="${!esStaff}">
 							<button type="button" id="btnAgregarDeportista"
 								class="btn btn-outline-primary btn-sm rounded-pill">
 								<i class="fas fa-plus me-1"></i> Agregar otro deportista
@@ -301,6 +328,16 @@
 
 	<footer th:replace="~{layout/layout :: footer}"></footer>
 	<script th:src="@{/js/usuario.js}"></script>
+	<script th:if="${puedeCrearStaff and !isEditing}" th:inline="javascript">
+		document.addEventListener("DOMContentLoaded", function() {
+			var sel = document.getElementById("tipoAltaUsuarioSelect");
+			if (!sel) return;
+			sel.addEventListener("change", function() {
+				var base = /*[[@{/crearUsuario}]]*/ "/crearUsuario";
+				window.location.href = base + "?tipo=" + encodeURIComponent(this.value);
+			});
+		});
+	</script>
 </body>
 
 </html>

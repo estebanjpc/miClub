@@ -48,20 +48,24 @@
 									<tr>
 										<th class="text-center text-nowrap" style="width: 3rem;">#</th>
 										<th>Deportista</th>
+										<th class="text-nowrap">Concepto</th>
 										<th class="text-nowrap">Mes</th>
 										<th class="text-nowrap">Año</th>
 										<th class="text-end text-nowrap">Valor</th>
+										<th>Detalle</th>
 									</tr>
 								</thead>
 								<tbody>
 									<tr th:each="m : ${meses}">
 										<td class="text-center">
-											<input type="checkbox" name="seleccionados" th:value="${m.deportistaId + '-' + m.mes + '-' + m.anio}" class="chkMes form-check-input" th:data-valor="${m.valorCuota}">
+											<input type="checkbox" name="seleccionados" th:value="${m.seleccionKey}" class="chkMes form-check-input" th:data-valor="${m.valorCuota}">
 										</td>
 										<td class="fw-medium" th:text="${m.deportistaNombre}"></td>
+										<td><span class="badge text-bg-light text-dark border" th:text="${m.conceptoLabel}">Mensualidad</span></td>
 										<td th:text="${m.nombreMes}"></td>
 										<td th:text="${m.anio}"></td>
 										<td class="text-end font-monospace" th:text="${'$ ' + #numbers.formatInteger(m.valorCuota, 0)}"></td>
+										<td class="small" th:text="${m.detalle != null and !m.detalle.isEmpty() ? m.detalle : '—'}"></td>
 									</tr>
 								</tbody>
 							</table>
@@ -178,6 +182,7 @@
 									<th class="text-nowrap">Año</th>
 									<th class="text-nowrap">Fecha</th>
 									<th class="text-nowrap">Medio</th>
+									<th class="text-nowrap">Concepto</th>
 									<th class="text-nowrap">Estado</th>
 									<th class="text-nowrap">Comprobante</th>
 									<th>Observación</th>
@@ -191,6 +196,7 @@
 									<td th:text="${p.anio}"></td>
 									<td class="text-nowrap small" th:text="${#temporals.format(p.fecha, 'dd/MM/yyyy HH:mm')}"></td>
 									<td><span class="badge text-bg-light text-dark border" th:text="${p.medioPago}"></span></td>
+									<td><span class="badge text-bg-light text-dark border" th:text="${p.concepto != null ? p.concepto : 'MENSUALIDAD'}"></span></td>
 									<td>
 										<span class="badge" th:classappend="${p.colorEstado}" th:text="${p.estado}"></span>
 									</td>

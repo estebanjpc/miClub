@@ -1,6 +1,7 @@
 package com.app.controllers;
 
 import java.security.Principal;
+import java.time.YearMonth;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +17,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.app.entity.Categoria;
+import com.app.entity.CategoriaValorVigencia;
 import com.app.entity.Club;
 import com.app.entity.Usuario;
 import com.app.service.ICategoriaService;
+import com.app.service.ICategoriaCuotaVigenciaService;
 import com.app.service.IUsuarioService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,6 +37,9 @@ public class CategoriaController {
 
     @Autowired
     private IUsuarioService usuarioService;
+
+    @Autowired
+    private ICategoriaCuotaVigenciaService categoriaCuotaVigenciaService;
 
     @GetMapping("/listar")
     public String listar(Model model, Principal principal, HttpServletRequest request,
@@ -64,10 +70,14 @@ public class CategoriaController {
 
         Categoria categoria = new Categoria();
         categoria.setClub(club); // Se asocia automáticamente al club del usuario
+        YearMonth ym = YearMonth.now();
 
         model.addAttribute("titulo", "Nueva Categoría");
         model.addAttribute("categoria", categoria);
         model.addAttribute("club", club);
+        model.addAttribute("mesVigencia", ym.getMonthValue());
+        model.addAttribute("anioVigencia", ym.getYear());
+        model.addAttribute("vigencias", List.<CategoriaValorVigencia>of());
 
         return "categoria";
     }
@@ -91,6 +101,10 @@ public class CategoriaController {
         model.addAttribute("titulo", "Editar Categoría");
         model.addAttribute("categoria", categoria);
         model.addAttribute("club", club);
+        YearMonth ym = YearMonth.now();
+        model.addAttribute("mesVigencia", ym.getMonthValue());
+        model.addAttribute("anioVigencia", ym.getYear());
+        model.addAttribute("vigencias", categoriaCuotaVigenciaService.listarVigencias(categoria.getId()));
 
         return "categoria";
     }
@@ -98,6 +112,8 @@ public class CategoriaController {
     @PostMapping("/guardar")
     public String guardar(@Valid @ModelAttribute("categoria") Categoria categoria,
                           BindingResult result,
+                          @org.springframework.web.bind.annotation.RequestParam Integer mesVigencia,
+                          @org.springframework.web.bind.annotation.RequestParam Integer anioVigencia,
                           Principal principal,
                           Model model,
                           HttpServletRequest request,
@@ -113,6 +129,11 @@ public class CategoriaController {
         if (result.hasErrors()) {
             model.addAttribute("titulo", categoria.getId() == null ? "Nueva Categoría" : "Editar Categoría");
             model.addAttribute("club", club);
+            model.addAttribute("mesVigencia", mesVigencia);
+            model.addAttribute("anioVigencia", anioVigencia);
+            model.addAttribute("vigencias", categoria.getId() != null
+                    ? categoriaCuotaVigenciaService.listarVigencias(categoria.getId())
+                    : List.<CategoriaValorVigencia>of());
             return "categoria";
         }
         
@@ -121,11 +142,43 @@ public class CategoriaController {
             model.addAttribute("titulo", categoria.getId() == null ? "Nueva Categoría" : "Editar Categoría");
             model.addAttribute("club", club);
             model.addAttribute("nombreDuplicado", true);
+            model.addAttribute("mesVigencia", mesVigencia);
+            model.addAttribute("anioVigencia", anioVigencia);
+            model.addAttribute("vigencias", categoria.getId() != null
+                    ? categoriaCuotaVigenciaService.listarVigencias(categoria.getId())
+                    : List.<CategoriaValorVigencia>of());
             return "categoria";
         }
 
-        categoria.setClub(club);
-        categoriaService.save(categoria);
+        Categoria categoriaGuardar = categoria;
+        if (categoria.getId() != null) {
+            Categoria categoriaExistente = categoriaService.findById(categoria.getId());
+            if (categoriaExistente == null || !categoriaExistente.getClub().getId().equals(club.getId())) {
+                flash.addFlashAttribute("msjLayout", "error;Error;La categoría no existe o no pertenece al club.");
+                return "redirect:/categorias/listar";
+            }
+            categoriaExistente.setNombre(categoria.getNombre());
+            categoriaExistente.setClub(club);
+            categoriaGuardar = categoriaExistente;
+        } else {
+            categoriaGuardar.setClub(club);
+        }
+        categoriaService.save(categoriaGuardar);
+        try {
+            categoriaCuotaVigenciaService.registrarVigencia(categoriaGuardar, anioVigencia, mesVigencia,
+                    categoria.getValorCuota());
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute("titulo", categoria.getId() == null ? "Nueva Categoría" : "Editar Categoría");
+            model.addAttribute("club", club);
+            model.addAttribute("mesVigencia", mesVigencia);
+            model.addAttribute("anioVigencia", anioVigencia);
+            model.addAttribute("vigenciaError", ex.getMessage());
+            model.addAttribute("vigencias", categoriaGuardar.getId() != null
+                    ? categoriaCuotaVigenciaService.listarVigencias(categoriaGuardar.getId())
+                    : List.<CategoriaValorVigencia>of());
+            model.addAttribute("categoria", categoriaGuardar);
+            return "categoria";
+        }
         
         flash.addFlashAttribute("msjLayout","success;Exito;Categoría guardada con éxito");
         return "redirect:/categorias/listar";

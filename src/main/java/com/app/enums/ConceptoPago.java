@@ -7,5 +7,8 @@ package com.app.enums;
  */
 public enum ConceptoPago {
 	MENSUALIDAD,
-	INSCRIPCION
+	INSCRIPCION,
+	MATRICULA,
+	IMPLEMENTACION,
+	OTRO
 }

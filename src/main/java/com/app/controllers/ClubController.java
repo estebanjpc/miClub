@@ -3,7 +3,6 @@ package com.app.controllers;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,6 +28,7 @@ import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.app.dto.TipoAltaUsuarioClub;
 import com.app.entity.Club;
 import com.app.entity.Deportista;
 import com.app.entity.Role;
@@ -37,6 +38,7 @@ import com.app.service.ClubMediosPagoService;
 import com.app.service.ICategoriaService;
 import com.app.service.IClubService;
 import com.app.service.IDeportistaService;
+import com.app.security.AppRoles;
 import com.app.service.IUsuarioService;
 import com.app.util.Util;
 
@@ -102,13 +104,18 @@ public class ClubController {
 		model.addAttribute("titulo", "Listado de deportistas");
 		model.addAttribute("listadoDeportistas", listadoDeportistas);
 		model.addAttribute("soloEfectivoMediosPago", soloEfectivoMediosPago);
+		List<Usuario> personalStaff = usuarioService.findUsuarioByIdClubAndRoles(idClubSession,
+				List.of(AppRoles.TESORERO, AppRoles.ENTRENADOR));
+		model.addAttribute("personalStaff", personalStaff);
 		return "listadoDeportistas";
 	}
 
 	@GetMapping("/crearUsuario")
 	@Secured({ "ROLE_CLUB", "ROLE_TESORERO", "ROLE_ENTRENADOR" })
-	public String crearUsuario(Model model, HttpServletRequest request, Principal principal,
-			RedirectAttributes flash) {
+	public String crearUsuario(
+			@RequestParam(required = false, defaultValue = TipoAltaUsuarioClub.APODERADO) String tipo,
+			Model model, HttpServletRequest request, Principal principal, RedirectAttributes flash,
+			Authentication authentication) {
 
 		Usuario usuarioLogin = usuarioService.refrescarUsuarioSesion(request, principal.getName());
 		if (usuarioLogin == null) {
@@ -116,29 +123,99 @@ public class ClubController {
 			return "redirect:/seleccionarClub";
 		}
 
-		Usuario usuario = new Usuario();
-		usuario.setRoles(Arrays.asList(new Role("Usuario", "ROLE_USER")));
-		usuario.setDeportistas(new ArrayList<>());
-		usuario.getDeportistas().add(new Deportista());
+		boolean puedeCrearStaff = esRolClub(authentication);
+		String tipoNorm = tipo != null ? tipo.trim().toUpperCase() : TipoAltaUsuarioClub.APODERADO;
+		if (!TipoAltaUsuarioClub.esValido(tipoNorm)) {
+			tipoNorm = TipoAltaUsuarioClub.APODERADO;
+		}
+		if (!puedeCrearStaff && (TipoAltaUsuarioClub.TESORERO.equals(tipoNorm)
+				|| TipoAltaUsuarioClub.ENTRENADOR.equals(tipoNorm))) {
+			tipoNorm = TipoAltaUsuarioClub.APODERADO;
+		}
 
-		model.addAttribute("titulo", "Crear Usuario / Apoderado");
+		boolean esStaffCreacion = TipoAltaUsuarioClub.TESORERO.equals(tipoNorm)
+				|| TipoAltaUsuarioClub.ENTRENADOR.equals(tipoNorm);
+
+		Usuario usuario = new Usuario();
+		if (esStaffCreacion) {
+			Role r = TipoAltaUsuarioClub.TESORERO.equals(tipoNorm)
+					? new Role("Tesorero", AppRoles.TESORERO)
+					: new Role("Entrenador", AppRoles.ENTRENADOR);
+			usuario.setRoles(new ArrayList<>(List.of(r)));
+			r.setUsuario(usuario);
+			usuario.setDeportistas(new ArrayList<>());
+		} else {
+			usuario.setRoles(new ArrayList<>(List.of(new Role("Usuario", AppRoles.USER))));
+			usuario.setDeportistas(new ArrayList<>());
+			usuario.getDeportistas().add(new Deportista());
+		}
+
+		model.addAttribute("titulo", esStaffCreacion ? "Crear personal del club" : "Crear Usuario / Apoderado");
 		model.addAttribute("usuario", usuario);
 		model.addAttribute("categorias", categoriaService.findByClub(usuarioLogin.getClub()));
 		model.addAttribute("estados", estados());
 		model.addAttribute("isEditing", false);
 		model.addAttribute("btn", "Crear");
+		model.addAttribute("puedeCrearStaff", puedeCrearStaff);
+		model.addAttribute("tipoAltaSeleccionado", tipoNorm);
+		model.addAttribute("esStaffCreacion", esStaffCreacion);
+		model.addAttribute("esStaff", esStaffCreacion);
 
 		return "usuario";
 	}
 
 	@PostMapping("/guardarUsuarioClub")
 	@Secured({ "ROLE_CLUB", "ROLE_TESORERO", "ROLE_ENTRENADOR" })
-	public String guardarUsuarioClub(@Valid @ModelAttribute("usuario") Usuario usuario, BindingResult result, Model model,
-			SessionStatus status, RedirectAttributes flash, HttpServletRequest request, Principal principal) {
+	public String guardarUsuarioClub(@Valid @ModelAttribute("usuario") Usuario usuario, BindingResult result,
+			@RequestParam(required = false, defaultValue = TipoAltaUsuarioClub.APODERADO) String tipoAltaUsuario,
+			Model model, SessionStatus status, RedirectAttributes flash, HttpServletRequest request, Principal principal,
+			Authentication authentication) {
 
-		validarUsuario(usuario, result);
+		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
+		if (idClubSession == null) {
+			return "redirect:/login";
+		}
 
-		// Filtrar deportistas vacíos
+		Usuario usuarioLogin = usuarioService.refrescarUsuarioSesion(request, principal.getName());
+		if (usuarioLogin == null) {
+			flash.addFlashAttribute("msjLogin", "error;Club;Selecciona un club para continuar.");
+			return "redirect:/seleccionarClub";
+		}
+
+		String tipoNorm = tipoAltaUsuario != null ? tipoAltaUsuario.trim().toUpperCase() : TipoAltaUsuarioClub.APODERADO;
+		if (!TipoAltaUsuarioClub.esValido(tipoNorm)) {
+			tipoNorm = TipoAltaUsuarioClub.APODERADO;
+		}
+		boolean puedeCrearStaff = esRolClub(authentication);
+		if (!puedeCrearStaff && (TipoAltaUsuarioClub.TESORERO.equals(tipoNorm)
+				|| TipoAltaUsuarioClub.ENTRENADOR.equals(tipoNorm))) {
+			tipoNorm = TipoAltaUsuarioClub.APODERADO;
+		}
+
+		boolean nuevo = (usuario.getId() == null);
+		Usuario persistido = null;
+		if (!nuevo) {
+			persistido = usuarioService.findByIdWithRolesAndDeportistas(usuario.getId());
+			if (persistido == null || persistido.getClub() == null || !idClubSession.equals(persistido.getClub().getId())) {
+				flash.addFlashAttribute("msjLayout", "error;Error;Usuario no encontrado.");
+				return "redirect:/listadoDeportistas";
+			}
+		}
+
+		boolean esStaffOperacion = nuevo
+				? (TipoAltaUsuarioClub.TESORERO.equals(tipoNorm) || TipoAltaUsuarioClub.ENTRENADOR.equals(tipoNorm))
+				: esUsuarioStaff(persistido);
+
+		if (!nuevo && esUsuarioStaff(persistido) && !esRolClub(authentication)) {
+			flash.addFlashAttribute("msjLayout", "error;Error;No tiene permiso para editar este usuario.");
+			return "redirect:/listadoDeportistas";
+		}
+
+		if (nuevo && esStaffOperacion && !esRolClub(authentication)) {
+			flash.addFlashAttribute("msjLayout", "error;Error;Solo el administrador del club puede crear este tipo de usuario.");
+			return "redirect:/listadoDeportistas";
+		}
+
 		if (usuario.getDeportistas() != null) {
 			usuario.setDeportistas(usuario.getDeportistas().stream()
 					.filter(d -> (d.getNombre() != null && !d.getNombre().isBlank())
@@ -148,59 +225,102 @@ public class ClubController {
 					.collect(java.util.stream.Collectors.toList()));
 		}
 
+		if (esStaffOperacion) {
+			usuario.setDeportistas(new ArrayList<>());
+		}
+
+		validarUsuario(usuario, result);
+		if (!esStaffOperacion) {
+			validarDeportistasApoderado(usuario, result);
+		}
 
 		if (result.hasErrors()) {
-			Usuario usuarioLogin = usuarioService.refrescarUsuarioSesion(request, principal.getName());
-			if (usuarioLogin == null) {
-				flash.addFlashAttribute("msjLogin", "error;Club;Selecciona un club para continuar.");
-				return "redirect:/seleccionarClub";
+			String tituloErr;
+			if (esStaffOperacion) {
+				tituloErr = usuario.getId() != null ? "Actualizar personal del club" : "Crear personal del club";
+			} else {
+				tituloErr = usuario.getId() != null ? "Actualizar Datos Usuario" : "Crear Usuario / Apoderado";
 			}
-
-			model.addAttribute("titulo", "Crear Usuario / Apoderado");
-			model.addAttribute("btn", "Guardar");
+			model.addAttribute("titulo", tituloErr);
+			model.addAttribute("btn", usuario.getId() != null ? "Actualizar" : "Guardar");
 			model.addAttribute("isEditing", usuario.getId() != null);
 			model.addAttribute("categorias", categoriaService.findByClub(usuarioLogin.getClub()));
 			model.addAttribute("estados", estados());
-
+			model.addAttribute("puedeCrearStaff", puedeCrearStaff);
+			model.addAttribute("tipoAltaSeleccionado", tipoNorm);
+			model.addAttribute("esStaffCreacion", nuevo && esStaffOperacion);
+			model.addAttribute("esStaff", esStaffOperacion);
 			return "usuario";
 		}
 
-		boolean nuevo = (usuario.getId() == null);
 		String passGenerada = null;
 		String mensaje = nuevo ? "Creado" : "Editado";
-
-		// Relación deportista → usuario
-		if (usuario.getDeportistas() != null) {
-		    usuario.getDeportistas().forEach(d -> {
-		        d.setUsuario(usuario);
-
-		        if (d.getFechaIngreso() == null) {
-		            d.setFechaIngreso(LocalDate.now());
-		        }
-		    });
-		}
-
-		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
 		Club club = clubService.findById(idClubSession);
-		usuario.setClub(club);
-
-		usuario.setEnabled("1".equals(usuario.getEstado()));
 
 		if (nuevo) {
+			if (esStaffOperacion) {
+				Role r = TipoAltaUsuarioClub.TESORERO.equals(tipoNorm)
+						? new Role("Tesorero", AppRoles.TESORERO)
+						: new Role("Entrenador", AppRoles.ENTRENADOR);
+				usuario.setRoles(new ArrayList<>(List.of(r)));
+				r.setUsuario(usuario);
+			} else {
+				usuario.setRoles(new ArrayList<>(List.of(new Role("Usuario", AppRoles.USER))));
+				usuario.getRoles().get(0).setUsuario(usuario);
+			}
+
+			usuario.setClub(club);
+			usuario.setEnabled("1".equals(usuario.getEstado()));
 			passGenerada = Util.generatePassword(10);
 			usuario.setPassword(passEncoder.encode(passGenerada));
 			usuario.setEstado("0");
-			usuario.getRoles().get(0).setUsuario(usuario);
-		}
-		
-		usuarioService.save(usuario);
-		status.setComplete();
+			usuario.setEnabled("1".equals(usuario.getEstado()));
 
-		if (nuevo) {
+			if (!esStaffOperacion && usuario.getDeportistas() != null) {
+				usuario.getDeportistas().forEach(d -> {
+					d.setUsuario(usuario);
+					if (d.getFechaIngreso() == null) {
+						d.setFechaIngreso(LocalDate.now());
+					}
+				});
+			}
+
+			usuarioService.save(usuario);
+			status.setComplete();
+
 			usuario.setPassAux(passGenerada);
 			asyncEmailService.creacionUsuario(usuario);
+
+			flash.addFlashAttribute("msjLayout", "success;" + mensaje + " con éxito;Usuario " + mensaje);
+			return "redirect:/listadoDeportistas";
 		}
 
+		// Edición
+		if (esStaffOperacion) {
+			copiarDatosBasicos(usuario, persistido);
+			persistido.setClub(club);
+			persistido.setEnabled("1".equals(persistido.getEstado()));
+			persistido.getDeportistas().clear();
+			usuarioService.save(persistido);
+		} else {
+			copiarDatosBasicos(usuario, persistido);
+			persistido.setClub(club);
+			persistido.setEnabled("1".equals(persistido.getEstado()));
+
+			persistido.getDeportistas().clear();
+			if (usuario.getDeportistas() != null) {
+				for (Deportista d : usuario.getDeportistas()) {
+					d.setUsuario(persistido);
+					if (d.getFechaIngreso() == null) {
+						d.setFechaIngreso(LocalDate.now());
+					}
+					persistido.getDeportistas().add(d);
+				}
+			}
+			usuarioService.save(persistido);
+		}
+
+		status.setComplete();
 		flash.addFlashAttribute("msjLayout", "success;" + mensaje + " con éxito;Usuario " + mensaje);
 
 		return "redirect:/listadoDeportistas";
@@ -209,51 +329,92 @@ public class ClubController {
 	@GetMapping("/editarUsuario/{id}")
 	@Secured({ "ROLE_CLUB", "ROLE_TESORERO", "ROLE_ENTRENADOR" })
 	public String editarUsuario(@PathVariable Long id, Model model, HttpServletRequest request, Principal principal,
-			RedirectAttributes flash) {
+			RedirectAttributes flash, Authentication authentication) {
 
 		Usuario usuarioLogin = usuarioService.refrescarUsuarioSesion(request, principal.getName());
 		if (usuarioLogin == null) {
 			flash.addFlashAttribute("msjLogin", "error;Club;Selecciona un club para continuar.");
 			return "redirect:/seleccionarClub";
 		}
-		Usuario usuario = usuarioService.findById(id);
+		Usuario usuario = usuarioService.findByIdWithRolesAndDeportistas(id);
 
 		if (usuario == null) {
 			return "redirect:/listadoDeportistas";
 		}
-		
+
 		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
+		if (usuario.getClub() == null || !idClubSession.equals(usuario.getClub().getId())) {
+			return "redirect:/listadoDeportistas";
+		}
+
+		if (esUsuarioStaff(usuario) && !esRolClub(authentication)) {
+			flash.addFlashAttribute("msjLayout", "error;Error;No tiene permiso para editar este usuario.");
+			return "redirect:/listadoDeportistas";
+		}
+
 		Club club = clubService.findById(idClubSession);
 		usuario.setClub(club);
 
 		usuario.setEstado(usuario.getEnabled() ? "1" : "2");
 
-		model.addAttribute("titulo", "Actualizar Datos Usuario");
+		boolean esStaff = esUsuarioStaff(usuario);
+		String tipoSel = TipoAltaUsuarioClub.APODERADO;
+		if (esStaff) {
+			if (usuario.getRoles().stream().anyMatch(r -> AppRoles.TESORERO.equals(r.getAuthority()))) {
+				tipoSel = TipoAltaUsuarioClub.TESORERO;
+			} else if (usuario.getRoles().stream().anyMatch(r -> AppRoles.ENTRENADOR.equals(r.getAuthority()))) {
+				tipoSel = TipoAltaUsuarioClub.ENTRENADOR;
+			}
+		}
+
+		model.addAttribute("titulo", esStaff ? "Actualizar personal del club" : "Actualizar Datos Usuario");
 		model.addAttribute("usuario", usuario);
 		model.addAttribute("categorias", categoriaService.findByClub(usuarioLogin.getClub()));
 		model.addAttribute("estados", estados());
 		model.addAttribute("isEditing", true);
 		model.addAttribute("btn", "Actualizar");
+		model.addAttribute("puedeCrearStaff", esRolClub(authentication));
+		model.addAttribute("tipoAltaSeleccionado", tipoSel);
+		model.addAttribute("esStaffCreacion", false);
+		model.addAttribute("esStaff", esStaff);
 
 		return "usuario";
 	}
 
 	@GetMapping("/eliminarUsuario/{id}")
 	@Secured({ "ROLE_CLUB", "ROLE_TESORERO" })
-	public String eliminarUsuarioApoderado(@PathVariable Long id, HttpServletRequest request, RedirectAttributes flash) {
+	public String eliminarUsuarioApoderado(@PathVariable Long id, HttpServletRequest request, RedirectAttributes flash,
+			Authentication authentication) {
 
 		Long idClubSession = (Long) request.getSession().getAttribute("idClubSession");
 		if (idClubSession == null) {
 			return "redirect:/login";
 		}
 
-		Usuario u = usuarioService.findById(id);
+		Usuario u = usuarioService.findByIdWithRolesAndDeportistas(id);
 		if (u == null || u.getClub() == null || !idClubSession.equals(u.getClub().getId())) {
 			flash.addFlashAttribute("msjLayout", "error;Error;No se pudo eliminar el usuario.");
 			return "redirect:/listadoDeportistas";
 		}
 
-		boolean esApoderado = u.getRoles().stream().anyMatch(r -> "ROLE_USER".equals(r.getAuthority()));
+		boolean esApoderado = u.getRoles().stream().anyMatch(r -> AppRoles.USER.equals(r.getAuthority()));
+		boolean esStaff = esUsuarioStaff(u);
+
+		if (esStaff) {
+			if (!esRolClub(authentication)) {
+				flash.addFlashAttribute("msjLayout", "error;Error;Solo el administrador del club puede eliminar a este usuario.");
+				return "redirect:/listadoDeportistas";
+			}
+			try {
+				usuarioService.delete(u);
+				flash.addFlashAttribute("msjLayout", "success;Eliminado;El usuario fue eliminado correctamente.");
+			} catch (Exception e) {
+				flash.addFlashAttribute("msjLayout",
+						"error;Error;No se pudo eliminar. Puede haber información asociada.");
+			}
+			return "redirect:/listadoDeportistas";
+		}
+
 		if (!esApoderado) {
 			flash.addFlashAttribute("msjLayout", "error;Error;Operación no permitida.");
 			return "redirect:/listadoDeportistas";
@@ -390,6 +551,37 @@ public class ClubController {
 
 	    flash.addFlashAttribute("msjLayout", "success;Club actualizado;Datos guardados correctamente");
 	    return "redirect:/perfilClub";
+	}
+
+	private boolean esRolClub(Authentication authentication) {
+		if (authentication == null) {
+			return false;
+		}
+		return authentication.getAuthorities().stream().anyMatch(a -> AppRoles.CLUB.equals(a.getAuthority()));
+	}
+
+	private boolean esUsuarioStaff(Usuario u) {
+		if (u == null || u.getRoles() == null) {
+			return false;
+		}
+		return u.getRoles().stream().anyMatch(r -> AppRoles.TESORERO.equals(r.getAuthority())
+				|| AppRoles.ENTRENADOR.equals(r.getAuthority()));
+	}
+
+	private void copiarDatosBasicos(Usuario desde, Usuario hacia) {
+		hacia.setNombre(desde.getNombre());
+		hacia.setApellido(desde.getApellido());
+		hacia.setEmail(desde.getEmail());
+		hacia.setTelefono(desde.getTelefono());
+		hacia.setDireccion(desde.getDireccion());
+		hacia.setRut(desde.getRut());
+		hacia.setEstado(desde.getEstado());
+	}
+
+	private void validarDeportistasApoderado(Usuario usuario, BindingResult result) {
+		if (usuario.getDeportistas() == null || usuario.getDeportistas().isEmpty()) {
+			result.reject("deportistas", "Debe registrar al menos un deportista.");
+		}
 	}
 
 	private void validarUsuario(Usuario usuario, BindingResult result) {

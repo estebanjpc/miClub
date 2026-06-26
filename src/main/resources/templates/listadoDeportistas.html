@@ -14,9 +14,19 @@
 					<h3 class="fw-bold text-primary mb-0" th:text="${titulo}">Listado de deportistas</h3>
 					<p class="text-muted small mb-0 mt-1">Todos los deportistas registrados en tu club. Editar abre la ficha del apoderado (usuario) asociado.</p>
 				</div>
-				<a th:href="@{/crearUsuario}" class="btn btn-primary btn-sm rounded-pill shadow-sm">
-					<i class="fas fa-user-plus me-1"></i> Crear apoderado
-				</a>
+				<div class="d-flex flex-wrap gap-2 justify-content-end">
+					<a th:href="@{/crearUsuario}" class="btn btn-primary btn-sm rounded-pill shadow-sm">
+						<i class="fas fa-user-plus me-1"></i> Crear apoderado
+					</a>
+					<a sec:authorize="hasRole('ROLE_CLUB')" th:href="@{/crearUsuario(tipo='TESORERO')}"
+						class="btn btn-outline-primary btn-sm rounded-pill shadow-sm">
+						<i class="fas fa-coins me-1"></i> Crear tesorero
+					</a>
+					<a sec:authorize="hasRole('ROLE_CLUB')" th:href="@{/crearUsuario(tipo='ENTRENADOR')}"
+						class="btn btn-outline-primary btn-sm rounded-pill shadow-sm">
+						<i class="fas fa-dumbbell me-1"></i> Crear entrenador
+					</a>
+				</div>
 			</div>
 
 			<div th:if="${soloEfectivoMediosPago}" class="alert alert-warning border-0 shadow-sm rounded-3 mb-3 d-flex flex-column flex-md-row align-items-start gap-3">
@@ -35,6 +45,65 @@
 					<a th:href="@{/cuentas}" class="btn btn-sm btn-outline-dark rounded-pill">
 						<i class="fas fa-cog me-1"></i> Configurar pagos
 					</a>
+				</div>
+			</div>
+
+			<div class="card border-0 shadow-sm rounded-3 overflow-hidden mb-3" th:if="${personalStaff != null}">
+				<div class="card-header bg-white border-bottom py-3 px-3 px-lg-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
+					<div class="d-flex align-items-center gap-2">
+						<span class="rounded-circle bg-secondary bg-opacity-10 text-secondary d-inline-flex align-items-center justify-content-center"
+							style="width:40px;height:40px;">
+							<i class="fas fa-id-badge"></i>
+						</span>
+						<div>
+							<h3 class="h6 mb-0 fw-semibold text-dark">Tesoreros y entrenadores</h3>
+							<p class="small text-muted mb-0">Personal del club (sin deportistas asociados en esta ficha)</p>
+						</div>
+					</div>
+				</div>
+				<div class="card-body p-0">
+					<div th:if="${personalStaff.isEmpty()}" class="text-center text-muted py-4 px-3 small">
+						No hay tesoreros ni entrenadores registrados desde la aplicación.
+					</div>
+					<div class="table-responsive" th:if="${!personalStaff.isEmpty()}">
+						<table class="table table-hover align-middle table-sm mb-0">
+							<thead class="table-light">
+								<tr>
+									<th>Nombre</th>
+									<th class="d-none d-md-table-cell">Email</th>
+									<th class="text-nowrap">Rol</th>
+									<th class="text-center text-nowrap" style="width:6rem;">Editar</th>
+									<th class="text-center text-nowrap" style="width:6rem;" sec:authorize="hasRole('ROLE_CLUB')">Eliminar</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr th:each="u : ${personalStaff}">
+									<td class="fw-medium" th:text="|${u.nombre} ${u.apellido != null ? u.apellido : ''}|">—</td>
+									<td class="d-none d-md-table-cell small text-break" th:text="${u.email}">—</td>
+									<td>
+										<th:block th:each="r : ${u.roles}">
+											<span th:if="${r.authority == 'ROLE_TESORERO'}"
+												class="badge rounded-pill bg-info text-dark">Tesorero</span>
+											<span th:if="${r.authority == 'ROLE_ENTRENADOR'}"
+												class="badge rounded-pill bg-secondary">Entrenador</span>
+										</th:block>
+									</td>
+									<td class="text-center">
+										<a sec:authorize="hasRole('ROLE_CLUB')" th:href="@{/editarUsuario/{id}(id=${u.id})}"
+											class="btn btn-outline-primary btn-sm rounded-pill px-2">
+											<i class="fas fa-edit"></i>
+										</a>
+									</td>
+									<td class="text-center" sec:authorize="hasRole('ROLE_CLUB')">
+										<button type="button" th:onclick="eliminarUsuario([[${u.id}]])"
+											class="btn btn-outline-danger btn-sm rounded-pill px-2">
+											<i class="fas fa-trash-alt"></i>
+										</button>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
 				</div>
 			</div>
 

@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.app.notification.service.NotificationConfigService;
 import com.app.repository.IClubRepository;
 import com.app.repository.IClubHistorialCambioRepository;
 import com.app.entity.Categoria;
@@ -23,6 +24,9 @@ public class ClubServiceImpl implements IClubService {
 
 	@Autowired
 	private IClubHistorialCambioRepository clubHistorialRepository;
+
+	@Autowired
+	private NotificationConfigService notificationConfigService;
 
 	@Override
 	public List<Club> findAll() {
@@ -41,6 +45,9 @@ public class ClubServiceImpl implements IClubService {
 		// Alta: sin id no hay historial que comparar; el flujo de edición usa findById(clubBD)
 		if (clubNuevo.getId() == null) {
 			clubRepository.save(clubNuevo);
+			if (clubNuevo.getId() != null) {
+				notificationConfigService.ensureDefaultsForClub(clubNuevo.getId());
+			}
 			return;
 		}
 

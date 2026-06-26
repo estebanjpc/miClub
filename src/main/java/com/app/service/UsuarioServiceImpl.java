@@ -2,6 +2,7 @@ package com.app.service;
 
 import java.util.List;
 
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,17 @@ public class UsuarioServiceImpl implements IUsuarioService {
 	@Transactional(readOnly = true)
 	public Usuario findById(Long id) {
 		return usuarioRepository.findById(id).orElse(null);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Usuario findByIdWithRolesAndDeportistas(Long id) {
+		Usuario u = usuarioRepository.findById(id).orElse(null);
+		if (u != null) {
+			Hibernate.initialize(u.getRoles());
+			Hibernate.initialize(u.getDeportistas());
+		}
+		return u;
 	}
 
 	@Override

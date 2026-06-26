@@ -140,5 +140,37 @@ public interface IPagoRepository extends JpaRepository<Pago, Long> {
 			order by p.fecha desc
 			""")
 	List<Pago> findByEstadoInOrderByFechaDesc(@Param("estados") Collection<EstadoPago> estados, Pageable pageable);
+
+	@Query("""
+			select p from Pago p
+			join fetch p.deportista d
+			join fetch d.usuario u
+			left join fetch d.categoria
+			where p.club.id = :clubId
+			  and u.id = :usuarioId
+			  and p.estado = com.app.enums.EstadoPago.MOROSO
+			  and p.concepto in (
+				com.app.enums.ConceptoPago.MATRICULA,
+				com.app.enums.ConceptoPago.IMPLEMENTACION,
+				com.app.enums.ConceptoPago.OTRO
+			  )
+			order by p.anio, p.mes, p.id
+			""")
+	List<Pago> findCobrosAdicionalesPendientesUsuario(@Param("clubId") Long clubId, @Param("usuarioId") Long usuarioId);
+
+	@Query("""
+			select p from Pago p
+			join fetch p.deportista d
+			join fetch d.usuario
+			left join fetch d.categoria
+			where p.club.id = :clubId
+			  and p.concepto in (
+				com.app.enums.ConceptoPago.MATRICULA,
+				com.app.enums.ConceptoPago.IMPLEMENTACION,
+				com.app.enums.ConceptoPago.OTRO
+			  )
+			order by p.fecha desc, p.id desc
+			""")
+	List<Pago> findCobrosAdicionalesByClub(@Param("clubId") Long clubId);
 }
 

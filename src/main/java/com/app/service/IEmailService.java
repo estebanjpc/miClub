@@ -29,6 +29,9 @@ public interface IEmailService {
 	/** Club (ROLE_CLUB): orden Khipu confirmada como pagada. */
 	void notificarClubOrdenKhipuPagada(OrdenPago orden);
 
+	/** Club (ROLE_CLUB): pago en efectivo o transferencia acreditado (aprobado). */
+	void notificarClubPagoAcreditado(Long idPago);
+
 	/** Usuario del deportista: resultado de validación en efectivo. */
 	void notificarUsuarioEstadoPagoEfectivo(Long idPago, boolean aprobado, String motivo);
 

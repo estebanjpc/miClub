@@ -83,6 +83,18 @@ CREATE TABLE IF NOT EXISTS categorias (
   CONSTRAINT fk_categorias_club FOREIGN KEY (id_club) REFERENCES club(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS categoria_valor_vigencia (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  id_categoria BIGINT NOT NULL,
+  anio INT NOT NULL,
+  mes INT NOT NULL,
+  valor_cuota INT NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_categoria_valor_vigencia_periodo (id_categoria, anio, mes),
+  KEY idx_categoria_valor_vigencia_categoria (id_categoria),
+  CONSTRAINT fk_categoria_valor_vigencia_categoria FOREIGN KEY (id_categoria) REFERENCES categorias(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS deportistas (
   id BIGINT NOT NULL AUTO_INCREMENT,
   nombre VARCHAR(255) NULL,
@@ -172,6 +184,33 @@ CREATE TABLE IF NOT EXISTS club_historial_cambio (
   CONSTRAINT fk_club_historial_cambio_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS notification_config (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  club_id BIGINT NOT NULL,
+  type VARCHAR(40) NOT NULL,
+  enabled BIT(1) NOT NULL,
+  days_offset INT NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_notification_config_club_type (club_id, type),
+  KEY idx_notification_config_club (club_id),
+  CONSTRAINT fk_notification_config_club FOREIGN KEY (club_id) REFERENCES club(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS notification_send_log (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  club_id BIGINT NOT NULL,
+  deportista_id BIGINT NOT NULL,
+  notification_type VARCHAR(40) NOT NULL,
+  mes INT NOT NULL,
+  anio INT NOT NULL,
+  sent_at DATETIME(6) NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_notification_log_dedupe (club_id, deportista_id, notification_type, mes, anio),
+  KEY idx_notification_log_club (club_id),
+  CONSTRAINT fk_notification_log_club FOREIGN KEY (club_id) REFERENCES club(id),
+  CONSTRAINT fk_notification_log_deportista FOREIGN KEY (deportista_id) REFERENCES deportistas(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS email_envios (
   id BIGINT NOT NULL AUTO_INCREMENT,
   id_club BIGINT NOT NULL,
@@ -184,6 +223,43 @@ CREATE TABLE IF NOT EXISTS email_envios (
   PRIMARY KEY (id),
   KEY idx_email_envios_club (id_club),
   CONSTRAINT fk_email_envios_club FOREIGN KEY (id_club) REFERENCES club(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS asistencia_clase (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  club_id BIGINT NOT NULL,
+  deportista_id BIGINT NOT NULL,
+  entrenador_id BIGINT NULL,
+  fecha_clase DATE NOT NULL,
+  presente BIT(1) NOT NULL,
+  observacion VARCHAR(255) NULL,
+  fecha_registro DATETIME NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_asistencia_clase_unica (club_id, deportista_id, fecha_clase),
+  KEY idx_asistencia_clase_club (club_id),
+  KEY idx_asistencia_clase_deportista (deportista_id),
+  KEY idx_asistencia_clase_entrenador (entrenador_id),
+  CONSTRAINT fk_asistencia_clase_club FOREIGN KEY (club_id) REFERENCES club(id),
+  CONSTRAINT fk_asistencia_clase_deportista FOREIGN KEY (deportista_id) REFERENCES deportistas(id),
+  CONSTRAINT fk_asistencia_clase_entrenador FOREIGN KEY (entrenador_id) REFERENCES usuarios(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS no_pago_config (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  club_id BIGINT NOT NULL,
+  mes INT NOT NULL,
+  anio INT NOT NULL,
+  scope VARCHAR(30) NOT NULL,
+  categoria_id BIGINT NULL,
+  deportista_id BIGINT NULL,
+  observacion VARCHAR(255) NULL,
+  PRIMARY KEY (id),
+  KEY idx_no_pago_club_periodo (club_id, anio, mes),
+  KEY idx_no_pago_categoria (categoria_id),
+  KEY idx_no_pago_deportista (deportista_id),
+  CONSTRAINT fk_no_pago_club FOREIGN KEY (club_id) REFERENCES club(id),
+  CONSTRAINT fk_no_pago_categoria FOREIGN KEY (categoria_id) REFERENCES categorias(id),
+  CONSTRAINT fk_no_pago_deportista FOREIGN KEY (deportista_id) REFERENCES deportistas(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Tabla legacy (entidad aún presente en proyecto)

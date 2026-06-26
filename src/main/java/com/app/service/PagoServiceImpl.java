@@ -20,10 +20,12 @@ import com.app.repository.IOrdenPagoRepository;
 import com.app.repository.IPagoRepository;
 import com.app.util.AfterCommitRunner;
 import com.app.dto.ComprobanteTransferenciaDTO;
+import com.app.dto.CobroAdicionalForm;
 import com.app.dto.KhipuResponse;
 import com.app.dto.MesPagoDTO;
 import com.app.dto.MorosidadClubDTO;
 import com.app.entity.Deportista;
+import com.app.entity.Club;
 import com.app.entity.OrdenPago;
 import com.app.entity.Pago;
 import com.app.enums.ConceptoPago;
@@ -46,6 +48,12 @@ public class PagoServiceImpl implements IPagoService {
 
 	@Autowired
 	private AsyncEmailService asyncEmailService;
+
+	@Autowired
+	private ICategoriaCuotaVigenciaService categoriaCuotaVigenciaService;
+
+	@Autowired
+	private INoPagoConfigService noPagoConfigService;
 
 //	@Override
 //	public List<MesPagoDTO> obtenerMesesParaPagar(Long usuarioId,Long idClub) {
@@ -86,7 +94,6 @@ public class PagoServiceImpl implements IPagoService {
 	    int mesActual = hoy.getMonthValue();
 
 	    for (Deportista d : deportistas) {
-	        int valorCuota = d.getCategoria().getValorCuota();
 	        LocalDate fechaIngreso = d.getFechaIngreso();
 	        
 	        int anioIngreso = fechaIngreso.getYear();
@@ -109,9 +116,13 @@ public class PagoServiceImpl implements IPagoService {
 	            }
 
 	            for (int mes = mesInicio; mes <= mesFin; mes++) {
+	            	if (noPagoConfigService.aplicaNoPago(idClub, d, mes, anio)) {
+	            		continue;
+	            	}
 	                boolean existePago = pagoRepository.existsPagoBloqueante(d.getId(), mes, anio);
 
 	                if (!existePago) {
+	                	Integer valorCuota = resolverValorCuota(d, anio, mes);
 	                    lista.add(new MesPagoDTO(
 	                        d.getId(), 
 	                        d.getNombre() + " " + d.getApellido(), 
@@ -122,6 +133,16 @@ public class PagoServiceImpl implements IPagoService {
 	                }
 	            }
 	        }
+	    }
+	    List<Pago> cobrosAdicionales = pagoRepository.findCobrosAdicionalesPendientesUsuario(idClub, usuarioId);
+	    for (Pago p : cobrosAdicionales) {
+	    	MesPagoDTO item = new MesPagoDTO(p.getDeportista().getId(),
+	    			p.getDeportista().getNombre() + " " + p.getDeportista().getApellido(), p.getMes(), p.getAnio(),
+	    			p.getMonto() != null ? p.getMonto() : 0);
+	    	item.setConceptoLabel(nombreConcepto(p.getConcepto()));
+	    	item.setDetalle(p.getObservacion() != null ? p.getObservacion() : "");
+	    	item.setSeleccionKey("ADICIONAL-" + p.getId());
+	    	lista.add(item);
 	    }
 	    return lista;
 	}
@@ -158,6 +179,16 @@ public class PagoServiceImpl implements IPagoService {
 	public void registrarPagoEfectivo(List<String> seleccionados, Long usuarioId, Long idClub) {
 		List<Long> idsRegistrados = new ArrayList<>();
 		for (String item : seleccionados) {
+			if (item != null && item.startsWith("ADICIONAL-")) {
+				Pago extra = requireCobroAdicionalDelUsuario(item, usuarioId, idClub);
+				extra.setEstado(EstadoPago.PENDIENTE);
+				extra.setMedioPago(MedioPago.EFECTIVO);
+				extra.setFecha(LocalDateTime.now());
+				extra.setObservacion(appendObs(extra.getObservacion(), "Pago adicional registrado en portal MiClub (efectivo)"));
+				pagoRepository.save(extra);
+				idsRegistrados.add(extra.getId());
+				continue;
+			}
             String[] data = item.split("-");
             if (data.length != 3) {
             	throw new IllegalArgumentException("Formato de selección inválido");
@@ -176,7 +207,7 @@ public class PagoServiceImpl implements IPagoService {
             pago.setEstado(EstadoPago.PENDIENTE);
             pago.setMedioPago(MedioPago.EFECTIVO);
             pago.setConcepto(ConceptoPago.MENSUALIDAD);
-            pago.setMonto(d.getCategoria() != null ? d.getCategoria().getValorCuota() : null);
+            pago.setMonto(resolverValorCuota(d, anio, mes));
             pago.setObservacion("Pago registrado desde portal MiClub (efectivo)");
             pagoRepository.save(pago);
             idsRegistrados.add(pago.getId());
@@ -220,6 +251,20 @@ public class PagoServiceImpl implements IPagoService {
 
 		List<Long> idsRegistrados = new ArrayList<>();
 		for (String item : seleccionados) {
+			if (item != null && item.startsWith("ADICIONAL-")) {
+				Pago extra = requireCobroAdicionalDelUsuario(item, usuarioId, idClub);
+				extra.setEstado(EstadoPago.PENDIENTE);
+				extra.setMedioPago(MedioPago.TRANSFERENCIA);
+				extra.setFecha(LocalDateTime.now());
+				extra.setComprobanteTransferencia(bytes);
+				extra.setComprobanteContentType(ct);
+				extra.setComprobanteNombreArchivo(nombre);
+				extra.setObservacion(appendObs(extra.getObservacion(),
+						"Transferencia de cobro adicional — comprobante adjunto (pendiente de validación del club)"));
+				pagoRepository.save(extra);
+				idsRegistrados.add(extra.getId());
+				continue;
+			}
 			String[] data = item.split("-");
 			if (data.length != 3) {
 				throw new IllegalArgumentException("Formato de selección inválido");
@@ -238,7 +283,7 @@ public class PagoServiceImpl implements IPagoService {
 			pago.setEstado(EstadoPago.PENDIENTE);
 			pago.setMedioPago(MedioPago.TRANSFERENCIA);
 			pago.setConcepto(ConceptoPago.MENSUALIDAD);
-			pago.setMonto(d.getCategoria() != null ? d.getCategoria().getValorCuota() : null);
+			pago.setMonto(resolverValorCuota(d, anio, mes));
 			pago.setObservacion("Transferencia bancaria — comprobante adjunto (pendiente de validación del club)");
 			pago.setComprobanteTransferencia(bytes);
 			pago.setComprobanteContentType(ct);
@@ -259,6 +304,17 @@ public class PagoServiceImpl implements IPagoService {
         int total = 0;
 
         for (String item : seleccionados) {
+        	if (item != null && item.startsWith("ADICIONAL-")) {
+        		Pago extra = requireCobroAdicionalDelUsuario(item, idUsuario, idClub);
+        		extra.setEstado(EstadoPago.PENDIENTE_KHIPU);
+        		extra.setMedioPago(MedioPago.KHIPU);
+        		extra.setFecha(LocalDateTime.now());
+        		extra.setObservacion(appendObs(extra.getObservacion(), "Pago adicional vía Khipu iniciado"));
+        		pagoRepository.save(extra);
+        		pagos.add(extra);
+        		total += (extra.getMonto() != null ? extra.getMonto() : 0);
+        		continue;
+        	}
             String[] d = item.split("-");
             if (d.length != 3) {
             	throw new IllegalArgumentException("Formato de selección inválido");
@@ -278,7 +334,7 @@ public class PagoServiceImpl implements IPagoService {
             p.setEstado(EstadoPago.PENDIENTE_KHIPU);
             p.setMedioPago(MedioPago.KHIPU);
             p.setConcepto(ConceptoPago.MENSUALIDAD);
-            Integer valor = dep.getCategoria() != null ? dep.getCategoria().getValorCuota() : null;
+            Integer valor = resolverValorCuota(dep, anio, mes);
             p.setMonto(valor);
             p.setObservacion("Pago vía Khipu iniciado");
             pagoRepository.save(p);
@@ -365,8 +421,11 @@ public class PagoServiceImpl implements IPagoService {
         }
 
         pagoRepository.save(pago);
-        AfterCommitRunner.run(() -> asyncEmailService.notificarUsuarioEstadoPagoEfectivo(idPago, true,
-                "El club validó y aprobó tu pago en efectivo."));
+        AfterCommitRunner.run(() -> {
+        	asyncEmailService.notificarUsuarioEstadoPagoEfectivo(idPago, true,
+        			"El club validó y aprobó tu pago en efectivo.");
+        	asyncEmailService.notificarClubPagoAcreditado(idPago);
+        });
     }
 
 	@Override
@@ -441,13 +500,20 @@ public class PagoServiceImpl implements IPagoService {
 			}
 			
 			int cuotasAdeudadas = 0;
+			int montoAdeudado = 0;
 			YearMonth cursor = inicio;
 			while (!cursor.isAfter(periodoConsulta)) {
+				if (noPagoConfigService.aplicaNoPago(idClubSession, deportista, cursor.getMonthValue(), cursor.getYear())) {
+					cursor = cursor.plusMonths(1);
+					continue;
+				}
 				String key = buildPeriodoKey(deportista.getId(), cursor.getYear(), cursor.getMonthValue());
 				Pago pagoPeriodo = ultimoPagoPorPeriodo.get(key);
 				
 				if (pagoPeriodo == null || pagoPeriodo.getEstado() != EstadoPago.PAGADO) {
 					cuotasAdeudadas++;
+					Integer valorPeriodo = resolverValorCuota(deportista, cursor.getYear(), cursor.getMonthValue());
+					montoAdeudado += (valorPeriodo != null ? valorPeriodo : 0);
 				}
 				cursor = cursor.plusMonths(1);
 			}
@@ -458,8 +524,7 @@ public class PagoServiceImpl implements IPagoService {
 				dto.setNombreCompleto(deportista.getNombre() + " " + deportista.getApellido());
 				dto.setCuotasAdeudadas(cuotasAdeudadas);
 				
-				Integer valorCuota = deportista.getCategoria() != null ? deportista.getCategoria().getValorCuota() : 0;
-				dto.setMontoAdeudado(cuotasAdeudadas * (valorCuota != null ? valorCuota : 0));
+				dto.setMontoAdeudado(montoAdeudado);
 				dto.setUltimaFechaPago(ultimaFechaPagoPorDeportista.get(deportista.getId()));
 				if (deportista.getCategoria() != null) {
 					dto.setIdCategoria(deportista.getCategoria().getId());
@@ -474,6 +539,58 @@ public class PagoServiceImpl implements IPagoService {
 	
 	private String buildPeriodoKey(Long deportistaId, Integer anio, Integer mes) {
 		return deportistaId + "-" + anio + "-" + mes;
+	}
+
+	private Integer resolverValorCuota(Deportista d, int anio, int mes) {
+		if (d == null || d.getCategoria() == null || d.getCategoria().getId() == null) {
+			return null;
+		}
+		return categoriaCuotaVigenciaService.obtenerValorCuota(d.getCategoria().getId(), anio, mes);
+	}
+
+	private Pago requireCobroAdicionalDelUsuario(String item, Long usuarioId, Long idClub) {
+		Long pagoId;
+		try {
+			pagoId = Long.parseLong(item.replace("ADICIONAL-", ""));
+		} catch (Exception e) {
+			throw new IllegalArgumentException("Formato de cobro adicional inválido");
+		}
+		Pago p = pagoRepository.findByIdWithDetalle(pagoId)
+				.orElseThrow(() -> new AccessDeniedException("Cobro adicional no encontrado"));
+		if (p.getClub() == null || !idClub.equals(p.getClub().getId())) {
+			throw new AccessDeniedException("Cobro adicional fuera del club");
+		}
+		if (p.getDeportista() == null || p.getDeportista().getUsuario() == null
+				|| !usuarioId.equals(p.getDeportista().getUsuario().getId())) {
+			throw new AccessDeniedException("Cobro adicional no pertenece al usuario");
+		}
+		if (!esCobroAdicional(p.getConcepto()) || p.getEstado() != EstadoPago.MOROSO) {
+			throw new IllegalArgumentException("Cobro adicional no disponible para pago");
+		}
+		return p;
+	}
+
+	private boolean esCobroAdicional(ConceptoPago c) {
+		return c == ConceptoPago.MATRICULA || c == ConceptoPago.IMPLEMENTACION || c == ConceptoPago.OTRO;
+	}
+
+	private String nombreConcepto(ConceptoPago c) {
+		if (c == null) {
+			return "Mensualidad";
+		}
+		return switch (c) {
+		case MATRICULA -> "Matrícula";
+		case IMPLEMENTACION -> "Implementación";
+		case OTRO -> "Otro";
+		default -> "Mensualidad";
+		};
+	}
+
+	private String appendObs(String original, String extra) {
+		if (original == null || original.isBlank()) {
+			return extra;
+		}
+		return original + " | " + extra;
 	}
 
 	@Override
@@ -508,6 +625,58 @@ public class PagoServiceImpl implements IPagoService {
 		}
 		String ct = p.getComprobanteContentType() != null ? p.getComprobanteContentType() : "application/octet-stream";
 		return new ComprobanteTransferenciaDTO(p.getComprobanteTransferencia(), ct, p.getComprobanteNombreArchivo());
+	}
+
+	@Override
+	@Transactional
+	public int crearCobroAdicional(Long idClub, CobroAdicionalForm form) {
+		List<Deportista> objetivo = new ArrayList<>();
+		if (form.getAlcance() == CobroAdicionalForm.Alcance.DEPORTISTA) {
+			Deportista d = deportistaRepository.findById(form.getDeportistaId())
+					.orElseThrow(() -> new IllegalArgumentException("Deportista no encontrado"));
+			if (d.getUsuario() == null || d.getUsuario().getClub() == null || !idClub.equals(d.getUsuario().getClub().getId())) {
+				throw new IllegalArgumentException("El deportista no pertenece al club.");
+			}
+			objetivo.add(d);
+		} else if (form.getAlcance() == CobroAdicionalForm.Alcance.CATEGORIA) {
+			objetivo = deportistaRepository.findByClub(idClub).stream()
+					.filter(d -> d.getCategoria() != null && form.getCategoriaId().equals(d.getCategoria().getId()))
+					.toList();
+		} else {
+			objetivo = deportistaRepository.findByClub(idClub);
+		}
+		if (objetivo.isEmpty()) {
+			return 0;
+		}
+		ConceptoPago concepto = switch (form.getTipoCobro()) {
+		case MATRICULA -> ConceptoPago.MATRICULA;
+		case IMPLEMENTACION -> ConceptoPago.IMPLEMENTACION;
+		case OTRO -> ConceptoPago.OTRO;
+		};
+		Club club = objetivo.get(0).getUsuario().getClub();
+		int creados = 0;
+		for (Deportista d : objetivo) {
+			Pago p = new Pago();
+			p.setClub(club);
+			p.setDeportista(d);
+			p.setFecha(LocalDateTime.now());
+			p.setMes(form.getMes());
+			p.setAnio(form.getAnio());
+			p.setEstado(EstadoPago.MOROSO);
+			p.setMedioPago(null);
+			p.setConcepto(concepto);
+			p.setMonto(form.getMonto());
+			p.setObservacion(form.getDescripcion());
+			pagoRepository.save(p);
+			creados++;
+		}
+		return creados;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<Pago> listarCobrosAdicionalesClub(Long idClub) {
+		return pagoRepository.findCobrosAdicionalesByClub(idClub);
 	}
 
 }

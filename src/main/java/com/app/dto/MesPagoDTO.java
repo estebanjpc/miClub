@@ -13,6 +13,9 @@ public class MesPagoDTO {
     private Integer anio;
 
     private Integer valorCuota;
+    private String conceptoLabel;
+    private String detalle;
+    private String seleccionKey;
 
     public String getNombreMes() {
         String nombre = Month.of(mes).getDisplayName(TextStyle.FULL, new Locale("es", "ES"));
@@ -27,6 +30,9 @@ public class MesPagoDTO {
         this.mes = mes;
         this.anio = anio;
         this.valorCuota = valorCuota;
+        this.conceptoLabel = "Mensualidad";
+        this.detalle = "";
+        this.seleccionKey = deportistaId + "-" + mes + "-" + anio;
     }
 
 	public Long getDeportistaId() {
@@ -67,6 +73,30 @@ public class MesPagoDTO {
 
 	public void setValorCuota(Integer valorCuota) {
 		this.valorCuota = valorCuota;
+	}
+
+	public String getConceptoLabel() {
+		return conceptoLabel;
+	}
+
+	public void setConceptoLabel(String conceptoLabel) {
+		this.conceptoLabel = conceptoLabel;
+	}
+
+	public String getDetalle() {
+		return detalle;
+	}
+
+	public void setDetalle(String detalle) {
+		this.detalle = detalle;
+	}
+
+	public String getSeleccionKey() {
+		return seleccionKey;
+	}
+
+	public void setSeleccionKey(String seleccionKey) {
+		this.seleccionKey = seleccionKey;
 	}
 
 

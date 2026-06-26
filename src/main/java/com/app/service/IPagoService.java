@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.app.dto.ComprobanteTransferenciaDTO;
+import com.app.dto.CobroAdicionalForm;
 import com.app.dto.MesPagoDTO;
 import com.app.dto.MorosidadClubDTO;
 import com.app.entity.OrdenPago;
@@ -38,5 +39,9 @@ public interface IPagoService {
 	/** Apoderado (mismo usuario del deportista) o personal del club (sesión del club). */
 	ComprobanteTransferenciaDTO obtenerComprobanteTransferenciaSiAutorizado(Long pagoId, Long usuarioId,
 			Long idClubSession, boolean esApoderado);
+
+	int crearCobroAdicional(Long idClub, CobroAdicionalForm form);
+
+	List<Pago> listarCobrosAdicionalesClub(Long idClub);
 
 }

@@ -1,6 +1,5 @@
 package com.app.service;
 
-import java.io.File;
 import java.text.NumberFormat;
 import java.time.Month;
 import java.time.format.TextStyle;
@@ -12,9 +11,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -24,6 +20,9 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.app.mail.MailInlineLogoSupport;
+import com.app.notification.domain.NotificationType;
+import com.app.notification.service.NotificationConfigService;
 import com.app.entity.Club;
 import com.app.entity.Email;
 import com.app.entity.OrdenPago;
@@ -54,6 +53,12 @@ public class EmailServiceImp implements IEmailService {
 
 	@Autowired
 	private IClubService clubService;
+
+	@Autowired
+	private NotificationConfigService notificationConfigService;
+
+	@Autowired
+	private MailInlineLogoSupport mailInlineLogoSupport;
 
 	@Value("${mail.set.from}")
 	private String emailSetFrom;
@@ -91,7 +96,7 @@ public class EmailServiceImp implements IEmailService {
 			if (usuario.getClub() != null && usuario.getClub().getId() != null) {
 				clubLogo = clubService.findById(usuario.getClub().getId());
 			}
-			inlineLogoClub(helper, clubLogo);
+			mailInlineLogoSupport.attachLogoClub(helper, clubLogo);
 
 			mailSender.send(mimeMessage);
 		} catch (Exception e) {
@@ -118,7 +123,7 @@ public class EmailServiceImp implements IEmailService {
 			helper.setSubject("Bienvenido a la Plataforma - Creación de cuenta");
 			helper.setFrom(emailSetFrom);
 			helper.setText(htmlContent, true);
-			inlineLogoPlataforma(helper);
+			mailInlineLogoSupport.attachLogoPlataforma(helper);
 
 			mailSender.send(mimeMessage);
 		} catch (Exception e) {
@@ -145,7 +150,7 @@ public class EmailServiceImp implements IEmailService {
 			helper.setSubject("Recuperación de Contraseña - Plataforma");
 			helper.setFrom(emailSetFrom);
 			helper.setText(htmlContent, true);
-			inlineLogoPlataforma(helper);
+			mailInlineLogoSupport.attachLogoPlataforma(helper);
 
 			mailSender.send(mimeMessage);
 		} catch (Exception e) {
@@ -181,11 +186,19 @@ public class EmailServiceImp implements IEmailService {
 			return;
 		}
 		Pago primero = pagos.get(0);
+		Long clubId = primero.getClub() != null ? primero.getClub().getId() : null;
+		if (clubId == null) {
+			return;
+		}
+		if (!notificationConfigService.isEnabled(clubId, NotificationType.PAYMENT_RECEIVED)) {
+			log.info("Aviso club por nuevo pago omitido por configuración desactivada. clubId={}", clubId);
+			return;
+		}
 		try {
-			List<Usuario> destinatarios = usuarioService.findUsuarioByIdClubAndRoles(primero.getClub().getId(),
+			List<Usuario> destinatarios = usuarioService.findUsuarioByIdClubAndRoles(clubId,
 					List.of(AppRoles.CLUB, AppRoles.TESORERO));
 			if (destinatarios == null || destinatarios.isEmpty()) {
-				log.warn("Aviso club omitido: no hay usuario club/tesorero. clubId={}", primero.getClub().getId());
+				log.warn("Aviso club omitido: no hay usuario club/tesorero. clubId={}", clubId);
 				return;
 			}
 			List<String> emails = destinatarios.stream()
@@ -227,12 +240,12 @@ public class EmailServiceImp implements IEmailService {
 			helper.setSubject(asunto);
 			helper.setFrom(emailSetFrom);
 			helper.setText(html, true);
-			inlineLogoClub(helper, clubService.findById(primero.getClub().getId()));
+			mailInlineLogoSupport.attachLogoClub(helper, clubService.findById(clubId));
 			mailSender.send(mimeMessage);
 			log.info("Correo de aviso pago efectivo enviado a club. clubId={} totalPagos={} destinatarios={}",
-					primero.getClub().getId(), pagos.size(), emails.size());
+					clubId, pagos.size(), emails.size());
 		} catch (Exception e) {
-			log.error("Error enviando aviso de pago efectivo al club. clubId={}", primero.getClub().getId(), e);
+			log.error("Error enviando aviso de pago efectivo al club. clubId={}", clubId, e);
 		}
 	}
 
@@ -242,6 +255,10 @@ public class EmailServiceImp implements IEmailService {
 			return;
 		}
 		Pago primero = orden.getPagos().get(0);
+		Long clubIdCfg = primero.getClub().getId();
+		if (!notificationConfigService.isEnabled(clubIdCfg, NotificationType.PAYMENT_RECEIVED)) {
+			return;
+		}
 		try {
 			List<Usuario> destinatarios = usuarioService.findUsuarioByIdClubAndRoles(primero.getClub().getId(),
 					List.of(AppRoles.CLUB, AppRoles.TESORERO));
@@ -271,13 +288,60 @@ public class EmailServiceImp implements IEmailService {
 			helper.setSubject("Pago Khipu confirmado — " + primero.getClub().getNombre());
 			helper.setFrom(emailSetFrom);
 			helper.setText(html, true);
-			inlineLogoClub(helper, clubService.findById(primero.getClub().getId()));
+			mailInlineLogoSupport.attachLogoClub(helper, clubService.findById(primero.getClub().getId()));
 			mailSender.send(mimeMessage);
 			log.info("Correo de pago Khipu confirmado enviado a club. ordenId={} clubId={} destinatarios={}",
 					orden.getId(), primero.getClub().getId(), emails.size());
 		} catch (Exception e) {
 			log.error("Error enviando aviso de pago Khipu al club. ordenId={}", orden.getId(), e);
 		}
+	}
+
+	@Override
+	public void notificarClubPagoAcreditado(Long idPago) {
+		pagoRepository.findByIdWithDetalle(idPago).ifPresent(pago -> {
+			if (pago.getClub() == null) {
+				return;
+			}
+			Long clubId = pago.getClub().getId();
+			if (!notificationConfigService.isEnabled(clubId, NotificationType.PAYMENT_RECEIVED)) {
+				return;
+			}
+			try {
+				List<Usuario> destinatarios = usuarioService.findUsuarioByIdClubAndRoles(clubId,
+						List.of(AppRoles.CLUB, AppRoles.TESORERO));
+				if (destinatarios == null || destinatarios.isEmpty()) {
+					return;
+				}
+				List<String> emails = destinatarios.stream()
+						.map(Usuario::getEmail)
+						.filter(e -> e != null && !e.isBlank())
+						.distinct()
+						.toList();
+				if (emails.isEmpty()) {
+					return;
+				}
+				MimeMessage mimeMessage = mailSender.createMimeMessage();
+				MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+				Context context = buildContextNuevoPagoClub(pago, null);
+				context.setVariable("subtitulo", "Pago acreditado (efectivo o transferencia)");
+				context.setVariable("estadoDescripcion", "Pagado");
+				context.setVariable("lineas", new ArrayList<String>());
+
+				String html = templateEngine.process("email/nuevoPagoClub.html", context);
+				helper.setTo(emails.toArray(new String[0]));
+				helper.setSubject("Pago acreditado — " + pago.getClub().getNombre());
+				helper.setFrom(emailSetFrom);
+				helper.setText(html, true);
+				mailInlineLogoSupport.attachLogoClub(helper, clubService.findById(clubId));
+				mailSender.send(mimeMessage);
+				log.info("Correo de pago acreditado enviado a club. pagoId={} clubId={} destinatarios={}", idPago, clubId,
+						emails.size());
+			} catch (Exception e) {
+				log.error("Error enviando aviso de pago acreditado al club. pagoId={}", idPago, e);
+			}
+		});
 	}
 
 	@Override
@@ -310,7 +374,7 @@ public class EmailServiceImp implements IEmailService {
 						: "Tu pago fue rechazado — " + pago.getClub().getNombre());
 				helper.setFrom(emailSetFrom);
 				helper.setText(html, true);
-				inlineLogoClub(helper, clubService.findById(pago.getClub().getId()));
+				mailInlineLogoSupport.attachLogoClub(helper, clubService.findById(pago.getClub().getId()));
 				mailSender.send(mimeMessage);
 				log.info("Correo de estado pago efectivo enviado al usuario. pagoId={} aprobado={} email={}",
 						pago.getId(), aprobado, usuario.getEmail());
@@ -361,7 +425,7 @@ public class EmailServiceImp implements IEmailService {
 					: "Pago Khipu no completado — " + primero.getClub().getNombre());
 			helper.setFrom(emailSetFrom);
 			helper.setText(html, true);
-			inlineLogoClub(helper, clubService.findById(primero.getClub().getId()));
+			mailInlineLogoSupport.attachLogoClub(helper, clubService.findById(primero.getClub().getId()));
 			mailSender.send(mimeMessage);
 			log.info("Correo de resultado Khipu enviado al usuario. ordenId={} exitoso={} email={}",
 					orden.getId(), exitoso, usuario.getEmail());
@@ -431,59 +495,6 @@ public class EmailServiceImp implements IEmailService {
 		return base + "/login";
 	}
 
-	/** Logo genérico de la plataforma (correos del administrador y del sistema). */
-	private void inlineLogoPlataforma(MimeMessageHelper helper) {
-		try {
-			ClassPathResource logoResource = new ClassPathResource("static/images/logo.png");
-			if (logoResource.exists()) {
-				helper.addInline("logoImage", logoResource);
-			} else {
-				File logoFile = new File("src/main/resources/static/images/logo.png");
-				if (logoFile.exists()) {
-					helper.addInline("logoImage", new FileSystemResource(logoFile));
-				}
-			}
-		} catch (Exception e) {
-			log.warn("No se pudo adjuntar logo de plataforma inline en correo", e);
-		}
-	}
-
-	/**
-	 * Logo del club en correos hacia usuarios/apoderados; si no hay imagen, el logo genérico de la plataforma.
-	 */
-	private void inlineLogoClub(MimeMessageHelper helper, Club club) {
-		try {
-			if (club != null && club.getLogo() != null && club.getLogo().length > 0) {
-				ByteArrayResource res = new ByteArrayResource(club.getLogo());
-				helper.addInline("logoImage", res, guessImageContentType(club.getLogo()));
-				return;
-			}
-		} catch (Exception e) {
-			log.warn("No se pudo adjuntar logo del club inline; usando logo de plataforma. clubId={}",
-					club != null ? club.getId() : null, e);
-		}
-		inlineLogoPlataforma(helper);
-	}
-
-	private static String guessImageContentType(byte[] data) {
-		if (data == null || data.length < 4) {
-			return "image/jpeg";
-		}
-		if (data[0] == (byte) 0xFF && data[1] == (byte) 0xD8) {
-			return "image/jpeg";
-		}
-		if (data.length >= 8 && data[0] == (byte) 0x89 && data[1] == 'P' && data[2] == 'N' && data[3] == 'G') {
-			return "image/png";
-		}
-		if (data[0] == 'G' && data[1] == 'I' && data[2] == 'F') {
-			return "image/gif";
-		}
-		if (data[0] == 'R' && data[1] == 'I' && data[2] == 'F' && data[3] == 'F') {
-			return "image/webp";
-		}
-		return "image/jpeg";
-	}
-
 	@Override
 	public void sendMail(SimpleMailMessage message) {
 		try {
@@ -532,7 +543,7 @@ public class EmailServiceImp implements IEmailService {
 			helper.setFrom(emailSetFrom);
 			helper.setText(html, true);
 			Club clubLogo = clubId != null ? clubService.findById(clubId) : null;
-			inlineLogoClub(helper, clubLogo);
+			mailInlineLogoSupport.attachLogoClub(helper, clubLogo);
 			mailSender.send(mimeMessage);
 			log.info("Correo de notificación de campaña enviado. club={} to={} subject={}",
 					nombreClub, emailDestino, asunto);

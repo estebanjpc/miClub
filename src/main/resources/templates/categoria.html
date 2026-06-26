@@ -25,7 +25,7 @@
 			<div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
 				<div>
 					<h3 class="fw-bold text-primary mb-0" th:text="${titulo}">Categoría</h3>
-					<p class="text-muted small mb-0 mt-1">Define el nombre y el valor de la cuota mensual.</p>
+					<p class="text-muted small mb-0 mt-1">Define valor de cuota con vigencia por mes y año.</p>
 				</div>
 				<a th:href="@{/categorias/listar}" class="btn btn-outline-secondary btn-sm rounded-pill">
 					<i class="fas fa-arrow-left me-1"></i> Volver al listado
@@ -63,6 +63,57 @@
 								th:classappend="${#fields.hasErrors('valorCuota')} ? 'is-invalid' : ''" />
 							<div class="invalid-feedback" th:if="${#fields.hasErrors('valorCuota')}"
 								th:errors="*{valorCuota}"></div>
+						</div>
+
+						<div class="col-md-6">
+							<label class="form-label fw-semibold">Mes de vigencia</label>
+							<select name="mesVigencia" class="form-select">
+								<option value="1" th:selected="${mesVigencia == 1}">Enero</option>
+								<option value="2" th:selected="${mesVigencia == 2}">Febrero</option>
+								<option value="3" th:selected="${mesVigencia == 3}">Marzo</option>
+								<option value="4" th:selected="${mesVigencia == 4}">Abril</option>
+								<option value="5" th:selected="${mesVigencia == 5}">Mayo</option>
+								<option value="6" th:selected="${mesVigencia == 6}">Junio</option>
+								<option value="7" th:selected="${mesVigencia == 7}">Julio</option>
+								<option value="8" th:selected="${mesVigencia == 8}">Agosto</option>
+								<option value="9" th:selected="${mesVigencia == 9}">Septiembre</option>
+								<option value="10" th:selected="${mesVigencia == 10}">Octubre</option>
+								<option value="11" th:selected="${mesVigencia == 11}">Noviembre</option>
+								<option value="12" th:selected="${mesVigencia == 12}">Diciembre</option>
+							</select>
+						</div>
+
+						<div class="col-md-6">
+							<label class="form-label fw-semibold">Año de vigencia</label>
+							<input name="anioVigencia" type="number" min="2000" max="2100" class="form-control"
+								th:value="${anioVigencia}" />
+						</div>
+
+						<div class="col-12" th:if="${vigenciaError != null}">
+							<div class="alert alert-danger border-0 shadow-sm rounded-3 py-2 px-3 mb-0" th:text="${vigenciaError}">
+								Error de vigencia
+							</div>
+						</div>
+
+						<div class="col-12" th:if="${vigencias != null and !vigencias.isEmpty()}">
+							<h6 class="fw-semibold text-primary mt-1">Historial de vigencias</h6>
+							<div class="table-responsive border rounded-3">
+								<table class="table table-sm mb-0">
+									<thead class="table-light">
+										<tr>
+											<th>Período</th>
+											<th class="text-end">Valor cuota</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr th:each="v : ${vigencias}">
+											<td th:text="${v.mes + '/' + v.anio}">1/2026</td>
+											<td class="text-end"
+												th:text="${#numbers.formatDecimal(v.valorCuota, 0, 'POINT', 0, 'COMMA')}">0</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
 						</div>
 
 						<div class="col-12 border-top pt-4 mt-2 d-flex flex-wrap justify-content-center gap-2">
