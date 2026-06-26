@@ -299,7 +299,9 @@ Autenticación: form login con `email` + `password` (BCrypt). Autorización: `@S
 | Elemento | Estado |
 |----------|--------|
 | `Dockerfile` multi-stage (build + JRE) | ✅ Añadido |
-| `docker-compose.yml` (app + MySQL) | ✅ Añadido |
+| `docker-compose.yml` (app + MySQL, build local) | ✅ Añadido |
+| `docker-compose.prod.yml` (VPS, imagen Docker Hub) | ✅ Añadido |
+| `.github/workflows/deploy.yml` (CI/CD) | ✅ Añadido |
 | Perfil `application-prod.properties` | ✅ Añadido |
 | `.env.example` (secretos fuera del código) | ✅ Añadido |
 | `.dockerignore` | ✅ Añadido |
@@ -312,22 +314,44 @@ Autenticación: form login con `email` + `password` (BCrypt). Autorización: `@S
 4. **Khipu webhook** debe apuntar a `https://adminclub.cl/api/khipu/notify` (HTTPS obligatorio).
 5. **Reverse proxy** (Nginx/Caddy) delante del contenedor para SSL; la app expone solo `127.0.0.1:8080`.
 
-### Pasos en el VPS
+### Pasos en el VPS (primera vez)
 
 ```bash
-# 1. Clonar repo en el servidor
-git clone <tu-repo> adminclub && cd adminclub
+# 1. Clonar en /opt/adminclub (ruta usada por el workflow CI/CD)
+sudo mkdir -p /opt/adminclub
+sudo chown $USER:$USER /opt/adminclub
+git clone <tu-repo> /opt/adminclub && cd /opt/adminclub
 
 # 2. Configurar entorno
 cp .env.example .env
-nano .env   # completar dominio, BD, contraseña SMTP IRCD, Khipu
+nano .env   # DOCKER_IMAGE=tuusuario/adminclub:latest, BD, SMTP IRCD, Khipu
 
 # 3. Levantar (MySQL inicializa esquema + import.sql la primera vez)
-docker compose up -d --build
+docker compose -f docker-compose.prod.yml up -d
 
 # 4. Ver logs
-docker compose logs -f app
+docker compose -f docker-compose.prod.yml logs -f app
 ```
+
+### CI/CD con GitHub Actions
+
+Cada `push` a **`main`** construye la imagen, la sube a Docker Hub y actualiza el VPS.
+
+**Secrets en GitHub** (Settings → Secrets and variables → Actions):
+
+| Secret | Descripción |
+|--------|-------------|
+| `DOCKERHUB_USERNAME` | Usuario Docker Hub |
+| `DOCKERHUB_TOKEN` | Access token Docker Hub (no la contraseña) |
+| `VPS_HOST` | IP o dominio del VPS |
+| `VPS_USER` | Usuario SSH (ej. `root` o `deploy`) |
+| `VPS_SSH_KEY` | Clave privada SSH (contenido completo del `.pem`) |
+
+Workflow: [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)
+
+Imagen publicada: `{DOCKERHUB_USERNAME}/adminclub:latest`
+
+Despliegues posteriores son automáticos al hacer push a `main`; en el VPS solo se hace `pull` + `up -d` de la app.
 
 ### Nginx (ejemplo mínimo)
 
