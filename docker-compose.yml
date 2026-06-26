@@ -1,0 +1,45 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: adminclub-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-bd_adm_club}
+      MYSQL_USER: ${MYSQL_USER:-adminclub}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # Esquema + datos iniciales (solo la primera vez que se crea el volumen)
+      - ./src/main/resources/db/01-schema-adminclub.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./src/main/resources/import.sql:/docker-entrypoint-initdb.d/02-import.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - adminclub-net
+
+  app:
+    build: .
+    container_name: adminclub-app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - adminclub-net
+
+volumes:
+  mysql_data:
+
+networks:
+  adminclub-net:
+    driver: bridge

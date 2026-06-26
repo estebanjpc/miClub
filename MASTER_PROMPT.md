@@ -350,7 +350,7 @@ Apoderado POST /pagar (Khipu)
 server.port=8081
 spring.jpa.hibernate.ddl-auto=create-drop
 spring.datasource.url=jdbc:mysql://localhost/bd_adm_club?serverTimezone=America/Santiago
-app.public.url=http://localhost:8081
+app.public.url=https://adminclub.cl
 notifications.scheduler.enabled=true
 notifications.scheduler.cron=0 0 8 * * ?
 khipu.webhook.verify-signature=true
