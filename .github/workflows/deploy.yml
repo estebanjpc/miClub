@@ -48,7 +48,7 @@ jobs:
             set -e
             cd /root/admin-club/desa
             export DOCKER_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/mi-club:desa
-            docker compose pull app
+            docker compose pull
             docker compose up -d --no-build
             docker image prune -f
 
@@ -64,6 +64,6 @@ jobs:
             set -e
             cd /root/admin-club/prod
             export DOCKER_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/mi-club:prod
-            docker compose pull app
+            docker compose pull
             docker compose up -d --no-build
             docker image prune -f
