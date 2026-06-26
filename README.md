@@ -333,25 +333,43 @@ docker compose -f docker-compose.prod.yml up -d
 docker compose -f docker-compose.prod.yml logs -f app
 ```
 
-### CI/CD con GitHub Actions
+### CI/CD con GitHub Actions (multi-ambiente)
 
-Cada `push` a **`main`** construye la imagen, la sube a Docker Hub y actualiza el VPS.
+| Rama | Imagen Docker Hub | VPS |
+|------|-------------------|-----|
+| `desa` | `{usuario}/mi-club:desa` | `/root/admin-club/desa` (SSH puerto **5416**) |
+| `prod` | `{usuario}/mi-club:prod` | `/root/admin-club/prod` (SSH puerto **5416**) |
 
 **Secrets en GitHub** (Settings → Secrets and variables → Actions):
 
 | Secret | Descripción |
 |--------|-------------|
 | `DOCKERHUB_USERNAME` | Usuario Docker Hub |
-| `DOCKERHUB_TOKEN` | Access token Docker Hub (no la contraseña) |
-| `VPS_HOST` | IP o dominio del VPS |
-| `VPS_USER` | Usuario SSH (ej. `root` o `deploy`) |
-| `VPS_SSH_KEY` | Clave privada SSH (contenido completo del `.pem`) |
+| `DOCKERHUB_TOKEN` | Access token Docker Hub |
+| `VPS_HOST` | Host/IP del servidor DESA |
+| `VPS_USER` | Usuario SSH DESA |
+| `VPS_SSH_KEY` | Clave privada SSH DESA |
+| `VPS_HOST_PROD` | Host/IP del servidor PROD |
+| `VPS_USER_PROD` | Usuario SSH PROD |
+| `VPS_SSH_KEY_PROD` | Clave privada SSH PROD |
 
 Workflow: [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)
 
-Imagen publicada: `{DOCKERHUB_USERNAME}/adminclub:latest`
+**Primera vez en cada VPS** (plantillas en carpeta `deploy/`):
 
-Despliegues posteriores son automáticos al hacer push a `main`; en el VPS solo se hace `pull` + `up -d` de la app.
+```bash
+# DESA
+mkdir -p /root/admin-club/desa/src/main/resources/db
+cp deploy/docker-compose.yml /root/admin-club/desa/
+cp deploy/desa.env.example /root/admin-club/desa/.env
+# Copiar también 01-schema-adminclub.sql e import.sql a src/main/resources/...
+nano /root/admin-club/desa/.env
+docker compose up -d
+
+# PROD (misma estructura en /root/admin-club/prod con prod.env.example)
+```
+
+Cada push a `desa` o `prod` construye la imagen con el tag correspondiente y actualiza solo el contenedor `app`.
 
 ### Nginx (ejemplo mínimo)
 
