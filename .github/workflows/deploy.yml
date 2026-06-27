@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - desa
-      - prod
+      - main
 
 jobs:
   build-and-deploy:
@@ -23,7 +23,7 @@ jobs:
       - name: Definir etiqueta de entorno
         id: vars
         run: |
-          if [ "${{ github.ref_name }}" = "prod" ]; then
+          if [ "${{ github.ref_name }}" = "main" ]; then
             echo "tag=prod" >> "$GITHUB_OUTPUT"
           else
             echo "tag=desa" >> "$GITHUB_OUTPUT"
@@ -53,7 +53,7 @@ jobs:
             docker image prune -f
 
       - name: Desplegar en PROD
-        if: github.ref_name == 'prod'
+        if: github.ref_name == 'main'
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST_PROD }}
