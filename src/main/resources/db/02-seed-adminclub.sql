@@ -5,8 +5,26 @@ INSERT INTO bancos (id, nombre) VALUES
   (1, 'Banco Estado'),
   (2, 'BCI'),
   (3, 'Banco Falabella'),
-  (4, 'Banco Chile'),
-  (5, 'Banco Itau')
+  (4, 'Banco de Chile'),
+  (5, 'Banco Itaú'),
+  (6, 'Banco Santander'),
+  (7, 'Scotiabank'),
+  (8, 'Banco BICE'),
+  (9, 'Banco Security'),
+  (10, 'Banco Consorcio'),
+  (11, 'Banco Internacional'),
+  (12, 'Banco Ripley'),
+  (13, 'Banco Edwards Citi'),
+  (14, 'HSBC Bank'),
+  -- Cooperativas autorizadas para cuentas corrientes/vistas
+  (15, 'Coopeuch'),
+  (16, 'Oriencoop'),
+  -- Instituciones de Prepago / Cuentas Digitales (Muy usadas en Chile)
+  (17, 'Tenpo'),
+  (18, 'Mercado Pago'),
+  (19, 'Mach (Prepago BCI)'),
+  (20, 'Global 66'),
+  (21, 'Prepago Los Héroes');
 ON DUPLICATE KEY UPDATE nombre = VALUES(nombre);
 
 INSERT INTO usuarios (

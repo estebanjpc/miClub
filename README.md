@@ -208,7 +208,7 @@ Puerto por defecto: **8081** → [http://localhost:8081](http://localhost:8081)
 
 En desarrollo se usa `spring.jpa.hibernate.ddl-auto=create-drop` y el archivo **`src/main/resources/import.sql`** como seed inicial (club demo, admin, categorías, deportistas, etc.).
 
-DDL de referencia completo: **`src/main/resources/db/01-schema-adminclub.sql`**.
+DDL de referencia (solo estructura): **`src/main/resources/db/scriptFinal.sql`**.
 
 ### Regenerar `import.sql` desde la BD actual
 
