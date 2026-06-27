@@ -434,4 +434,4 @@ MySQL instalado en el host; variables de entorno según `.env.example`.
 
 ## Licencia
 
-Apache License 2.0 (según `pom.xml`).
+Apache License 2.0 (según `pom.xml`). 
