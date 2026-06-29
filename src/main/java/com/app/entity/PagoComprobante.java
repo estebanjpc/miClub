@@ -2,12 +2,16 @@ package com.app.entity;
 
 import java.io.Serializable;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import jakarta.persistence.Basic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
 @Entity
@@ -26,8 +30,9 @@ public class PagoComprobante implements Serializable {
 	@Column(name = "id_Pago")
 	private Long idPago;
 
-	@Lob
-	@Column(name = "file_blob")
+	@JdbcTypeCode(SqlTypes.BLOB)
+	@Basic(fetch = FetchType.LAZY)
+	@Column(name = "file_blob", columnDefinition = "LONGBLOB")
 	private byte[] fileBlob;
 
 	public Long getId() {

@@ -1,6 +1,15 @@
 -- AdminClub - Estructura de base de datos (solo DDL, sin datos)
 -- MySQL 8+
--- Archivo: scriptFinal.sql
+-- Archivo canónico: scriptFinal.sql
+--
+-- USO:
+--   Instalación nueva (VPS/Docker, BD vacía): ejecutar este archivo completo.
+--   Base ya existente (DESA/PROD):             ejecutar 04-upgrade-existing-db.sql
+--
+-- Tipos BLOB alineados con entidades JPA (spring.jpa.hibernate.ddl-auto=validate):
+--   club.logo                      -> LONGBLOB
+--   pago.comprobante_transferencia -> MEDIUMBLOB  (comprobantes transferencia, ~16 MB)
+--   pago_comprobante.file_blob     -> LONGBLOB    (archivos adjuntos legacy)
 
 SET NAMES utf8mb4;
 SET time_zone = '+00:00';
@@ -267,7 +276,7 @@ CREATE TABLE IF NOT EXISTS no_pago_config (
 CREATE TABLE IF NOT EXISTS pago_comprobante (
   id BIGINT NOT NULL AUTO_INCREMENT,
   id_Pago BIGINT NULL,
-  file_blob LONGBLOB NULL,
+  file_blob LONGBLOB NULL COMMENT 'Archivo adjunto; LONGBLOB alineado con PagoComprobante JPA',
   PRIMARY KEY (id),
   KEY idx_pago_comprobante_pago (id_Pago)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
