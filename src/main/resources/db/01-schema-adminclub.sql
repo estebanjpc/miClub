@@ -1,8 +1,13 @@
 -- AdminClub - Esquema base MySQL 8+
--- Generado desde entidades JPA del proyecto.
+-- Copia de referencia local; fuente canónica: scriptFinal.sql
+--
+-- USO:
+--   Instalación nueva: scriptFinal.sql (o este archivo, contenido equivalente).
+--   Base existente:    04-upgrade-existing-db.sql
 
 SET NAMES utf8mb4;
 SET time_zone = '+00:00';
+SET FOREIGN_KEY_CHECKS = 0;
 
 CREATE TABLE IF NOT EXISTS club (
   id BIGINT NOT NULL AUTO_INCREMENT,
@@ -262,11 +267,12 @@ CREATE TABLE IF NOT EXISTS no_pago_config (
   CONSTRAINT fk_no_pago_deportista FOREIGN KEY (deportista_id) REFERENCES deportistas(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Tabla legacy (entidad aún presente en proyecto)
 CREATE TABLE IF NOT EXISTS pago_comprobante (
   id BIGINT NOT NULL AUTO_INCREMENT,
   id_Pago BIGINT NULL,
-  file_blob LONGBLOB NULL,
+  file_blob LONGBLOB NULL COMMENT 'Archivo adjunto; LONGBLOB alineado con PagoComprobante JPA',
   PRIMARY KEY (id),
   KEY idx_pago_comprobante_pago (id_Pago)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+SET FOREIGN_KEY_CHECKS = 1;
