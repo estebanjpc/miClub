@@ -185,7 +185,7 @@ Estructura bajo el paquete raíz `com.app`:
 
 - JDK 17+
 - Maven 3.8+ (o wrapper `./mvnw`)
-- MySQL con base de datos creada (por defecto `bd_adm_club`)
+- MySQL 8+ con base **`bd_adm_club_desa`** (local) o **`bd_adm_club_pro`** / **`bd_adm_club_desa`** en VPS (MySQL compartido `mysql-server`)
 
 ### Arrancar la aplicación
 
@@ -299,8 +299,9 @@ Autenticación: form login con `email` + `password` (BCrypt). Autorización: `@S
 | Elemento | Estado |
 |----------|--------|
 | `Dockerfile` multi-stage (build + JRE) | ✅ Añadido |
-| `docker-compose.yml` (app + MySQL, build local) | ✅ Añadido |
-| `docker-compose.prod.yml` (VPS, imagen Docker Hub) | ✅ Añadido |
+| `docker-compose.yml` (app DESA, sin MySQL) | ✅ Añadido |
+| `docker-compose.prod.yml` (app PROD, sin MySQL) | ✅ Añadido |
+| `deploy/docker-compose-mysql.yml` (MySQL compartido `mysql-server`) | ✅ Añadido |
 | `.github/workflows/deploy.yml` (CI/CD) | ✅ Añadido |
 | Perfil `application-prod.properties` | ✅ Añadido |
 | `.env.example` (secretos fuera del código) | ✅ Añadido |
@@ -355,21 +356,29 @@ docker compose -f docker-compose.prod.yml logs -f app
 
 Workflow: [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)
 
-**Primera vez en cada VPS** (plantillas en carpeta `deploy/`):
+**Primera vez en el VPS** (plantillas en `deploy/`):
 
 ```bash
-# DESA
-mkdir -p /root/admin-club/desa/src/main/resources/db
-cp deploy/docker-compose.yml /root/admin-club/desa/
-cp deploy/desa.env.example /root/admin-club/desa/.env
-# Copiar también 01-schema-adminclub.sql e import.sql a src/main/resources/...
-nano /root/admin-club/desa/.env
-docker compose up -d
+# 1. MySQL compartido (una sola vez)
+bash deploy/setup-vps.sh mysql
+cd /root/admin-club/mysql && docker compose up -d
+# Crea: bd_adm_club_pro y bd_adm_club_desa
 
-# PROD (misma estructura en /root/admin-club/prod con prod.env.example)
+# 2. PROD (solo app)
+bash deploy/setup-vps.sh prod
+nano /root/admin-club/prod/.env
+cd /root/admin-club/prod && docker compose up -d
+
+# 3. DESA (solo app)
+bash deploy/setup-vps.sh desa
+nano /root/admin-club/desa/.env
+cd /root/admin-club/desa && docker compose up -d
+
+# Migración desde 2 contenedores MySQL antiguos:
+bash deploy/migrate-shared-mysql.sh
 ```
 
-Cada push a `desa` o `prod` construye la imagen con el tag correspondiente y actualiza solo el contenedor `app`.
+Cada push a `desa` o `main` construye la imagen y actualiza solo el contenedor de la app (`app-club-desa` / `app-club-prod`).
 
 ### Nginx (ejemplo mínimo)
 

@@ -1,0 +1,46 @@
+# MySQL compartido — todos los proyectos del VPS.
+# Ubicación en el servidor: /root/mysql/
+#
+# Paso 1 (solo infraestructura):
+#   mkdir -p /root/mysql/init
+#   cp este archivo → /root/mysql/docker-compose.yml
+#   cd /root/mysql && docker compose up -d
+#
+# Otros proyectos se conectan por red Docker:
+#   host: mysql-server  |  puerto: 3306  |  red: shared-db-net
+#
+# Workbench: IP del VPS, puerto 3306, usuario root
+
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-server
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-Mysql.mysql}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_server_data:/var/lib/mysql
+      # Scripts .sql / .sh en ./init/ se ejecutan solo la 1ª vez (volumen vacío)
+      - ./init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    networks:
+      shared-db-net:
+        aliases:
+          - mysql-server
+
+volumes:
+  mysql_server_data:
+
+networks:
+  shared-db-net:
+    name: shared-db-net
+    driver: bridge

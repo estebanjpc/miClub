@@ -2,9 +2,17 @@
 -- MySQL 8+
 -- Archivo canónico: scriptFinal.sql
 --
+-- Bases por ambiente (MySQL compartido mysql-server):
+--   PROD → bd_adm_club_pro
+--   DESA → bd_adm_club_desa
+--
 -- USO:
---   Instalación nueva (VPS/Docker, BD vacía): ejecutar este archivo completo.
---   Base ya existente (DESA/PROD):             ejecutar 04-upgrade-existing-db.sql
+--   Instalación nueva: ejecutar 00-create-databases.sql y luego este archivo en cada BD.
+--   Base existente:    ejecutar 04-upgrade-existing-db.sql en la BD correspondiente.
+--
+-- Ejemplo Workbench / CLI:
+--   USE bd_adm_club_pro;   -- o bd_adm_club_desa
+--   SOURCE scriptFinal.sql;
 --
 -- Tipos BLOB alineados con entidades JPA (spring.jpa.hibernate.ddl-auto=validate):
 --   club.logo                      -> LONGBLOB

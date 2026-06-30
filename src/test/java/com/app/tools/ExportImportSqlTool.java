@@ -37,7 +37,7 @@ public final class ExportImportSqlTool {
 	public static void main(String[] args) throws Exception {
 		Class.forName("com.mysql.cj.jdbc.Driver");
 		String url = envOr("SPRING_DATASOURCE_URL",
-				"jdbc:mysql://127.0.0.1/bd_adm_club?serverTimezone=America/Santiago&useSSL=false&allowPublicKeyRetrieval=true&connectTimeout=5000&socketTimeout=15000");
+				"jdbc:mysql://127.0.0.1:3306/bd_adm_club_desa?serverTimezone=America/Santiago&useSSL=false&allowPublicKeyRetrieval=true&connectTimeout=5000&socketTimeout=15000");
 		String user = envOr("SPRING_DATASOURCE_USERNAME", "root");
 		String pass = envOr("SPRING_DATASOURCE_PASSWORD", "Mysql.mysql");
 

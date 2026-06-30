@@ -1,27 +1,25 @@
-  GNU nano 6.2                                                                                                                   docker-compose.yml                                                                                                                            
-services:
-  db-desa:
-    image: mysql:8.0
-    container_name: mysql-club-desa
-    restart: always
-    environment:
-      MYSQL_DATABASE: bd_adm_club
-      MYSQL_ROOT_PASSWORD: Mysql.mysql
-    ports:
-      - "3307:3306" 
-    volumes:
-      - mysql_desa_data:/var/lib/mysql
+# Referencia local DESA — copia en VPS: deploy/docker-compose-desa.yml
+version: '3.8'
 
+services:
   mi-club-desa:
     image: estebanjpc/mi-club:desa
+    container_name: app-club-desa
+    restart: always
     ports:
       - "8080:80"
+    networks:
+      - shared-db-net
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db-desa:3306/bd_adm_club?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-server:3306/bd_adm_club_desa?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=America/Santiago
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=Mysql.mysql
-    restart: always
+      - SPRING_JPA_DDL_AUTO=validate
+      - SERVER_PORT=80
+      - APP_PUBLIC_URL=http://45.7.229.27:8080
 
-# --- ESTO ES LO QUE DEBES AGREGAR AL FINAL ---
-volumes:
-  mysql_desa_data:
+networks:
+  shared-db-net:
+    external: true
+    name: shared-db-net

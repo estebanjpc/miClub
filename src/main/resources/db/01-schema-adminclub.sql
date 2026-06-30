@@ -1,9 +1,9 @@
 -- AdminClub - Esquema base MySQL 8+
 -- Copia de referencia local; fuente canónica: scriptFinal.sql
 --
--- USO:
---   Instalación nueva: scriptFinal.sql (o este archivo, contenido equivalente).
---   Base existente:    04-upgrade-existing-db.sql
+-- Bases por ambiente: bd_adm_club_pro (PROD), bd_adm_club_desa (DESA)
+-- Instalación nueva: USE bd_adm_club_pro|desa; SOURCE scriptFinal.sql;
+-- Base existente:    04-upgrade-existing-db.sql
 
 SET NAMES utf8mb4;
 SET time_zone = '+00:00';
