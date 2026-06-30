@@ -1,16 +1,19 @@
 -- AdminClub - Migraciones para bases de datos EXISTENTES
 -- MySQL 8+
 --
+-- Ejecutar en la BD del ambiente correspondiente:
+--   PROD → USE bd_adm_club_pro;
+--   DESA → USE bd_adm_club_desa;
+--
 -- Cuándo ejecutar:
 --   - El arranque falla con Schema-validation y tipos BLOB incorrectos.
---   - La BD se creó con Hibernate antiguo (TINYBLOB/BLOB) antes de scriptFinal.sql.
---   - Actualizas DESA/PROD sin recrear el volumen de MySQL.
+--   - La BD se creó con Hibernate antiguo (TINYBLOB/BLOB).
 --
 -- Cuándo NO ejecutar:
---   - Instalación nueva: usa scriptFinal.sql en BD vacía (ya incluye los tipos correctos).
+--   - Instalación nueva con scriptFinal.sql (ya incluye los tipos correctos).
 --
--- Ejecución (ejemplo DESA):
---   docker exec -i mysql-club-desa mysql -uroot -p bd_adm_club < 04-upgrade-existing-db.sql
+-- Ejemplo CLI:
+--   docker exec -i mysql-server mysql -uroot -p bd_adm_club_pro < 04-upgrade-existing-db.sql
 --
 -- Idempotente: repetir los ALTER no da error si la columna ya tiene el tipo correcto.
 

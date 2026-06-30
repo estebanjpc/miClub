@@ -1,5 +1,5 @@
 -- Seed generado automáticamente (ExportImportSqlTool)
--- Origen: jdbc:mysql://127.0.0.1/bd_adm_club?serverTimezone=America/Santiago&useSSL=false&allowPublicKeyRetrieval=true&connectTimeout=5000&socketTimeout=15000 usuario=root
+-- Origen: jdbc:mysql://127.0.0.1:3306/bd_adm_club_desa?... usuario=root
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS=0;

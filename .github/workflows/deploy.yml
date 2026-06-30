@@ -46,6 +46,7 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
             set -e
+            docker network inspect shared-db-net >/dev/null 2>&1 || { echo "ERROR: Levanta mysql-server primero (deploy/docker-compose-mysql.yml)"; exit 1; }
             cd /root/admin-club/desa
             export DOCKER_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/mi-club:desa
             docker compose pull
@@ -62,6 +63,7 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
             set -e
+            docker network inspect shared-db-net >/dev/null 2>&1 || { echo "ERROR: Levanta mysql-server primero (deploy/docker-compose-mysql.yml)"; exit 1; }
             cd /root/admin-club/prod
             export DOCKER_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/mi-club:prod
             docker compose pull
